@@ -1,2 +1,2 @@
-# Demo-Website
-A Repository to host my demo websites.
+# Website
+A Repository for my personal website.
