@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Towards Quantum Machine Learning — Kartik Anand</title>
+<meta name="description" content="A short history of quantum computing and the four approaches to quantum machine learning.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   blog.css — shared styling for Kartik Anand's on-site blog
+   Used by blogs.html (index) and every blog-*.html article.
+   To add a post: copy blog-template.html, write the <article>,
+   then add a card to blogs.html.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #03040a;
+  --rule: rgba(120,160,255,0.11);
+  --rule-bright: rgba(120,160,255,0.22);
+  --quantum: #5aabff;
+  --entangle: #9c7cff;
+  --star: rgba(215,228,255,0.92);
+  --muted: rgba(170,195,240,0.5);
+  --accent: #f0c060;
+  --serif: 'EB Garamond', Georgia, serif;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1100px 650px at 50% -10%, rgba(90,171,255,0.05), transparent 60%),
+    var(--void);
+  color: var(--star);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+.wrapper { max-width: 720px; margin: 0 auto; padding: 0 1.5rem 5rem; }
+
+/* top bar */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.6rem 0 1.2rem; border-bottom: 1px solid var(--rule);
+}
+.home-link {
+  font-size: 0.76rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color .2s;
+}
+.home-link:hover { color: var(--quantum); }
+.home-link span { color: var(--quantum); }
+.kicker {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(180,155,255,0.7);
+}
+
+/* ---------- index ---------- */
+.hero { padding: 3rem 0 1.6rem; }
+.hero h1 {
+  font-family: var(--serif); font-weight: 400; font-size: clamp(2.1rem, 6vw, 3.2rem);
+  line-height: 1.1; color: rgba(225,238,255,0.98);
+}
+.hero h1 em { font-style: italic; color: var(--entangle); }
+.hero .lede {
+  font-family: var(--serif); font-size: 1.12rem; line-height: 1.7;
+  color: rgba(210,225,255,0.82); max-width: 58ch; margin-top: 1rem;
+}
+.hero .lede a, .more a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.28); }
+.hero .lede a:hover, .more a:hover { border-color: var(--quantum); }
+
+.series-label {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--quantum); margin: 2.4rem 0 1.2rem; display: flex; align-items: center; gap: 0.75rem;
+}
+.series-label::after { content:''; height:1px; flex:1; background: var(--rule); }
+
+.posts { display: flex; flex-direction: column; gap: 1rem; }
+.post {
+  display: block; text-decoration: none; color: inherit;
+  padding: 1.4rem 1.5rem; border-radius: 10px;
+  border: 1px solid var(--rule-bright);
+  background: linear-gradient(180deg, rgba(12,16,28,0.7), rgba(7,9,16,0.7));
+  transition: border-color .2s, transform .2s, background .2s;
+}
+.post:hover { border-color: rgba(120,160,255,0.45); transform: translateY(-2px); background: rgba(90,171,255,0.05); }
+.post:focus-visible { outline: 2px solid var(--quantum); outline-offset: 3px; }
+.post-meta {
+  font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(160,190,240,0.6); margin-bottom: 0.55rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+}
+.post-meta .dot { color: rgba(120,150,210,0.5); }
+.post-title {
+  font-family: var(--serif); font-size: 1.4rem; font-weight: 500; line-height: 1.25;
+  color: rgba(228,240,255,0.97); margin-bottom: 0.5rem; transition: color .2s;
+}
+.post:hover .post-title { color: var(--quantum); }
+.post-desc { font-size: 0.93rem; line-height: 1.62; color: rgba(195,212,245,0.8); margin-bottom: 0.9rem; }
+.post-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
+.tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tag {
+  font-size: 0.66rem; font-weight: 500; letter-spacing: 0.06em;
+  padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid var(--rule-bright); color: rgba(160,190,255,0.7);
+}
+.read-on { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--quantum); white-space: nowrap; }
+.more { margin-top: 1.8rem; font-size: 0.9rem; color: var(--muted); }
+
+/* ---------- article ---------- */
+.article-head { padding: 2.6rem 0 1.4rem; border-bottom: 1px solid var(--rule); }
+.article-head .eyebrow {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(180,155,255,0.75); margin-bottom: 0.9rem;
+}
+.article-head h1 {
+  font-family: var(--serif); font-weight: 500; font-size: clamp(1.9rem, 5vw, 2.7rem);
+  line-height: 1.15; color: rgba(228,240,255,0.98); letter-spacing: 0.01em;
+}
+.article-head .meta {
+  margin-top: 1rem; font-size: 0.78rem; color: var(--muted);
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+}
+.article-head .meta .dot { color: rgba(120,150,210,0.5); }
+
+article { font-family: var(--serif); font-size: 1.12rem; line-height: 1.85; color: rgba(214,228,255,0.88); }
+article > p { margin: 1.15rem 0; }
+article .lead { font-size: 1.22rem; color: rgba(224,236,255,0.92); margin-top: 1.8rem; }
+article h2 {
+  font-family: var(--serif); font-weight: 500; font-size: 1.5rem; line-height: 1.25;
+  color: rgba(226,238,255,0.96); margin: 2.4rem 0 0.4rem;
+  padding-top: 1.4rem; border-top: 1px solid var(--rule);
+}
+article h3 {
+  font-family: var(--sans); font-weight: 600; font-size: 0.95rem; letter-spacing: 0.01em;
+  color: var(--quantum); margin: 1.7rem 0 0.3rem;
+}
+article a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.28); transition: border-color .2s; }
+article a:hover { border-color: var(--quantum); }
+article em { font-style: italic; color: rgba(210,222,255,0.92); }
+article strong { color: rgba(228,240,255,0.95); font-weight: 600; }
+
+article ul, article ol { margin: 1rem 0 1rem 1.3rem; }
+article li { margin: 0.45rem 0; }
+
+article blockquote {
+  margin: 1.6rem 0; padding: 0.9rem 1.2rem;
+  border-left: 3px solid var(--entangle);
+  background: rgba(156,124,255,0.06); border-radius: 0 6px 6px 0;
+  font-style: italic; color: rgba(206,216,250,0.86);
+}
+article blockquote.def {
+  border-left-color: var(--quantum); background: rgba(90,171,255,0.06); font-style: normal;
+}
+
+article code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.86em; background: rgba(120,160,255,0.1);
+  padding: 0.1em 0.4em; border-radius: 4px; color: #bcd6ff;
+}
+.formula {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.92rem; color: #cfe0ff;
+  background: rgba(90,171,255,0.06); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 0.7rem 0.9rem; margin: 1.2rem 0; overflow-x: auto;
+  line-height: 1.5;
+}
+
+.figure-note {
+  font-family: var(--sans); font-size: 0.78rem; color: var(--muted);
+  border: 1px dashed var(--rule-bright); border-radius: 6px;
+  padding: 0.6rem 0.8rem; margin: 1.2rem 0; font-style: italic;
+}
+
+.article-foot {
+  margin-top: 2.6rem; padding-top: 1.6rem; border-top: 1px solid var(--rule);
+  font-family: var(--sans); font-size: 0.9rem; color: var(--muted);
+}
+.article-foot .sig { font-family: var(--serif); font-style: italic; color: rgba(200,215,250,0.8); margin-bottom: 0.8rem; }
+.article-foot a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.28); }
+.article-foot a:hover { border-color: var(--quantum); }
+.next-prev { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.4rem; flex-wrap: wrap; }
+.next-prev a { font-size: 0.82rem; }
+
+footer {
+  margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;
+  font-size: 0.74rem; color: rgba(150,175,220,0.55); font-family: var(--sans);
+}
+footer a { color: var(--quantum); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: rgba(90,171,255,0.25); border-radius: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .post:hover { transform: none; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="topbar">
+    <a class="home-link" href="blogs.html"><span>&larr;</span> Writing</a>
+    <div class="kicker">Towards QML &middot; Intro</div>
+  </div>
+
+  <div class="article-head">
+    <div class="eyebrow">Towards Quantum Machine Learning</div>
+    <h1>Towards Quantum Machine Learning</h1>
+    <div class="meta"><span>Series intro</span><span class="dot">&middot;</span><span>August 2022</span><span class="dot">&middot;</span><span>5 min read</span></div>
+  </div>
+
+  <article>
+    <p class="lead">Quantum computing — when and how it all started, and how it is slowly conquering the Turing world.</p>
+
+    <p>Quantum theory turned out to be one of the best descriptions of how the universe actually works, and that success pushed researchers to revisit every discipline from this stranger, richer point of view. It wasn't until the 1980s, though, that quantum <em>information</em> became a field of its own.</p>
+
+    <h2>A very short history</h2>
+    <p>In 1979 Paul Benioff argued that a computing machine with quantum behaviour could be built, soon followed by Yuri Manin's book <em>Computable and Non-Computable</em>. Then, in 1981, Richard Feynman gave his now-famous talk <a href="https://s2.smu.edu/~mitch/class/5395/papers/feynman-quantum-1981.pdf" target="_blank" rel="noopener">"Simulating Physics with Computers"</a>, where he made the case that a fundamentally quantum-mechanical nature should not be simulated by a classical computer, and sketched the features a useful quantum computer would need. It is hard to read that talk and not be struck by how far ahead Feynman was seeing.</p>
+
+    <p>With that push from Feynman, Manin, and Benioff, people went looking for algorithms that could run on such machines. In 1985 David <a href="https://www.cs.princeton.edu/courses/archive/fall04/cos576/papers/deutsch85.pdf" target="_blank" rel="noopener">Deutsch</a> showed the kind of advantage these machines might hold over classical ones, later generalising it with Richard Jozsa.</p>
+
+    <p>That early advantage softened once you allowed small errors in the classical computation — the problem could then be solved in roughly linear time. So in 1993 Bernstein and Vazirani produced a problem with a clean separation between classical and quantum computation <em>even when</em> small errors were allowed, and along the way described a quantum version of the Fourier transform. Shortly after, Simon's problem gave a quantum computer a linear-time solution to something that costs a classical computer exponential time, and Seth Lloyd laid out how such a machine might physically be built.</p>
+
+    <p>Then came Peter Shor. He combined the existing ideas into a factoring algorithm and published it in 1994 — and because factoring underpins RSA cryptography, that single result lit a fire under the whole field. Suddenly everyone was hunting for more quantum algorithms.</p>
+
+    <p>Fast-forward about twenty years and a new subfield appears with a name fancier than almost anything before it: <strong>Quantum Machine Learning</strong>. Plenty of groundwork had been laid since the mid-90s, but the term itself shows up in Lloyd, Mohseni, and Rebentrost's <a href="https://arxiv.org/abs/1307.0401" target="_blank" rel="noopener">"Quantum Principal Component Analysis"</a>. Interest has climbed steadily since 2013, and QML is now its own corner of quantum computing.</p>
+
+    <h2>Four approaches to quantum machine learning</h2>
+    <p>Aimeur, Brassard, and Gambs proposed a clean way to organise the field. Split on two questions: is the <em>data</em> generated by a classical (C) or quantum (Q) system, and is the <em>learning device</em> classical (C) or quantum (Q)? That gives four boxes.</p>
+
+    <h3>CC — classical data, classical device</h3>
+    <p>The conventional setting, but with methods borrowed from quantum information — for example <a href="https://arxiv.org/abs/1605.05775" target="_blank" rel="noopener">tensor-network</a> approaches, and the broader family of "quantum-inspired" models with varying degrees of grounding in real quantum theory.</p>
+
+    <h3>QC — quantum data, classical device</h3>
+    <p>Here machine learning helps quantum computing. Think of characterising the internal state of a quantum device with as few measurements as possible and analysing that data with ordinary ML, or discriminating between quantum states a source emits and between transformations an apparatus performs.</p>
+
+    <h3>CQ — classical data, quantum device</h3>
+    <p>This is the most heavily studied box, and the focus of this series. The aim is a speed-up on ML tasks by running quantum versions of learning algorithms on classical data — which first has to be <em>encoded</em> into the quantum computer, an active research problem in its own right. The strategies range from translating familiar ML models into quantum algorithms all the way to genuinely new models born from how quantum computers work. I'll mostly stay with supervised learning here, with the occasional detour into unsupervised ideas (quantum GANs, autoencoders, Boltzmann machines, and more).</p>
+
+    <h3>QQ — quantum data, quantum device</h3>
+    <p>Quantum data processed on a quantum device. Two flavours: measurements of a physical quantum experiment fed to a separate quantum learner, or a quantum device that simulates a system and hands its state straight to a quantum algorithm running on the same hardware — immediate access to the state, exponential speed-up by design. It's fascinating and largely open territory, mostly out of scope for this series.</p>
+
+    <p>That's the map. By way of a sign-off, Dunjko, Taylor, and Briegel make a lovely point about the fully-quantum corner: once the interaction itself can be quantum, even the question of what it <em>means</em> "to learn" gets slippery — agent and environment can end up entangled. (See their 2016 <a href="https://arxiv.org/abs/1610.08251" target="_blank" rel="noopener">"Quantum-Enhanced Machine Learning"</a>.)</p>
+
+    <div class="article-foot">
+      <div class="sig">— Kartik Anand</div>
+      <div>Originally published on <a href="https://medium.com/@kartikhanand/towards-quantum-machine-learning-c9f2c8c03d25" target="_blank" rel="noopener">Medium</a> (Aug 2022).</div>
+      <div class="next-prev">
+        <a href="blogs.html">&larr; All posts</a>
+        <a href="blog-qml-basis-encoding.html">Next: Basis Encoding &rarr;</a>
+      </div>
+    </div>
+  </article>
+
+  <footer>
+    <span>Kartik Anand &middot; Quantum Complexity Theory</span>
+    <span><a href="index.html">&larr; back home</a></span>
+  </footer>
+
+</div>
+</body>
+</html>

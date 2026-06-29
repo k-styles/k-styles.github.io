@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generative Adversarial Networks — Kartik Anand</title>
+<meta name="description" content="Where GANs sit among generative models, the adversarial game, training, and DCGAN.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   blog.css — shared styling for Kartik Anand's on-site blog
+   Used by blogs.html (index) and every blog-*.html article.
+   To add a post: copy blog-template.html, write the <article>,
+   then add a card to blogs.html.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #03040a;
+  --rule: rgba(120,160,255,0.11);
+  --rule-bright: rgba(120,160,255,0.22);
+  --quantum: #5aabff;
+  --entangle: #9c7cff;
+  --star: rgba(215,228,255,0.92);
+  --muted: rgba(170,195,240,0.5);
+  --accent: #f0c060;
+  --serif: 'EB Garamond', Georgia, serif;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1100px 650px at 50% -10%, rgba(90,171,255,0.05), transparent 60%),
+    var(--void);
+  color: var(--star);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+.wrapper { max-width: 720px; margin: 0 auto; padding: 0 1.5rem 5rem; }
+
+/* top bar */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.6rem 0 1.2rem; border-bottom: 1px solid var(--rule);
+}
+.home-link {
+  font-size: 0.76rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color .2s;
+}
+.home-link:hover { color: var(--quantum); }
+.home-link span { color: var(--quantum); }
+.kicker {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(180,155,255,0.7);
+}
+
+/* ---------- index ---------- */
+.hero { padding: 3rem 0 1.6rem; }
+.hero h1 {
+  font-family: var(--serif); font-weight: 400; font-size: clamp(2.1rem, 6vw, 3.2rem);
+  line-height: 1.1; color: rgba(225,238,255,0.98);
+}
+.hero h1 em { font-style: italic; color: var(--entangle); }
+.hero .lede {
+  font-family: var(--serif); font-size: 1.12rem; line-height: 1.7;
+  color: rgba(210,225,255,0.82); max-width: 58ch; margin-top: 1rem;
+}
+.hero .lede a, .more a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.28); }
+.hero .lede a:hover, .more a:hover { border-color: var(--quantum); }
+
+.series-label {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--quantum); margin: 2.4rem 0 1.2rem; display: flex; align-items: center; gap: 0.75rem;
+}
+.series-label::after { content:''; height:1px; flex:1; background: var(--rule); }
+
+.posts { display: flex; flex-direction: column; gap: 1rem; }
+.post {
+  display: block; text-decoration: none; color: inherit;
+  padding: 1.4rem 1.5rem; border-radius: 10px;
+  border: 1px solid var(--rule-bright);
+  background: linear-gradient(180deg, rgba(12,16,28,0.7), rgba(7,9,16,0.7));
+  transition: border-color .2s, transform .2s, background .2s;
+}
+.post:hover { border-color: rgba(120,160,255,0.45); transform: translateY(-2px); background: rgba(90,171,255,0.05); }
+.post:focus-visible { outline: 2px solid var(--quantum); outline-offset: 3px; }
+.post-meta {
+  font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(160,190,240,0.6); margin-bottom: 0.55rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+}
+.post-meta .dot { color: rgba(120,150,210,0.5); }
+.post-title {
+  font-family: var(--serif); font-size: 1.4rem; font-weight: 500; line-height: 1.25;
+  color: rgba(228,240,255,0.97); margin-bottom: 0.5rem; transition: color .2s;
+}
+.post:hover .post-title { color: var(--quantum); }
+.post-desc { font-size: 0.93rem; line-height: 1.62; color: rgba(195,212,245,0.8); margin-bottom: 0.9rem; }
+.post-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
+.tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tag {
+  font-size: 0.66rem; font-weight: 500; letter-spacing: 0.06em;
+  padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid var(--rule-bright); color: rgba(160,190,255,0.7);
+}
+.read-on { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--quantum); white-space: nowrap; }
+.more { margin-top: 1.8rem; font-size: 0.9rem; color: var(--muted); }
+
+/* ---------- article ---------- */
+.article-head { padding: 2.6rem 0 1.4rem; border-bottom: 1px solid var(--rule); }
+.article-head .eyebrow {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(180,155,255,0.75); margin-bottom: 0.9rem;
+}
+.article-head h1 {
+  font-family: var(--serif); font-weight: 500; font-size: clamp(1.9rem, 5vw, 2.7rem);
+  line-height: 1.15; color: rgba(228,240,255,0.98); letter-spacing: 0.01em;
+}
+.article-head .meta {
+  margin-top: 1rem; font-size: 0.78rem; color: var(--muted);
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+}
+.article-head .meta .dot { color: rgba(120,150,210,0.5); }
+
+article { font-family: var(--serif); font-size: 1.12rem; line-height: 1.85; color: rgba(214,228,255,0.88); }
+article > p { margin: 1.15rem 0; }
+article .lead { font-size: 1.22rem; color: rgba(224,236,255,0.92); margin-top: 1.8rem; }
+article h2 {
+  font-family: var(--serif); font-weight: 500; font-size: 1.5rem; line-height: 1.25;
+  color: rgba(226,238,255,0.96); margin: 2.4rem 0 0.4rem;
+  padding-top: 1.4rem; border-top: 1px solid var(--rule);
+}
+article h3 {
+  font-family: var(--sans); font-weight: 600; font-size: 0.95rem; letter-spacing: 0.01em;
+  color: var(--quantum); margin: 1.7rem 0 0.3rem;
+}
+article a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.28); transition: border-color .2s; }
+article a:hover { border-color: var(--quantum); }
+article em { font-style: italic; color: rgba(210,222,255,0.92); }
+article strong { color: rgba(228,240,255,0.95); font-weight: 600; }
+
+article ul, article ol { margin: 1rem 0 1rem 1.3rem; }
+article li { margin: 0.45rem 0; }
+
+article blockquote {
+  margin: 1.6rem 0; padding: 0.9rem 1.2rem;
+  border-left: 3px solid var(--entangle);
+  background: rgba(156,124,255,0.06); border-radius: 0 6px 6px 0;
+  font-style: italic; color: rgba(206,216,250,0.86);
+}
+article blockquote.def {
+  border-left-color: var(--quantum); background: rgba(90,171,255,0.06); font-style: normal;
+}
+
+article code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.86em; background: rgba(120,160,255,0.1);
+  padding: 0.1em 0.4em; border-radius: 4px; color: #bcd6ff;
+}
+.formula {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.92rem; color: #cfe0ff;
+  background: rgba(90,171,255,0.06); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 0.7rem 0.9rem; margin: 1.2rem 0; overflow-x: auto;
+  line-height: 1.5;
+}
+
+.figure-note {
+  font-family: var(--sans); font-size: 0.78rem; color: var(--muted);
+  border: 1px dashed var(--rule-bright); border-radius: 6px;
+  padding: 0.6rem 0.8rem; margin: 1.2rem 0; font-style: italic;
+}
+
+.article-foot {
+  margin-top: 2.6rem; padding-top: 1.6rem; border-top: 1px solid var(--rule);
+  font-family: var(--sans); font-size: 0.9rem; color: var(--muted);
+}
+.article-foot .sig { font-family: var(--serif); font-style: italic; color: rgba(200,215,250,0.8); margin-bottom: 0.8rem; }
+.article-foot a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.28); }
+.article-foot a:hover { border-color: var(--quantum); }
+.next-prev { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.4rem; flex-wrap: wrap; }
+.next-prev a { font-size: 0.82rem; }
+
+footer {
+  margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;
+  font-size: 0.74rem; color: rgba(150,175,220,0.55); font-family: var(--sans);
+}
+footer a { color: var(--quantum); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: rgba(90,171,255,0.25); border-radius: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .post:hover { transform: none; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="topbar">
+    <a class="home-link" href="blogs.html"><span>&larr;</span> Writing</a>
+    <div class="kicker">Deep Learning</div>
+  </div>
+
+  <div class="article-head">
+    <div class="eyebrow">Deep Learning</div>
+    <h1>Generative Adversarial Networks</h1>
+    <div class="meta"><span>July 2022</span><span class="dot">&middot;</span><span>8 min read</span></div>
+  </div>
+
+  <article>
+    <p class="lead">Generative models try to learn the underlying probability distribution of real-world data and then use it to make new samples — either to study that distribution or just to get fresh data.</p>
+
+    <p>Some models learn the distribution explicitly; others skip that and focus on generation. GANs are firmly in the second camp — they're built for sample generation, though you can coax them into estimating densities too. Before getting to GANs, it helps to see the bigger map.</p>
+
+    <h2>A taxonomy of deep generative models</h2>
+
+    <h3>Explicit density models</h3>
+    <p>I'd call these the "brute-force" models. The idea is simple: define a model that gives an estimate of a probability distribution, parameterised by <code>&theta;</code>, and call the <em>likelihood</em> the probability the model assigns to the training data. Maximum likelihood then says: pick the parameters that maximise the likelihood of the data — done in log-space in practice, which dodges the numerical underflow you'd hit from multiplying many tiny probabilities.</p>
+    <p>There's an equivalent view: maximum likelihood is the same as minimising the KL divergence between the true data-generating distribution and the model's. We don't have the true distribution, of course — only samples — so in practice we minimise the KL divergence between the <em>empirical</em> distribution of the data and the model.</p>
+    <p>Explicit models split further by whether that density is computationally tractable. Tractable examples include fully-visible belief networks, nonlinear ICA, and PixelRNN. Models that instead learn a bound on an intractable density include variational autoencoders (deterministic approximations) and Boltzmann machines (Markov-chain Monte Carlo).</p>
+
+    <h3>Implicit density models</h3>
+    <p>The trouble is that the tractable models tend to be slow, and the approximate ones often aren't great at high-quality samples. So if all you want is samples that look real, why learn the density at all? Drop it. <em>(Fun fact: you can still make a GAN estimate a density — but vanilla GANs just generate.)</em></p>
+    <p>Some implicit models draw samples by running a Markov-chain transition operator many times — a generative stochastic network is the classic example — but Markov chains scale poorly to high dimensions and get expensive. GANs sidestep that entirely.</p>
+
+    <h2>The GAN framework</h2>
+    <p>It's a game between two players. A <strong>generator</strong> creates samples meant to look like the training distribution, and a <strong>discriminator</strong> inspects samples and labels them real or fake. During training the generator tries to fool the discriminator; the discriminator learns, alongside it, not to be fooled.</p>
+    <p>More precisely, both players are differentiable functions: a discriminator <code>D(x)</code> with parameters <code>&theta;<sup>d</sup></code>, and a generator <code>G(z)</code> with parameters <code>&theta;<sup>g</sup></code>, where <code>z</code> is random noise. Each has a cost defined in terms of the other's parameters, and each controls only its own parameters.</p>
+    <blockquote class="def">The solution is a Nash equilibrium — a point that is a local minimum of the discriminator's cost in <code>&theta;<sup>d</sup></code> and of the generator's cost in <code>&theta;<sup>g</sup></code>.</blockquote>
+
+    <h3>Training GANs</h3>
+    <p>Each iteration samples two mini-batches — real <code>x</code> from the dataset and noise <code>z</code> from the prior — and takes two gradient steps at once: one on <code>&theta;<sup>d</sup></code> to lower the discriminator's cost, one on <code>&theta;<sup>g</sup></code> to lower the generator's. Adam is the usual update rule. People argue about whether to do <code>k = 1</code> or several discriminator steps per generator step; some report <code>k &gt; 1</code> helping, but Goodfellow's original recommendation is simultaneous descent, one step each.</p>
+
+    <h3>The cost function (and a crucial fix)</h3>
+    <p>In the clean minimax version, the generator's cost is just the negative of the discriminator's. That's tidy for proving the game reaches equilibrium, but in practice it can stall: early on, when <code>G</code> is bad, <code>D</code> rejects its samples with high confidence, the generator's term saturates, and the gradient vanishes.</p>
+    <p>One small change fixes it. Instead of training <code>G</code> to minimise <code>log(1 &minus; D(G(z)))</code>, train it to <em>maximise</em> <code>log D(G(z))</code>. Same fixed point, but much stronger gradients early in training. The game is no longer zero-sum — and that's fine.</p>
+
+    <h2>The workhorse architecture: DCGAN</h2>
+    <p>DCGAN came from <a href="https://arxiv.org/abs/1511.06434" target="_blank" rel="noopener">Radford et al. (2015)</a>, proposing a family of convolutional architectures for GANs and visualising the filters they learn. The key ingredients:</p>
+    <ol>
+      <li>An all-convolutional net (<a href="https://arxiv.org/abs/1412.6806" target="_blank" rel="noopener">Springenberg et al., 2014</a>): no pooling — use strided transposed convolutions to grow spatial dimensions.</li>
+      <li>No fully-connected hidden layers in deeper architectures.</li>
+      <li><a href="https://arxiv.org/abs/1502.03167" target="_blank" rel="noopener">Batch normalisation</a> to stabilise learning — but <em>not</em> on the generator's output layer or the discriminator's input layer, or you get oscillation and instability.</li>
+      <li>ReLU in the generator everywhere except the output (which uses tanh); LeakyReLU throughout the discriminator.</li>
+      <li>Adam rather than SGD with momentum.</li>
+    </ol>
+    <p>It worked well enough that most GANs in research and production today are loosely built on DCGAN's principles.</p>
+
+    <h2>How good are they?</h2>
+    <p>GANs were designed to dodge the weaknesses of other models:</p>
+    <ul>
+      <li>No Markov chains, so they scale to high dimensions where Boltzmann machines and GSNs struggle.</li>
+      <li>No variational bound, so nothing inherently caps sample quality the way it can for VAEs.</li>
+      <li>Very few restrictions on the generator's design — an edge over Boltzmann machines.</li>
+      <li>Samples are generated in parallel, unlike the pixel-by-pixel generation of fully-visible belief nets and PixelCNNs.</li>
+      <li>Subjectively, they tend to produce nicer samples.</li>
+    </ul>
+    <p>The catch: training is less stable than for the other models — though years of architectural and training tricks have made that far more manageable.</p>
+
+    <h2>Where to go next</h2>
+    <p>Ian Goodfellow's <a href="https://www.youtube.com/watch?v=HGYYEUSm-0Q" target="_blank" rel="noopener">NIPS 2016 GAN tutorial</a> is a great two hours from the person who invented them. For the literature: the original <a href="https://arxiv.org/abs/1406.2661" target="_blank" rel="noopener">Generative Adversarial Nets</a>, <a href="https://arxiv.org/abs/1511.06434" target="_blank" rel="noopener">DCGAN</a>, <a href="https://arxiv.org/abs/1606.03498" target="_blank" rel="noopener">Improved Techniques for Training GANs</a>, <a href="https://arxiv.org/abs/1411.1784" target="_blank" rel="noopener">Conditional GANs</a>, and the ever-growing <a href="https://github.com/hindupuravinash/the-gan-zoo" target="_blank" rel="noopener">GAN Zoo</a>.</p>
+    <p>GANs are a genuinely powerful family of networks — a real breakthrough in modelling the real world, and still producing astonishing results.</p>
+
+    <div class="article-foot">
+      <div class="sig">— Kartik Anand</div>
+      <div>Originally published on <a href="https://medium.com/@kartikhanand/generative-adversarial-networks-82b93f223e69" target="_blank" rel="noopener">Medium</a> (Jul 2022).</div>
+      <div class="next-prev">
+        <a href="blogs.html">&larr; All posts</a>
+        <a href="blog-qml-intro.html">Quantum ML series &rarr;</a>
+      </div>
+    </div>
+  </article>
+
+  <footer>
+    <span>Kartik Anand &middot; Quantum Complexity Theory</span>
+    <span><a href="index.html">&larr; back home</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
