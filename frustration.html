@@ -411,6 +411,7 @@ footer a:hover { text-decoration: underline; }
   letter-spacing: 0.04em; text-align: right;
 }
 .glassfig svg { width: 100%; height: auto; display: block; }
+#shatterMap { width: 100%; height: auto; display: block; border: 1px solid var(--rule); border-radius: 6px; margin-top: 0.5rem; }
 .rsb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 .gf-slider {
   -webkit-appearance: none; appearance: none; width: 100%; height: 3px; margin: 0.9rem 0 0.2rem;
@@ -535,6 +536,8 @@ footer a:hover { text-decoration: underline; }
     <div class="glassfig">
       <div class="gf-head"><h3>Shattering</h3><span class="gf-sub" id="shatterSub">one connected basin</span></div>
       <svg id="shatterSvg" viewBox="0 0 600 230" role="img" aria-label="Solution space fragmenting into clusters as disorder increases"></svg>
+      <canvas id="shatterMap" role="img" aria-label="Energy landscape as a 2D map, growing peaks at the clusters as it cools"></canvas>
+      <div class="gf-cap" style="margin-top:0.35rem">The map below is the same landscape from above. Cool it down and peaks rise where the clusters sit.</div>
       <input type="range" id="shatterCtl" class="gf-slider" min="0" max="100" value="6" aria-label="disorder">
       <p class="gf-cap">
         Below the <b>clustering transition</b>, the set of low energy states breaks into many clusters. Each one
@@ -1074,6 +1077,8 @@ footer a:hover { text-decoration: underline; }
   (function shatter(){
     const svg = $("shatterSvg"), ctl = $("shatterCtl"), sub = $("shatterSub");
     if (!svg) return;
+    const map = $("shatterMap"), mctx = map ? map.getContext("2d") : null;
+    const MW = 600, MH = 150; if (map) { map.width = MW; map.height = MH; }
     const W = 600, H = 230, pad = 16;
     svg.appendChild(mk("rect", {x:pad-6, y:pad-6, width:W-2*pad+12, height:H-2*pad+12, rx:8,
       fill:"rgba(90,171,255,0.02)", stroke:C.grid, "stroke-width":1}));
@@ -1114,7 +1119,27 @@ footer a:hover { text-decoration: underline; }
       }
       linkPath.setAttribute("d", d);
       linkPath.setAttribute("stroke-opacity", (0.32 - 0.12*t).toFixed(2));
+      if (mctx) drawMap(t);
       sub.textContent = a < 0.3 ? "one connected basin" : a < 0.66 ? "fragmenting\u2026" : "exponentially many clusters";
+    }
+
+    function mapColor(v) {
+      v = v<0?0:v>1?1:v;
+      let r,g,b;
+      if (v < 0.5) { const u=v/0.5; r=lerp(8,64,u); g=lerp(14,116,u); b=lerp(28,255,u); }
+      else { const u=(v-0.5)/0.5; r=lerp(64,214,u); g=lerp(116,150,u); b=255; }
+      return "rgb("+(r|0)+","+(g|0)+","+(b|0)+")";
+    }
+    function drawMap(t) {
+      const cols=80, rows=20, cw=MW/cols, ch=MH/rows;
+      const sigma=lerp(82,24,t), h=lerp(0.10,1.0,t), base=0.16*(1-t);
+      const cs = centres.map(c => ({ x: c.x/600*MW, y: c.y/230*MH }));
+      for (let gy=0; gy<rows; gy++) for (let gx=0; gx<cols; gx++) {
+        const px=(gx+0.5)*cw, py=(gy+0.5)*ch; let v=base;
+        for (const c of cs) { const dx=px-c.x, dy=py-c.y; v += h*Math.exp(-(dx*dx+dy*dy)/(2*sigma*sigma)); }
+        mctx.fillStyle = mapColor(v);
+        mctx.fillRect(gx*cw, gy*ch, cw+1, ch+1);
+      }
     }
 
     if (reduced){ a = 0.85; ctl.value = 85; draw(); return; }
