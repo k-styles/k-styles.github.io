@@ -43,6 +43,7 @@ body {
   width: 100%; height: 100%;
   z-index: 0;
   pointer-events: none;
+  opacity: 0.52;
 }
 
 .wrapper {
@@ -175,6 +176,8 @@ nav a {
   transition: color 0.2s;
 }
 nav a:hover { color: var(--quantum); }
+nav a.nav-fun { color: rgba(180,155,255,0.78); }
+nav a.nav-fun:hover { color: var(--entangle); }
 
 /* ── SECTIONS ── */
 section {
@@ -400,11 +403,19 @@ footer a:hover { text-decoration: underline; }
           <a href="#news">News</a>
           <a href="#about">About</a>
           <a href="#publications">Publications</a>
+          <a href="blogs.html">Blog</a>
+          <a href="frustration.html" class="nav-fun">Playground&#8202;✦</a>
           <a href="mailto:Kartik.anand@tuhh.de">Contact</a>
         </nav>
       </div>
 
-      <img src="./avatar.jpg" alt="Kartik Anand" style="width:180px; height:220px; object-fit:cover; border-radius:4px; flex-shrink:0;">
+      <div class="photo-slot">
+  <img
+    src="./avatar.jpg"
+    alt="Profile photo"
+    class="profile-photo"
+  />
+</div>
     </div>
   </header>
 
@@ -543,214 +554,267 @@ footer a:hover { text-decoration: underline; }
 
 </div>
 
-<!-- ═══════════════════════════════════════════
-     FEYNMAN DIAGRAM BACKGROUND
-     Vertices (particles) connected by propagators
-     (photon wiggles, fermion arrows, gluon spirals).
-     Everything slowly drifts. Occasional flash when
-     a virtual particle loop closes ("interaction").
-════════════════════════════════════════════════ -->
 <script>
 (function () {
   const canvas = document.getElementById('feynman-canvas');
   const ctx = canvas.getContext('2d');
   let W, H, t = 0;
 
-  /* ─── CONFIG ─── */
-  const N_VERTICES = 28;
-  const FERMION_COLOR  = 'rgba(100,180,255,';
-  const PHOTON_COLOR   = 'rgba(255,220,100,';
-  const GLUON_COLOR    = 'rgba(180,130,255,';
-  const VERTEX_COLOR   = 'rgba(200,225,255,';
-  const LOOP_COLOR     = 'rgba(160,200,255,';
+  const N_VERTICES = 34;
+  const FERMION_COLOR = [100, 190, 255];
+  const ANTIFERM_COLOR = [255, 130, 100];
+  const PHOTON_COLOR  = [255, 225, 90];
+  const GLUON_COLOR   = [190, 140, 255];
+  const ANNIHIL_COLOR = [255, 200, 80];
 
-  let vertices = [], propagators = [], loops = [];
+  let vertices = [], propagators = [], loops = [], events = [];
 
-  /* ─── RESIZE ─── */
+  function rgba(c, a) { return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+
   function resize() {
     W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
     build();
   }
 
-  /* ─── BUILD DIAGRAM ─── */
   function build() {
-    vertices = [];
-    propagators = [];
-    loops = [];
-
-    const margin = 80;
+    vertices = []; propagators = []; loops = []; events = [];
+    const margin = 60;
     for (let i = 0; i < N_VERTICES; i++) {
+      const isAnti = Math.random() < 0.35;
       vertices.push({
-        x:  margin + Math.random() * (W - margin * 2),
-        y:  margin + Math.random() * (H - margin * 2),
-        vx: (Math.random() - 0.5) * 0.12,
-        vy: (Math.random() - 0.5) * 0.12,
+        x: margin + Math.random() * (W - margin * 2),
+        y: margin + Math.random() * (H - margin * 2),
+        vx: (Math.random() - 0.5) * 0.22,
+        vy: (Math.random() - 0.5) * 0.22,
         phase: Math.random() * Math.PI * 2,
-        r: Math.random() * 1.4 + 1.0,
+        r: Math.random() * 2.2 + 1.4,
+        anti: isAnti,
+        life: 1,
+        born: t,
       });
     }
-
-    /* Connect nearby pairs */
     for (let i = 0; i < vertices.length; i++) {
       for (let j = i + 1; j < vertices.length; j++) {
         const dx = vertices[j].x - vertices[i].x;
         const dy = vertices[j].y - vertices[i].y;
-        const d  = Math.sqrt(dx * dx + dy * dy);
-        if (d < 220 && Math.random() < 0.38) {
-          const kind = Math.random();
+        const d  = Math.sqrt(dx*dx + dy*dy);
+        if (d < 260 && Math.random() < 0.4) {
+          const k = Math.random();
           propagators.push({
             a: i, b: j,
-            type: kind < 0.45 ? 'fermion' : kind < 0.75 ? 'photon' : 'gluon',
+            type: k < 0.4 ? 'fermion' : k < 0.68 ? 'photon' : 'gluon',
             phase: Math.random() * Math.PI * 2,
-            flash: 0,
           });
         }
       }
     }
-
-    /* A handful of loop candidates (triplets) */
     for (let i = 0; i < vertices.length - 2; i += 3) {
-      loops.push({ a: i, b: i + 1, c: i + 2, phase: Math.random() * Math.PI * 2 });
+      loops.push({ a: i, b: i+1, c: i+2, phase: Math.random() * Math.PI * 2 });
     }
   }
 
-  /* ─── WIGGLE PATH (photon / gauge boson) ─── */
-  function drawWiggle(ax, ay, bx, by, amp, freq, alpha, color) {
-    const dx = bx - ax, dy = by - ay;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 4) return;
-    const nx = -dy / len, ny = dx / len;
-    const steps = Math.max(2, Math.floor(len / 6));
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
+  /* spawn a pair-creation or annihilation event */
+  function spawnEvent(x, y, kind) {
+    events.push({ x, y, kind, birth: t, life: 80 });
+  }
+
+  /* ─── WIGGLE (photon) ─── */
+  function drawWiggle(ax, ay, bx, by, amp, freq, alpha, col) {
+    const dx = bx-ax, dy = by-ay;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    if (len < 6) return;
+    const nx = -dy/len, ny = dx/len;
+    const steps = Math.max(4, Math.floor(len/5));
+    ctx.beginPath(); ctx.moveTo(ax, ay);
     for (let s = 1; s <= steps; s++) {
-      const frac = s / steps;
-      const wave = amp * Math.sin(frac * Math.PI * freq + t * 0.04);
-      ctx.lineTo(ax + dx * frac + nx * wave, ay + dy * frac + ny * wave);
+      const f = s/steps;
+      const wave = amp * Math.sin(f * Math.PI * freq + t * 0.05);
+      ctx.lineTo(ax + dx*f + nx*wave, ay + dy*f + ny*wave);
     }
-    ctx.strokeStyle = color + alpha + ')';
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
+    ctx.strokeStyle = rgba(col, alpha);
+    ctx.lineWidth = 1.4; ctx.stroke();
   }
 
-  /* ─── SPRING PATH (gluon) ─── */
+  /* ─── SPRING (gluon) ─── */
   function drawSpring(ax, ay, bx, by, alpha) {
-    const dx = bx - ax, dy = by - ay;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 4) return;
-    const nx = -dy / len, ny = dx / len;
-    const coils = Math.max(3, Math.floor(len / 18));
-    const r = 5;
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    for (let i = 0; i <= coils * 16; i++) {
-      const frac = i / (coils * 16);
-      const ang  = frac * Math.PI * 2 * coils + t * 0.03;
-      ctx.lineTo(
-        ax + dx * frac + nx * Math.cos(ang) * r,
-        ay + dy * frac + ny * Math.sin(ang) * r
-      );
+    const dx = bx-ax, dy = by-ay;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    if (len < 6) return;
+    const nx = -dy/len, ny = dx/len;
+    const coils = Math.max(3, Math.floor(len/16));
+    ctx.beginPath(); ctx.moveTo(ax, ay);
+    for (let i = 0; i <= coils*18; i++) {
+      const f = i/(coils*18);
+      const ang = f * Math.PI * 2 * coils + t * 0.04;
+      ctx.lineTo(ax + dx*f + nx*Math.cos(ang)*6, ay + dy*f + ny*Math.sin(ang)*6);
     }
-    ctx.strokeStyle = GLUON_COLOR + alpha + ')';
-    ctx.lineWidth = 0.7;
-    ctx.stroke();
+    ctx.strokeStyle = rgba(GLUON_COLOR, alpha);
+    ctx.lineWidth = 1.1; ctx.stroke();
   }
 
   /* ─── FERMION (arrow line) ─── */
-  function drawFermion(ax, ay, bx, by, alpha) {
-    const dx = bx - ax, dy = by - ay;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 4) return;
+  function drawFermion(ax, ay, bx, by, alpha, anti) {
+    const col = anti ? ANTIFERM_COLOR : FERMION_COLOR;
+    const dx = bx-ax, dy = by-ay;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    if (len < 6) return;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
+    ctx.strokeStyle = rgba(col, alpha);
+    ctx.lineWidth = 1.5; ctx.stroke();
+    /* arrowhead */
+    const f = anti ? 0.38 : 0.62;
+    const mx = ax + dx*f, my = ay + dy*f;
+    const ux = dx/len, uy = dy/len, hs = 7;
     ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(bx, by);
-    ctx.strokeStyle = FERMION_COLOR + alpha + ')';
-    ctx.lineWidth = 0.9;
-    ctx.stroke();
-    /* arrowhead at 60% */
-    const mx = ax + dx * 0.6, my = ay + dy * 0.6;
-    const ux = dx / len, uy = dy / len;
-    const hs = 5;
-    ctx.beginPath();
-    ctx.moveTo(mx + ux * hs, my + uy * hs);
-    ctx.lineTo(mx - ux * hs - uy * hs * 0.5, my - uy * hs + ux * hs * 0.5);
-    ctx.lineTo(mx - ux * hs + uy * hs * 0.5, my - uy * hs - ux * hs * 0.5);
+    ctx.moveTo(mx + ux*hs, my + uy*hs);
+    ctx.lineTo(mx - ux*hs - uy*hs*0.55, my - uy*hs + ux*hs*0.55);
+    ctx.lineTo(mx - ux*hs + uy*hs*0.55, my - uy*hs - ux*hs*0.55);
     ctx.closePath();
-    ctx.fillStyle = FERMION_COLOR + alpha + ')';
-    ctx.fill();
+    ctx.fillStyle = rgba(col, alpha); ctx.fill();
   }
 
-  /* ─── VERTEX DOT ─── */
+  /* ─── VERTEX ─── */
   function drawVertex(v, alpha) {
-    ctx.beginPath();
-    ctx.arc(v.x, v.y, v.r, 0, Math.PI * 2);
-    ctx.fillStyle = VERTEX_COLOR + alpha + ')';
-    ctx.fill();
-    /* halo */
-    ctx.beginPath();
-    ctx.arc(v.x, v.y, v.r * 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = VERTEX_COLOR + (alpha * 0.06) + ')';
-    ctx.fill();
+    const col = v.anti ? ANTIFERM_COLOR : FERMION_COLOR;
+    /* outer glow */
+    const grad = ctx.createRadialGradient(v.x, v.y, 0, v.x, v.y, v.r * 9);
+    grad.addColorStop(0, rgba(col, alpha * 0.35));
+    grad.addColorStop(1, rgba(col, 0));
+    ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 9, 0, Math.PI*2);
+    ctx.fillStyle = grad; ctx.fill();
+    /* core */
+    ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, Math.PI*2);
+    ctx.fillStyle = rgba(col, Math.min(1, alpha * 1.6)); ctx.fill();
   }
 
-  /* ─── LOOP GLOW ─── */
+  /* ─── LOOP ─── */
   function drawLoop(lp) {
     const va = vertices[lp.a], vb = vertices[lp.b], vc = vertices[lp.c];
-    const pulse = 0.5 + 0.5 * Math.sin(t * 0.018 + lp.phase);
-    const alpha = 0.04 + 0.05 * pulse;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 0.015 + lp.phase);
+    const alpha = 0.05 + 0.08 * pulse;
     ctx.beginPath();
     ctx.moveTo(va.x, va.y);
     ctx.quadraticCurveTo(vb.x, vb.y, vc.x, vc.y);
-    ctx.quadraticCurveTo((va.x + vc.x) * 0.5, (va.y + vc.y) * 0.5, va.x, va.y);
-    ctx.fillStyle = LOOP_COLOR + alpha + ')';
-    ctx.fill();
-    ctx.strokeStyle = LOOP_COLOR + (alpha * 2.5) + ')';
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
+    ctx.quadraticCurveTo((va.x+vc.x)*0.5, (va.y+vc.y)*0.5, va.x, va.y);
+    ctx.fillStyle = rgba(FERMION_COLOR, alpha); ctx.fill();
+    ctx.strokeStyle = rgba(FERMION_COLOR, alpha * 3);
+    ctx.lineWidth = 0.8; ctx.stroke();
   }
 
-  /* ─── DRAW FRAME ─── */
+  /* ─── CREATION / ANNIHILATION EVENT ─── */
+  function drawEvent(e) {
+    const age = t - e.birth;
+    const progress = age / e.life;
+    let alpha = progress < 0.3
+      ? progress / 0.3
+      : 1 - (progress - 0.3) / 0.7;
+    alpha *= 0.72;
+    const burst = progress * 55;
+
+    if (e.kind === 'annihilation') {
+      /* two particles spiraling inward → flash */
+      for (let i = 0; i < 2; i++) {
+        const sign = i === 0 ? 1 : -1;
+        const px = e.x + sign * Math.cos(progress * Math.PI * 3) * (1-progress) * 40;
+        const py = e.y + sign * Math.sin(progress * Math.PI * 3) * (1-progress) * 40;
+        ctx.beginPath(); ctx.arc(px, py, 4*(1-progress)+1, 0, Math.PI*2);
+        ctx.fillStyle = rgba(i===0 ? FERMION_COLOR : ANTIFERM_COLOR, alpha*0.9);
+        ctx.fill();
+      }
+      /* flash at center */
+      if (progress > 0.4) {
+        const fa = (1-progress) * alpha * 1.4;
+        const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, burst);
+        grad.addColorStop(0, rgba(ANNIHIL_COLOR, fa));
+        grad.addColorStop(0.4, rgba([255,160,60], fa*0.5));
+        grad.addColorStop(1, rgba(ANNIHIL_COLOR, 0));
+        ctx.beginPath(); ctx.arc(e.x, e.y, burst, 0, Math.PI*2);
+        ctx.fillStyle = grad; ctx.fill();
+        /* photon wiggles shooting out */
+        for (let k = 0; k < 3; k++) {
+          const ang = (k / 3) * Math.PI * 2 + progress * 2;
+          const ex = e.x + Math.cos(ang) * burst;
+          const ey = e.y + Math.sin(ang) * burst;
+          drawWiggle(e.x, e.y, ex, ey, 5, 6, fa * 0.8, PHOTON_COLOR);
+        }
+      }
+    } else {
+      /* pair creation: flash → two particles diverging */
+      if (progress < 0.45) {
+        const fa = alpha * 1.2;
+        const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, burst * 0.8);
+        grad.addColorStop(0, rgba(ANNIHIL_COLOR, fa));
+        grad.addColorStop(1, rgba(ANNIHIL_COLOR, 0));
+        ctx.beginPath(); ctx.arc(e.x, e.y, burst * 0.8, 0, Math.PI*2);
+        ctx.fillStyle = grad; ctx.fill();
+      } else {
+        const p2 = (progress - 0.45) / 0.55;
+        for (let i = 0; i < 2; i++) {
+          const sign = i === 0 ? 1 : -1;
+          const ang = e.angle + sign * 0.5;
+          const px = e.x + Math.cos(ang) * p2 * 60;
+          const py = e.y + Math.sin(ang) * p2 * 60;
+          ctx.beginPath(); ctx.arc(px, py, 3.5*alpha+1, 0, Math.PI*2);
+          ctx.fillStyle = rgba(i===0 ? FERMION_COLOR : ANTIFERM_COLOR, alpha);
+          ctx.fill();
+          /* trail */
+          ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(px, py);
+          ctx.strokeStyle = rgba(i===0 ? FERMION_COLOR : ANTIFERM_COLOR, alpha*0.4);
+          ctx.lineWidth = 1; ctx.stroke();
+        }
+      }
+    }
+  }
+
+  /* ─── DRAW ─── */
   function draw() {
     requestAnimationFrame(draw);
     t++;
     ctx.clearRect(0, 0, W, H);
 
-    /* loops */
+    /* random events */
+    if (t % 180 === 0) {
+      const x = 80 + Math.random() * (W - 160);
+      const y = 80 + Math.random() * (H - 160);
+      const kind = Math.random() < 0.5 ? 'annihilation' : 'creation';
+      spawnEvent(x, y, kind);
+      if (kind === 'creation') events[events.length-1].angle = Math.random() * Math.PI * 2;
+    }
+
     for (const lp of loops) drawLoop(lp);
 
-    /* propagators */
     for (const p of propagators) {
       const va = vertices[p.a], vb = vertices[p.b];
       const dx = vb.x - va.x, dy = vb.y - va.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 320) continue;
-      const fade = 1 - dist / 320;
-      const pulse = 0.45 + 0.45 * Math.sin(t * 0.013 + p.phase);
-      const alpha = fade * pulse * 0.55;
-
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist > 340) continue;
+      const fade = 1 - dist/340;
+      const pulse = 0.5 + 0.5 * Math.sin(t * 0.014 + p.phase);
+      const alpha = fade * pulse * 0.7;
       if (p.type === 'fermion') {
-        drawFermion(va.x, va.y, vb.x, vb.y, alpha);
+        const useAnti = vertices[p.a].anti;
+        drawFermion(va.x, va.y, vb.x, vb.y, alpha, useAnti);
       } else if (p.type === 'photon') {
-        drawWiggle(va.x, va.y, vb.x, vb.y, 5, 8, alpha, PHOTON_COLOR);
+        drawWiggle(va.x, va.y, vb.x, vb.y, 7, 9, alpha, PHOTON_COLOR);
       } else {
-        drawSpring(va.x, va.y, vb.x, vb.y, alpha * 0.9);
+        drawSpring(va.x, va.y, vb.x, vb.y, alpha);
       }
     }
 
-    /* vertices */
     for (const v of vertices) {
-      const pulse = 0.5 + 0.5 * Math.sin(t * 0.016 + v.phase);
-      drawVertex(v, 0.35 + 0.35 * pulse);
-
-      /* drift */
-      v.x += v.vx + Math.sin(t * 0.0007 + v.phase) * 0.08;
-      v.y += v.vy + Math.cos(t * 0.0007 + v.phase * 1.2) * 0.08;
-      if (v.x < -60)  v.x = W + 60;
-      if (v.x > W+60) v.x = -60;
-      if (v.y < -60)  v.y = H + 60;
-      if (v.y > H+60) v.y = -60;
+      const pulse = 0.5 + 0.5 * Math.sin(t * 0.018 + v.phase);
+      drawVertex(v, 0.3 + 0.4 * pulse);
+      v.x += v.vx + Math.sin(t * 0.0009 + v.phase) * 0.1;
+      v.y += v.vy + Math.cos(t * 0.0009 + v.phase * 1.3) * 0.1;
+      if (v.x < -80) v.x = W + 80;
+      if (v.x > W+80) v.x = -80;
+      if (v.y < -80) v.y = H + 80;
+      if (v.y > H+80) v.y = -80;
     }
+
+    events = events.filter(e => t - e.birth < e.life);
+    for (const e of events) drawEvent(e);
   }
 
   window.addEventListener('resize', resize);
