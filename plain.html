@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kartik Anand — Quantum Complexity</title>
+<meta name="description" content="Kartik Anand — researcher in quantum complexity theory, Hamburg. Quantum Hamiltonian complexity, the quantum PCP conjecture, quantum learning.">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=Yuji+Boku&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --paper:#ece6d8;
+  --ink:#191712;
+  --ink-soft:rgba(25,23,18,0.72);
+  --ink-faint:rgba(25,23,18,0.45);
+  --serif:'Fraunces',Georgia,serif;
+  --display:'Yuji Boku','Fraunces',serif;
+  --hand:'Caveat',cursive;
+  --sans:'Inter',system-ui,sans-serif;
+}
+.about-p,.lede,.pub .ti,.pub .venue{font-variation-settings:'SOFT' 40,'WONK' 1,'opsz' 40}
+html,body{margin:0;background:var(--paper)}
+body{color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+/* shared paper grain so the theme matches index.html exactly */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.26;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+a{color:inherit}
+.wrap{max-width:60rem;margin:0 auto;padding:0 7vw;position:relative;z-index:1}
+
+/* top bar */
+.top{display:flex;justify-content:space-between;align-items:center;padding:1.6rem 0;border-bottom:1px solid var(--ink-faint)}
+.top .brand{font-family:var(--serif);font-style:italic;font-size:1.1rem}
+.top .toggle{font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft);text-decoration:none;border:1px solid var(--ink-faint);padding:.45rem .85rem;border-radius:1px;transition:background .2s}
+.top .toggle:hover{background:rgba(25,23,18,.06)}
+
+/* hero */
+.hero{padding:8vh 0 6vh;border-bottom:1px solid var(--ink-faint)}
+.eyebrow{font-size:0.64rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:1.4rem}
+.name{font-family:var(--display);font-weight:400;font-size:clamp(3.2rem,12vw,7rem);line-height:1.02;letter-spacing:.005em}
+.lede{font-family:var(--serif);font-size:clamp(1.3rem,2.6vw,1.9rem);line-height:1.5;color:var(--ink-soft);max-width:32ch;margin-top:1.8rem}
+.tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2rem}
+.tag{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--ink-faint);border-radius:1px;padding:0.4rem 0.85rem}
+
+/* sections */
+section{padding:6vh 0;border-bottom:1px solid var(--ink-faint)}
+.sec-label{font-size:0.62rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:2rem;display:flex;align-items:center;gap:1rem}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--ink-faint);opacity:.6}
+.about-p{font-family:var(--serif);font-size:1.16rem;line-height:1.75;color:var(--ink-soft);max-width:56ch;margin-bottom:1.2rem}
+.about-p em{font-style:italic;color:var(--ink)}
+
+.pub{display:block;text-decoration:none;border-top:1px solid var(--ink-faint);padding:1.6rem 0;position:relative;transition:padding .2s}
+.pub:last-child{border-bottom:1px solid var(--ink-faint)}
+.pub:hover{padding-left:1rem}
+.pub .yr{font-size:0.64rem;letter-spacing:0.2em;color:var(--ink-faint)}
+.pub .ti{font-family:var(--serif);font-size:clamp(1.2rem,2.4vw,1.6rem);line-height:1.25;margin:.3rem 0 .4rem}
+.pub .meta{font-size:0.86rem;color:var(--ink-soft)}
+.pub .venue{font-style:italic;font-family:var(--serif)}
+.pub .go{position:absolute;right:0;top:1.6rem;font-family:var(--hand);font-size:1.25rem;color:var(--ink-faint);opacity:0;transition:opacity .2s}
+.pub:hover .go{opacity:1}
+
+.contact{display:flex;flex-wrap:wrap;gap:2.5rem 4rem;align-items:flex-end;justify-content:space-between}
+.contact h3{font-family:var(--display);font-size:clamp(2.4rem,6.5vw,4rem);line-height:1.06}
+.links{display:flex;flex-direction:column;gap:.7rem;font-size:1rem}
+.links a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--ink-faint);padding-bottom:2px;width:fit-content;transition:color .2s}
+.links a:hover{color:var(--ink)}
+
+.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding:3vh 0 6vh;font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint)}
+.foot .hand{font-family:var(--hand);font-size:1.05rem;letter-spacing:0;text-transform:none;color:var(--ink-soft)}
+.foot a{text-decoration:none;border-bottom:1px solid var(--ink-faint)}
+@media(max-width:680px){.contact{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <span class="brand">Kartik Anand</span>
+    <a class="toggle" href="./index.html">View animated&nbsp;→</a>
+  </header>
+
+  <div class="hero">
+    <div class="eyebrow">Hamburg · Quantum Complexity</div>
+    <h1 class="name">Kartik Anand</h1>
+    <p class="lede">I think hard about the computational nature of quantum many-body systems — and I like cats and pizza.</p>
+    <div class="tags">
+      <span class="tag">Quantum Hamiltonian Complexity</span>
+      <span class="tag">Quantum PCP</span>
+      <span class="tag">Quantum Learning</span>
+    </div>
+  </div>
+
+  <section id="about">
+    <div class="sec-label">01 · About</div>
+    <p class="about-p">Hi — I'm Kartik. I like cats, pizzas, and thinking hard about the <em>computational nature of quantum many-body systems</em>. I'm a Master's student in Computer Science at TUHH, in Prof. Martin Kliesch's group at the Institute for Quantum Inspired &amp; Quantum Optimization.</p>
+    <p class="about-p">Before quantum, I did deep-learning research at IIT Delhi's Vision Lab — a paper at ACCV 2024. In 2024 my interests shifted decisively toward quantum complexity: Quantum Hamiltonian Complexity, the quantum PCP conjecture and its hardness-of-approximation formulation. I've also collaborated with the Quantum Information Theory Group at Seoul National University.</p>
+  </section>
+
+  <section id="publications">
+    <div class="sec-label">02 · Selected papers</div>
+    <a class="pub" href="https://arxiv.org/abs/2506.19792" target="_blank" rel="noopener">
+      <div class="yr">2025 · Preprint</div>
+      <div class="ti">Collapses in quantum-classical probabilistically checkable proofs and the quantum polynomial hierarchy</div>
+      <div class="meta">Kartik Anand, Kabgyun Jeong, Junseo Lee · <span class="venue">arXiv:2506.19792</span></div>
+      <span class="go">read →</span>
+    </a>
+    <a class="pub" href="https://arxiv.org/abs/2502.15368" target="_blank" rel="noopener">
+      <div class="yr">2025 · Preprint</div>
+      <div class="ti">Constructing Fermionic Hamiltonians with Non-Gaussianic low-energy states</div>
+      <div class="meta">Kartik Anand · <span class="venue">arXiv:2502.15368</span></div>
+      <span class="go">read →</span>
+    </a>
+    <a class="pub" href="https://arxiv.org/abs/2411.08928" target="_blank" rel="noopener">
+      <div class="yr">2024 · Preprint</div>
+      <div class="ti">Feynman's Entangled Paths to Optimized Circuit Design</div>
+      <div class="meta">Kartik Anand · <span class="venue">arXiv:2411.08928</span></div>
+      <span class="go">read →</span>
+    </a>
+    <a class="pub" href="https://openaccess.thecvf.com/content/ACCV2024/papers/Hebbalaguppe_Calibration_Transfer_via_Knowledge_Distillation_ACCV_2024_paper.pdf" target="_blank" rel="noopener">
+      <div class="yr">2024 · Conference</div>
+      <div class="ti">Calibration Transfer via Knowledge Distillation</div>
+      <div class="meta">R. Hebbalaguppe, M. Baranwal, K. Anand, C. Arora · <span class="venue">ACCV 2024</span></div>
+      <span class="go">read →</span>
+    </a>
+  </section>
+
+  <section id="contact">
+    <div class="contact">
+      <div>
+        <div class="sec-label" style="margin-bottom:1.2rem">03 · Contact</div>
+        <h3>Let's talk complexity.</h3>
+      </div>
+      <div class="links">
+        <a href="mailto:Kartik.anand@tuhh.de">Kartik.anand@tuhh.de</a>
+        <a href="https://k-styles.github.io/" target="_blank" rel="noopener">k-styles.github.io</a>
+        <a href="./frustration.html">Playground ✦</a>
+        <a href="https://scholar.google.com/" target="_blank" rel="noopener">Google Scholar</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>© 2025 Kartik Anand · Hamburg</span>
+    <span class="hand">drawn between proofs.</span>
+    <span><a href="./index.html">Animated version</a></span>
+  </div>
+
+</div>
+</body>
+</html>
