@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Frustration Game — Kartik Anand</title>
+<meta name="description" content="A playable introduction to ground states, frustration, and quantum Hamiltonian complexity.">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=Rock+Salt&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper: #ece6d8;
+  --paper-warm: #e7e0d0;
+  --ink: #191712;
+  --ink-soft: rgba(25,23,18,0.72);
+  --ink-faint: rgba(25,23,18,0.45);
+  --void: #ece6d8;
+  --rule: rgba(25,23,18,0.18);
+  --rule-bright: rgba(25,23,18,0.30);
+  --quantum: #314a72;      /* restrained indigo ink — links / accents */
+  --entangle: #6a4a9c;     /* muted violet ink — emphasis */
+  --star: rgba(25,23,18,0.92);
+  --muted: rgba(25,23,18,0.60);
+  --ghost: rgba(25,23,18,0.40);
+  --serif: 'Fraunces', Georgia, serif;
+  --display: 'Rock Salt', 'Fraunces', serif;
+  --hand: 'Caveat', cursive;
+  --sans: 'Inter', system-ui, sans-serif;
+  --accent: #9a5b2e;       /* warm ink accent */
+  /* game semantics — confident inks on paper, not neon */
+  --sat: #2f7d6e;          /* a satisfied bond is a calm teal-green ink */
+  --sat-glow: rgba(47,125,110,0.28);
+  --strain: #c0492f;       /* a violated bond is a brick / vermilion ink */
+  --strain-glow: rgba(192,73,47,0.25);
+  --up: #1f4e8c;           /* muted blue ink */
+  --down: #6a4a9c;         /* muted violet ink */
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+/* toned-paper grain */
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 40; pointer-events: none;
+  opacity: 0.30; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* ambient spin-field behind the content — faint ink texture on paper */
+#spin-bg {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none; opacity: 0.5;
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 1.5rem 5rem;
+}
+
+/* ── top bar ── */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.6rem 0 1.2rem;
+  border-bottom: 1px solid var(--rule);
+}
+.home-link {
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.home-link:hover { color: var(--ink); }
+.home-link span { color: var(--accent); }
+.kicker {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ── hero ── */
+.hero { padding: 3rem 0 1.4rem; }
+.hero h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.8rem, 5vw, 2.9rem);
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.hero h1 em { font-style: normal; color: var(--entangle); }
+.hero .lede {
+  font-family: var(--serif);
+  font-size: 1.12rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin-top: 1.4rem;
+}
+.hero .lede strong { color: var(--ink); font-weight: 600; }
+/* how-to strip */
+.howto {
+  display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; align-items: baseline;
+  margin-top: 1.4rem; padding: 0.9rem 1.1rem;
+  border: 1px solid var(--ink-faint); border-radius: 6px;
+  background: var(--paper-warm);
+}
+.howto .lead {
+  font-family: var(--hand); font-size: 1.2rem; line-height: 1.2;
+  color: var(--ink); flex: 1 1 13rem;
+}
+.howto .lead b { font-weight: 600; }
+.howto dl { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; margin: 0; }
+.howto .def { font-size: 0.78rem; color: var(--ink-soft); line-height: 1.45; }
+.howto .def b { color: var(--ink); font-weight: 600; }
+
+/* ── game card ── */
+.game {
+  margin-top: 2.2rem;
+  border: 1px solid var(--ink-faint);
+  border-radius: 10px;
+  background: var(--paper-warm);
+  overflow: hidden;
+}
+
+/* level pills */
+.levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+.lvl {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--rule-bright);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.lvl:hover { color: var(--ink); border-color: var(--ink); }
+.lvl[aria-current="true"] {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+  font-weight: 600;
+}
+.lvl.solved::after { content: " ✓"; color: var(--sat); }
+.lvl[aria-current="true"].solved::after { color: rgba(236,230,216,0.75); }
+
+/* stage layout */
+.stage {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 0;
+}
+.board-wrap {
+  position: relative;
+  padding: 0.5rem 0.5rem 0.2rem;
+  border-right: 1px solid var(--rule);
+}
+.level-name {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--ink);
+  padding: 0.55rem 0.6rem 0;
+}
+.level-blurb {
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 0.15rem 0.6rem 0.4rem;
+  min-height: 2.4em;
+}
+svg.board { width: 100%; height: auto; display: block; touch-action: manipulation; }
+
+/* spins */
+.spin { cursor: pointer; outline: none; }
+.spin .disc { transition: fill .18s ease, stroke .18s ease; }
+.spin .arrow {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 19px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: #f2ecdf;
+  pointer-events: none;
+  user-select: none;
+}
+.spin:focus-visible .ring { opacity: 1; }
+.spin .ring { opacity: 0; transition: opacity .15s; }
+.spin.flip .disc { animation: flip .26s ease; }
+@keyframes flip {
+  0% { transform: scale(1); }
+  45% { transform: scale(0.72); }
+  100% { transform: scale(1); }
+}
+.spin .disc { transform-box: fill-box; transform-origin: center; }
+
+/* control panel */
+.panel { padding: 0.9rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.85rem; }
+.readout { display: flex; flex-direction: column; gap: 0.5rem; }
+.stat { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.8rem; }
+.stat .k { color: var(--muted); letter-spacing: 0.04em; }
+.stat .v { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.95rem; color: var(--star); }
+.stat .v.energy { color: var(--quantum); }
+
+.meter {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(192,73,47,0.14);
+  overflow: hidden;
+  border: 1px solid var(--rule);
+}
+.meter > i {
+  display: block; height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--strain), var(--sat));
+  transition: width .35s ease;
+}
+
+.status {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  min-height: 4.4em;
+  padding: 0.6rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: rgba(25,23,18,0.035);
+  color: var(--ink-soft);
+  transition: border-color .3s, background .3s;
+}
+.status.win { border-color: rgba(47,125,110,0.55); background: rgba(47,125,110,0.10); color: #235c50; }
+.status.win strong { color: #1d4f45; }
+.status.frustrated { border-color: rgba(192,73,47,0.5); background: rgba(192,73,47,0.09); color: #8f3320; }
+.status.frustrated strong { color: #7a2a18; }
+
+.btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button.act {
+  flex: 1 1 auto;
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.6rem 0.8rem;
+  min-height: 40px;
+  border-radius: 4px;
+  border: 1px solid var(--ink-faint);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s, opacity .2s;
+}
+button.act:hover { background: rgba(25,23,18,0.06); border-color: var(--ink); }
+button.act.primary {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+button.act.primary:hover { background: #2c281f; border-color: var(--ink); }
+button.act:disabled { opacity: 0.4; cursor: default; }
+button.act:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.legend .li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.swatch { width: 22px; height: 3px; border-radius: 2px; display: inline-block; }
+.swatch.sat { background: var(--sat); box-shadow: 0 0 6px var(--sat-glow); }
+.swatch.strain { background: var(--strain); box-shadow: 0 0 6px var(--strain-glow); }
+.glyph {
+  display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center;
+  border: 1px solid var(--rule-bright); border-radius: 50%; font-size: 0.7rem; color: var(--star);
+}
+
+/* energy landscape band */
+.landscape {
+  border-top: 1px solid var(--rule);
+  padding: 0.7rem 1rem 0.9rem;
+}
+.ls-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+.ls-head .temp { color: var(--entangle); font-variant-numeric: tabular-nums; }
+.ls-head .temp.hot { color: var(--strain); }
+#lsSvg { width: 100%; height: auto; display: block; }
+.ls-cap { font-size: 0.66rem; color: var(--ink-faint); margin-top: 0.25rem; font-style: italic; }
+.temp-bar { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--entangle); text-align: center; min-height: 1em; margin-top: 0.6rem; }
+.temp-bar.hot { color: var(--strain); }
+
+/* disorder controls (spin-glass levels only) */
+.glass-only { display: none; }
+.game.is-glass .glass-only { display: inline-flex; }
+
+/* shimmer ring shown on spins while annealing */
+.spin .shimmer { opacity: 0; }
+.game.annealing .spin .shimmer { opacity: 1; animation: shimmer 0.7s ease-in-out infinite; }
+@keyframes shimmer {
+  0%,100% { opacity: 0.15; }
+  50% { opacity: 0.7; }
+}
+
+/* ── explainer ── */
+.read {
+  margin-top: 3.2rem;
+  padding-top: 2.4rem;
+  border-top: 1px solid var(--rule);
+}
+.read .eyebrow {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--quantum); margin-bottom: 1.2rem;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.read .eyebrow::after { content:''; height:1px; flex:1; background: var(--rule); }
+.read h2 {
+  font-family: var(--serif); font-weight: 500; font-size: 1.5rem;
+  color: var(--ink); margin: 2rem 0 0.7rem; line-height: 1.25;
+}
+.read h2:first-of-type { margin-top: 0; }
+.read p {
+  font-family: var(--serif); font-size: 1.07rem; line-height: 1.85;
+  color: var(--ink-soft); margin-bottom: 1rem; max-width: 68ch;
+}
+.read p a, .read .closing a {
+  color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(49,74,114,0.4);
+  transition: border-color .2s;
+}
+.read p a:hover, .read .closing a:hover { border-color: var(--quantum); }
+.read em { color: var(--entangle); font-style: italic; }
+.read .term { color: var(--ink); font-weight: 600; font-style: normal; }
+
+.read .big {
+  font-family: var(--serif); font-size: 1.28rem; line-height: 1.7;
+  color: var(--ink); max-width: 70ch; margin-bottom: 1.8rem;
+}
+
+.cards {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; margin-bottom: 1.4rem;
+}
+.cards.two { grid-template-columns: repeat(2, 1fr); }
+.card {
+  padding: 1.1rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: rgba(25,23,18,0.03);
+}
+.card h3 {
+  font-family: var(--sans); font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--quantum);
+  margin-bottom: 0.5rem;
+}
+.card p {
+  font-family: var(--sans); font-size: 0.9rem; line-height: 1.6;
+  color: var(--ink-soft); margin: 0; max-width: none;
+}
+
+.callout {
+  margin: 1.6rem 0;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid rgba(106,74,156,0.28);
+  border-left: 3px solid var(--entangle);
+  border-radius: 6px;
+  background: rgba(106,74,156,0.06);
+}
+.callout p { font-family: var(--sans); font-size: 0.9rem; line-height: 1.65; color: var(--ink-soft); margin: 0; max-width: none; }
+.callout p strong { color: var(--entangle); }
+.callout p + p { margin-top: 0.7rem; }
+
+.closing {
+  margin-top: 2.4rem; padding-top: 1.6rem; border-top: 1px solid var(--rule);
+  font-size: 0.9rem; color: var(--muted);
+}
+
+footer {
+  margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;
+  font-size: 0.74rem; color: var(--ink-faint);
+}
+footer a { color: var(--quantum); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb { background: rgba(25,23,18,0.25); border-radius: 3px; }
+
+@media (max-width: 680px) {
+  .stage { grid-template-columns: 1fr; }
+  .board-wrap { border-right: none; border-bottom: 1px solid var(--rule); }
+  .cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .topbar { flex-wrap: wrap; gap: 0.4rem; }
+  .levels { gap: 0.45rem; padding: 0.8rem; }
+  .lvl { padding: 0.5rem 0.85rem; font-size: 0.78rem; }
+  .btns { gap: 0.6rem; }
+  button.act { flex: 1 1 100%; min-height: 46px; font-size: 0.8rem; }
+  .panel { padding: 1rem; gap: 1rem; }
+  .stat { font-size: 0.86rem; }
+  .legend { gap: 0.5rem 0.9rem; }
+  .howto { flex-direction: column; gap: 0.7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin.flip .disc { animation: none; }
+  .game.annealing .spin .shimmer { animation: none; opacity: 0.4; }
+  #spin-bg { display: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ── glass-phase illustrations (RSB + shattering) ── */
+.glassfig {
+  margin: 1.2rem 0;
+  border: 1px solid var(--ink-faint);
+  border-radius: 10px;
+  background: rgba(25,23,18,0.025);
+  padding: 1rem 1.1rem 1.1rem;
+}
+.gf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.6rem; }
+.gf-head h3 {
+  font-family: var(--sans); font-size: 0.74rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--quantum); margin: 0;
+}
+.gf-sub {
+  font-family: var(--sans); font-size: 0.72rem; color: var(--entangle);
+  letter-spacing: 0.04em; text-align: right;
+}
+.glassfig svg { width: 100%; height: auto; display: block; }
+#shatterMap { width: 100%; height: auto; display: block; border: 1px solid var(--rule); border-radius: 6px; margin-top: 0.5rem; }
+.rsb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.gf-slider {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 3px; margin: 0.9rem 0 0.2rem;
+  background: var(--rule-bright); border-radius: 3px; outline: none; cursor: pointer;
+}
+.gf-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+  background: var(--ink); border: 2px solid var(--paper); box-shadow: 0 1px 3px rgba(25,23,18,0.35); cursor: pointer;
+}
+.gf-slider::-moz-range-thumb {
+  width: 15px; height: 15px; border-radius: 50%; background: var(--ink);
+  border: 2px solid var(--paper); box-shadow: 0 1px 3px rgba(25,23,18,0.35); cursor: pointer;
+}
+.gf-axis { font-family: var(--sans); font-size: 9px; fill: var(--muted); letter-spacing: 0.05em; }
+.gf-cap {
+  font-family: var(--sans); font-size: 0.78rem; line-height: 1.55;
+  color: var(--ink-soft); margin-top: 0.55rem;
+}
+.gf-cap b { color: var(--ink); font-weight: 600; }
+@media (max-width: 680px) { .rsb-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<canvas id="spin-bg"></canvas>
+<div class="wrapper">
+
+  <div class="topbar">
+    <a class="home-link" href="./index.html"><span>✦</span> Kartik Anand</a>
+    <div class="kicker">Playground</div>
+  </div>
+
+  <div class="hero">
+    <h1>The <em>Frustration</em> Game</h1>
+    <p class="lede">
+      Every dot is a spin, up or down. Every line is a rule. Some bonds want their two spins to
+      <strong>match</strong>, some want them to <strong>differ</strong>. Flip spins to satisfy as many rules
+      as you can and reach the <strong>ground state</strong>, the lowest energy arrangement. It starts easy.
+      Then you hit a shape where you cannot please everyone at once. That feeling is <em>frustration</em>.
+    </p>
+    <div class="howto" role="note" aria-label="How to play">
+      <div class="lead"><b>How to play:</b> click or tap any spin to flip it. Lower the <b>Energy</b> until it reaches <b>Best possible</b> — that arrangement is the ground state.</div>
+      <dl>
+        <div class="def"><b>Energy</b> — total penalty from broken rules. Lower is better.</div>
+        <div class="def"><b>Best possible</b> — the lowest energy this board allows.</div>
+        <div class="def"><b>Rules satisfied</b> — how many bonds are currently happy.</div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="game" id="game">
+    <div class="levels" id="levels" role="tablist" aria-label="Puzzles"></div>
+
+    <div class="stage">
+      <div class="board-wrap">
+        <div class="level-name" id="levelName"></div>
+        <div class="level-blurb" id="levelBlurb"></div>
+        <svg class="board" id="board" viewBox="0 0 600 420" role="group" aria-label="Spin puzzle board"></svg>
+      </div>
+
+      <div class="panel">
+        <div class="readout">
+          <div class="stat"><span class="k">Energy</span><span class="v energy" id="energyVal">0</span></div>
+          <div class="meter"><i id="meterFill"></i></div>
+          <div class="stat"><span class="k">Best possible</span><span class="v" id="groundVal">0</span></div>
+          <div class="stat"><span class="k">Rules satisfied</span><span class="v" id="satVal">0 / 0</span></div>
+        </div>
+
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+
+        <div class="btns">
+          <button class="act" id="resetBtn">Reset</button>
+          <button class="act glass-only" id="shuffleBtn">New&nbsp;disorder</button>
+          <button class="act primary" id="annealBtn">Quantum&nbsp;Anneal</button>
+        </div>
+        <div class="temp-bar" id="tempLabel"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="li"><span class="glyph">≠</span> wants opposite spins</span>
+      <span class="li"><span class="glyph">=</span> wants matching spins</span>
+      <span class="li"><span class="swatch sat"></span> satisfied</span>
+      <span class="li"><span class="swatch strain"></span> frustrated</span>
+    </div>
+  </div>
+
+  <!-- EXPLAINER -->
+  <div class="read">
+    <div class="eyebrow">The idea behind the game</div>
+
+    <p class="big">
+      The board is a <span class="term">Hamiltonian</span>. It is a stack of small local rules, and each one
+      scores two spins. The lowest total score is the <span class="term">ground state</span>, and finding it
+      is the whole game.
+    </p>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Frustration</h3>
+        <p>An odd loop of opposite wanting bonds can never be fully happy. Some bond always loses. The rules are simple, but there is no perfect answer. That is why the big lattices get hard.</p>
+      </div>
+      <div class="card">
+        <h3>The quantum jump</h3>
+        <p>Let the spins go quantum, so they can be superposed and entangled. Now even estimating the ground energy is <span class="term">QMA complete</span>, the quantum cousin of NP complete.</p>
+      </div>
+      <div class="card">
+        <h3>Still open</h3>
+        <p>Does even a rough estimate stay this hard? That is the <a href="https://arxiv.org/abs/1309.7495" target="_blank" rel="noopener">quantum PCP conjecture</a>. Nobody has proved it, and that is why this corner stays alive.</p>
+      </div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:2.4rem">Deeper, inside the glass phase</div>
+    <p class="big" style="font-size:1.12rem">
+      Push the disorder and cool it down. The low energy states reorganise in two famous ways. Drag the sliders.
+    </p>
+
+    <div class="glassfig">
+      <div class="gf-head"><h3>Shattering</h3><span class="gf-sub" id="shatterSub">one connected basin</span></div>
+      <svg id="shatterSvg" viewBox="0 0 600 230" role="img" aria-label="Solution space fragmenting into clusters as disorder increases"></svg>
+      <canvas id="shatterMap" role="img" aria-label="Energy landscape as a 2D map, growing peaks at the clusters as it cools"></canvas>
+      <div class="gf-cap" style="margin-top:0.35rem">The map below is the same landscape from above. Cool it down and peaks rise where the clusters sit.</div>
+      <input type="range" id="shatterCtl" class="gf-slider" min="0" max="100" value="6" aria-label="disorder">
+      <p class="gf-cap">
+        Below the <b>clustering transition</b>, the set of low energy states breaks into many clusters. Each one
+        is tiny and sits far from the rest. Local moves get trapped inside a single cluster, so simple dynamics
+        stall and the system stops exploring. You see this in real glasses and in random problems like SAT and
+        graph colouring.
+      </p>
+    </div>
+
+    <div class="glassfig">
+      <div class="gf-head"><h3>Trapped in a cluster</h3><span class="gf-sub" id="stuckSub">stuck</span></div>
+      <svg id="stuckSvg" viewBox="0 0 600 240" role="img" aria-label="A walker trapped inside one cluster, unable to cross to the ground state cluster"></svg>
+      <input type="range" id="stuckCtl" class="gf-slider" min="2" max="40" value="6" aria-label="number of clusters">
+      <p class="gf-cap">
+        The walker only makes small local moves, so it stays inside the cluster it started in. The barriers
+        between clusters are too high to cross, and the ground state lives in a different cluster (in teal),
+        so the walker never reaches it. Random restarts drop it into a random cluster, but with this many the
+        odds of hitting the right one are about 1 in <span id="stuckK">6</span>. Push the slider up. When the
+        clusters grow exponentially, restarting stops working.
+      </p>
+    </div>
+
+    <div class="glassfig">
+      <div class="gf-head"><h3>Replica symmetry breaking</h3><span class="gf-sub" id="rsbSub">replica symmetric &middot; one state</span></div>
+      <div class="rsb-row">
+        <svg id="treeSvg" viewBox="0 0 300 230" role="img" aria-label="Pure states organising into an ultrametric hierarchy"></svg>
+        <svg id="pqSvg" viewBox="0 0 300 230" role="img" aria-label="Overlap distribution P of q broadening under replica symmetry breaking"></svg>
+      </div>
+      <input type="range" id="rsbCtl" class="gf-slider" min="0" max="100" value="4" aria-label="replica symmetry breaking">
+      <p class="gf-cap">
+        The Gibbs measure splits into many <b>pure states</b>, and they organise into a hierarchy. On the left,
+        that hierarchy is an <b>ultrametric</b> tree. On the right, the overlap <code>q</code> between two
+        independent replicas stops being one fixed number. Its distribution <b>P(q)</b> widens from a single
+        spike at <code>q<sub>EA</sub></code> into a whole spread of values down to small <code>q</code>. That
+        function is Parisi's order parameter.
+      </p>
+    </div>
+
+    <div class="eyebrow" style="margin-top:2.4rem">Why the lowest energy state matters</div>
+    <p class="big" style="font-size:1.12rem">Hunting for ground states is not a toy. The same math shows up everywhere.</p>
+
+    <div class="cards two">
+      <div class="card">
+        <h3>Optimization</h3>
+        <p>Routing, scheduling, and MAX CUT all map straight onto spins like these. Quantum annealers such as D Wave hunt for exactly these minima.</p>
+      </div>
+      <div class="card">
+        <h3>Magnets and materials</h3>
+        <p>The resting state of a real magnet or material is the ground state of its Hamiltonian. Predict one and you predict the other.</p>
+      </div>
+      <div class="card">
+        <h3>Memory and learning</h3>
+        <p>Hopfield networks store memories as energy minima. Recalling one is just rolling downhill into the nearest valley.</p>
+      </div>
+      <div class="card">
+        <h3>Quantum simulation</h3>
+        <p>Ground state energies drive chemistry and materials design. That is one of the main reasons to build a quantum computer at all.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>The anneal button</strong> heats the system so spins can jump out of bad spots, then slowly cools it until everything settles low. That is simulated annealing. Real quantum annealers do the same thing, but they tunnel through barriers instead of hopping over them.</p>
+    </div>
+
+    <div class="closing">
+      More on the work at the <a href="index.html">main page</a>, the <a href="blogs.html">writing</a>, or just <a href="mailto:Kartik.anand@tuhh.de">say hi</a>.
+    </div>
+  </div>
+
+  <footer>
+    <span>Kartik Anand · Quantum Complexity Theory</span>
+    <span><a href="index.html">← back home</a></span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // J = +1  -> antiferromagnetic, wants OPPOSITE spins  (glyph ≠)
+  // J = -1  -> ferromagnetic,     wants MATCHING spins   (glyph =)
+  // Glass levels define `edges` + glass:true; their bond signs are randomised on load.
+  const LEVELS = [
+    { name: "Pair",
+      blurb: "Two spins and one rule. This bond wants them to match. Tap a spin to flip it.",
+      nodes: [[225,210],[375,210]],
+      bonds: [[0,1,-1]] },
+    { name: "Chain",
+      blurb: "A row where every neighbour wants to disagree. There is a clean answer here.",
+      nodes: [[120,210],[260,210],[400,210],[540,210]],
+      bonds: [[0,1,1],[1,2,1],[2,3,1]] },
+    { name: "Square",
+      blurb: "Four spins in a loop, all wanting opposites. An even loop can still please everyone.",
+      nodes: [[230,120],[370,120],[370,300],[230,300]],
+      bonds: [[0,1,1],[1,2,1],[2,3,1],[3,0,1]] },
+    { name: "Hexagon",
+      blurb: "Six in a ring, all wanting opposites. The loop is even, so it works out.",
+      nodes: [[300,80],[413,145],[413,275],[300,340],[187,275],[187,145]],
+      bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1]] },
+    { name: "Triangle",
+      blurb: "Three spins, all wanting to disagree. One bond always loses.",
+      nodes: [[300,110],[200,300],[400,300]],
+      bonds: [[0,1,1],[1,2,1],[2,0,1]] },
+    { name: "Pentagon",
+      blurb: "Any odd ring of opposite wanting bonds gets stuck, not just the triangle.",
+      nodes: [[300,95],[414,178],[370,312],[230,312],[186,178]],
+      bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,0,1]] },
+    { name: "House",
+      blurb: "A square with a roof. The roof adds a triangle, and that triangle gets stuck.",
+      nodes: [[230,300],[370,300],[370,180],[230,180],[300,90]],
+      bonds: [[0,1,1],[1,2,1],[2,3,1],[3,0,1],[3,4,1],[2,4,1]] },
+    { name: "Mixed signs",
+      blurb: "Three bonds want opposites and one wants a match. An odd count of opposite bonds still breaks the loop.",
+      nodes: [[230,120],[370,120],[370,300],[230,300]],
+      bonds: [[0,1,1],[1,2,1],[2,3,1],[3,0,-1]] },
+    { name: "Bowtie",
+      blurb: "Two triangles sharing one spin. You settle two frustrations at once.",
+      nodes: [[300,210],[180,130],[180,290],[420,130],[420,290]],
+      bonds: [[0,1,1],[1,2,1],[2,0,1],[0,3,1],[3,4,1],[4,0,1]] },
+    { name: "Grid 3\u00d73",
+      blurb: "It looks big, but a square grid is even all over, so a perfect checkerboard exists.",
+      nodes: [[180,90],[300,90],[420,90],[180,210],[300,210],[420,210],[180,330],[300,330],[420,330]],
+      bonds: [[0,1,1],[1,2,1],[3,4,1],[4,5,1],[6,7,1],[7,8,1],[0,3,1],[3,6,1],[1,4,1],[4,7,1],[2,5,1],[5,8,1]] },
+    { name: "Triangular",
+      blurb: "A hub ringed by triangles. Every small triangle fights and nothing comes out clean.",
+      nodes: [[300,210],[420,210],[360,106],[240,106],[180,210],[240,314],[360,314]],
+      bonds: [[0,1,1],[0,2,1],[0,3,1],[0,4,1],[0,5,1],[0,6,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,6,1],[6,1,1]] },
+    { name: "Big lattice",
+      blurb: "Ten spins and nineteen fighting bonds. Hard to crack by hand, so let it anneal.",
+      nodes: [[210,110],[300,110],[390,110],[165,188],[255,188],[345,188],[435,188],[210,266],[300,266],[390,266]],
+      bonds: [[0,1,1],[1,2,1],[3,4,1],[4,5,1],[5,6,1],[7,8,1],[8,9,1],[0,3,1],[0,4,1],[1,4,1],[1,5,1],[2,5,1],[2,6,1],[3,7,1],[4,7,1],[4,8,1],[5,8,1],[5,9,1],[6,9,1]] },
+    { name: "Spin glass", glass: true,
+      blurb: "Random rules on a tidy grid. The disorder alone makes it glassy. Hit New disorder for a fresh one.",
+      nodes: [[180,90],[300,90],[420,90],[180,210],[300,210],[420,210],[180,330],[300,330],[420,330]],
+      edges: [[0,1],[1,2],[3,4],[4,5],[6,7],[7,8],[0,3],[3,6],[1,4],[4,7],[2,5],[5,8]] },
+    { name: "Frozen glass", glass: true,
+      blurb: "Disorder on a triangular web, so random rules and geometry both fight. Very rugged. Let it anneal.",
+      nodes: [[300,210],[420,210],[360,106],[240,106],[180,210],[240,314],[360,314]],
+      edges: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[1,2],[2,3],[3,4],[4,5],[5,6],[6,1]] }
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const boardEl = $("board"), levelsEl = $("levels"), nameEl = $("levelName"), blurbEl = $("levelBlurb"),
+        energyEl = $("energyVal"), groundEl = $("groundVal"), satEl = $("satVal"), meterEl = $("meterFill"),
+        statusEl = $("status"), resetBtn = $("resetBtn"), annealBtn = $("annealBtn"), shuffleBtn = $("shuffleBtn"),
+        gameEl = $("game"), lsSvg = $("lsSvg"), tempLabel = $("tempLabel");
+
+  const COL = {
+    sat: "#2f7d6e", satGlow: "rgba(47,125,110,0.28)",
+    strain: "#c0492f", strainGlow: "rgba(192,73,47,0.25)",
+    up: "#1f4e8c", down: "#6a4a9c",
+    upGlow: "rgba(31,78,140,0.22)", downGlow: "rgba(106,74,156,0.22)",
+    voidc: "#ece6d8", star: "rgba(25,23,18,0.55)",
+    fontStack: "Inter, system-ui, sans-serif"
+  };
+
+  let L, BONDS = [], spins = [], groundE = 0, worstE = 0, frustrated = false,
+      solvedSet = new Set(), curLevel = 0, annealing = false, instanceSeed = 1;
+
+  // ---------- energy ----------
+  function energyOf(s) { let e = 0; for (const [a,b,J] of BONDS) e += J * s[a] * s[b]; return e; }
+  function analyse() {
+    const n = L.nodes.length; let lo = Infinity, hi = -Infinity;
+    for (let m = 0; m < (1<<n); m++) {
+      const s = []; for (let i=0;i<n;i++) s.push((m>>i)&1 ? 1 : -1);
+      const e = energyOf(s); if (e < lo) lo = e; if (e > hi) hi = e;
+    }
+    return { lo, hi };
+  }
+  function groundConfig() {
+    const n = L.nodes.length; let best = null, bestE = Infinity;
+    for (let m = 0; m < (1<<n); m++) {
+      const s = []; for (let i=0;i<n;i++) s.push((m>>i)&1 ? 1 : -1);
+      const e = energyOf(s); if (e < bestE) { bestE = e; best = s; }
+    }
+    return best;
+  }
+
+  // ---------- bonds (random signs for glass) ----------
+  function makeBonds() {
+    if (!L.glass) return L.bonds.map(b => b.slice());
+    const rnd = seeded(curLevel*131 + instanceSeed*977 + 7);
+    return L.edges.map(([a,b]) => [a, b, rnd() < 0.5 ? 1 : -1]);
+  }
+
+  function seeded(seed) {
+    let s = seed >>> 0;
+    return function () { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  // ---------- energy landscape (illustrative) ----------
+  let lsSamples = [], lsRank = [], lsBall = null, lsGround = null,
+      lsBallPos = {x:300,y:60}, lsTarget = {x:300,y:60}, lsN = 80;
+
+  function buildLandscape() {
+    if (!lsSvg) return;
+    const rnd = seeded(curLevel*7919 + instanceSeed*523 + 31);
+    const a1 = 10+rnd()*16, a2 = 6+rnd()*12, a3 = 3+rnd()*9;
+    const p1 = rnd()*6.283, p2 = rnd()*6.283, p3 = rnd()*6.283;
+    const f1 = 1+Math.floor(rnd()*2), f2 = 3+Math.floor(rnd()*3), f3 = 6+Math.floor(rnd()*5);
+    const raw = [];
+    for (let i=0;i<lsN;i++) {
+      const x = i/(lsN-1);
+      raw.push(a1*Math.sin(x*Math.PI*f1+p1) + a2*Math.sin(x*Math.PI*f2+p2) + a3*Math.sin(x*Math.PI*f3+p3) + (rnd()-0.5)*5);
+    }
+    const mn = Math.min.apply(null, raw), mx = Math.max.apply(null, raw), rng = (mx-mn)||1;
+    lsSamples = raw.map((y,i) => {
+      const norm = (y-mn)/rng;            // 0..1
+      const X = 12 + (i/(lsN-1))*576;
+      const Y = 104 - norm*86;            // bigger Y (bottom) = deeper valley
+      return { x:X, y:Y };
+    });
+    lsRank = lsSamples.map((s,i)=>i).sort((a,b)=> lsSamples[b].y - lsSamples[a].y); // deepest first
+
+    // (re)build SVG content
+    lsSvg.innerHTML = "";
+    const grad = document.createElementNS(SVGNS, "linearGradient");
+    grad.setAttribute("id","lsfill"); grad.setAttribute("x1","0"); grad.setAttribute("y1","0");
+    grad.setAttribute("x2","0"); grad.setAttribute("y2","1");
+    grad.innerHTML = '<stop offset="0" stop-color="rgba(25,23,18,0.12)"/><stop offset="1" stop-color="rgba(25,23,18,0.02)"/>';
+    lsSvg.appendChild(grad);
+    const area = document.createElementNS(SVGNS, "path");
+    area.setAttribute("d", "M 12 116 L " + lsSamples.map(s=>s.x.toFixed(1)+" "+s.y.toFixed(1)).join(" L ") + " L 588 116 Z");
+    area.setAttribute("fill", "url(#lsfill)");
+    lsSvg.appendChild(area);
+    const curve = document.createElementNS(SVGNS, "path");
+    curve.setAttribute("d", "M " + lsSamples.map(s=>s.x.toFixed(1)+" "+s.y.toFixed(1)).join(" L "));
+    curve.setAttribute("fill","none"); curve.setAttribute("stroke","rgba(25,23,18,0.5)"); curve.setAttribute("stroke-width","1.6");
+    lsSvg.appendChild(curve);
+    // ground-state well marker (deepest point)
+    const gp = lsSamples[lsRank[0]];
+    lsGround = document.createElementNS(SVGNS, "circle");
+    lsGround.setAttribute("cx", gp.x); lsGround.setAttribute("cy", gp.y); lsGround.setAttribute("r","4");
+    lsGround.setAttribute("fill","none"); lsGround.style.stroke = COL.sat; lsGround.setAttribute("stroke-width","1.4");
+    lsGround.style.opacity = "0.7";
+    lsSvg.appendChild(lsGround);
+    // the marker ball
+    lsBall = document.createElementNS(SVGNS, "circle");
+    lsBall.setAttribute("r","5.5"); lsBall.style.fill = COL.up;
+    lsBall.style.filter = "drop-shadow(0 0 6px " + COL.upGlow + ")";
+    lsSvg.appendChild(lsBall);
+  }
+
+  function energyTarget(E) {
+    if (!lsSamples.length) return {x:300,y:60};
+    const span = (worstE - groundE) || 1;
+    let e = (E - groundE) / span; e = Math.max(0, Math.min(1, e));
+    const idx = Math.round(e * (lsN - 1));
+    const s = lsSamples[lsRank[idx]];
+    return { x: s.x, y: s.y };
+  }
+
+  // ---------- render board ----------
+  function render(rebuild) {
+    if (rebuild) boardEl.innerHTML = "";
+    const E = energyOf(spins);
+    let satCount = 0;
+
+    BONDS.forEach((bd, bi) => {
+      const [a,b,J] = bd;
+      const [ax,ay] = L.nodes[a], [bx,by] = L.nodes[b];
+      const sat = (J * spins[a] * spins[b]) === -1;
+      if (sat) satCount++;
+      const col = sat ? COL.sat : COL.strain;
+      const glow = sat ? COL.satGlow : COL.strainGlow;
+
+      let line = boardEl.querySelector('[data-bond="'+bi+'"]');
+      if (!line) {
+        line = document.createElementNS(SVGNS, "line");
+        line.setAttribute("data-bond", bi);
+        line.setAttribute("x1", ax); line.setAttribute("y1", ay);
+        line.setAttribute("x2", bx); line.setAttribute("y2", by);
+        line.setAttribute("stroke-width", "3"); line.setAttribute("stroke-linecap","round");
+        boardEl.appendChild(line);
+      }
+      line.style.stroke = col;
+      line.style.filter = "drop-shadow(0 0 5px " + glow + ")";
+
+      const mx = (ax+bx)/2, my = (ay+by)/2;
+      let badge = boardEl.querySelector('[data-badge="'+bi+'"]');
+      if (!badge) {
+        badge = document.createElementNS(SVGNS, "g");
+        badge.setAttribute("data-badge", bi);
+        const c = document.createElementNS(SVGNS, "circle");
+        c.setAttribute("r","11"); c.setAttribute("cx",mx); c.setAttribute("cy",my); c.style.fill = COL.voidc;
+        const tx = document.createElementNS(SVGNS, "text");
+        tx.setAttribute("x",mx); tx.setAttribute("y",my+0.5);
+        tx.setAttribute("text-anchor","middle"); tx.setAttribute("dominant-baseline","central");
+        tx.setAttribute("font-size","14"); tx.style.fontFamily = COL.fontStack;
+        badge.appendChild(c); badge.appendChild(tx); boardEl.appendChild(badge);
+      }
+      const bc = badge.querySelector("circle"), bt = badge.querySelector("text");
+      bt.textContent = J === 1 ? "\u2260" : "=";  // ≠ or =
+      bc.style.stroke = col; bc.setAttribute("stroke-width","1.5"); bt.style.fill = col;
+    });
+
+    L.nodes.forEach((pos, i) => {
+      const [x,y] = pos;
+      const up = spins[i] === 1;
+      const fill = up ? COL.up : COL.down;
+      const halo = up ? COL.upGlow : COL.downGlow;
+      let g = boardEl.querySelector('[data-spin="'+i+'"]');
+      if (!g) {
+        g = document.createElementNS(SVGNS, "g");
+        g.setAttribute("data-spin", i); g.setAttribute("class","spin");
+        g.setAttribute("tabindex","0"); g.setAttribute("role","button");
+
+        const shimmer = document.createElementNS(SVGNS, "circle");
+        shimmer.setAttribute("class","shimmer");
+        shimmer.setAttribute("cx",x); shimmer.setAttribute("cy",y); shimmer.setAttribute("r","23");
+        shimmer.setAttribute("fill","none"); shimmer.style.stroke = COL.star; shimmer.setAttribute("stroke-width","1.4");
+
+        const ring = document.createElementNS(SVGNS, "circle");
+        ring.setAttribute("class","ring");
+        ring.setAttribute("cx",x); ring.setAttribute("cy",y); ring.setAttribute("r","27");
+        ring.setAttribute("fill","none"); ring.setAttribute("stroke-width","2"); ring.style.stroke = COL.star;
+
+        const disc = document.createElementNS(SVGNS, "circle");
+        disc.setAttribute("class","disc");
+        disc.setAttribute("cx",x); disc.setAttribute("cy",y); disc.setAttribute("r","18");
+        disc.setAttribute("stroke","rgba(25,23,18,0.5)"); disc.setAttribute("stroke-width","1.2");
+
+        const arrow = document.createElementNS(SVGNS, "text");
+        arrow.setAttribute("class","arrow"); arrow.setAttribute("x",x); arrow.setAttribute("y",y+1);
+        arrow.style.fontFamily = COL.fontStack;
+
+        g.appendChild(shimmer); g.appendChild(ring); g.appendChild(disc); g.appendChild(arrow);
+        boardEl.appendChild(g);
+
+        const flip = () => doFlip(i, g);
+        g.addEventListener("click", flip);
+        g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } });
+      }
+      const disc = g.querySelector(".disc"), arrow = g.querySelector(".arrow");
+      disc.style.fill = fill; disc.style.filter = "drop-shadow(0 0 8px " + halo + ")";
+      arrow.textContent = up ? "\u2191" : "\u2193";
+      g.setAttribute("aria-label", "Spin " + (i+1) + ", currently " + (up ? "up" : "down") + ". Activate to flip.");
+    });
+
+    energyEl.textContent = (E>0?"+":"") + E;
+    groundEl.textContent = (groundE>0?"+":"") + groundE;
+    satEl.textContent = satCount + " / " + BONDS.length;
+    const span = (worstE - groundE) || 1;
+    meterEl.style.width = (Math.max(0, Math.min(1, (worstE - E)/span)) * 100).toFixed(1) + "%";
+
+    // landscape target
+    lsTarget = energyTarget(E);
+    if (prefersReduced && lsBall) { lsBallPos = {x:lsTarget.x, y:lsTarget.y}; placeBall(); }
+
+    statusEl.className = "status";
+    if (E === groundE) {
+      if (frustrated) {
+        const red = BONDS.length - satCount;
+        const redTxt = red === 1 ? "one bond stays red" : red + " bonds stay red";
+        statusEl.classList.add("frustrated");
+        statusEl.innerHTML = "Ground state reached. Still, " + redTxt + ". <strong>That is frustration.</strong> Even the best arrangement cannot make every rule happy.";
+      } else {
+        statusEl.classList.add("win");
+        statusEl.innerHTML = "Ground state reached. Every rule is happy. This is the lowest energy state.";
+      }
+      if (!annealing && !solvedSet.has(curLevel)) {
+        solvedSet.add(curLevel);
+        levelsEl.children[curLevel].classList.add("solved");
+      }
+    } else {
+      const gap = E - groundE;
+      statusEl.textContent = "Above the ground state by " + gap + ". Keep flipping, or let it anneal.";
+    }
+  }
+
+  function placeBall() {
+    if (!lsBall) return;
+    lsBall.setAttribute("cx", lsBallPos.x.toFixed(1));
+    lsBall.setAttribute("cy", lsBallPos.y.toFixed(1));
+  }
+
+  function doFlip(i, g) {
+    if (annealing) return;
+    spins[i] *= -1;
+    if (!prefersReduced && g) { g.classList.remove("flip"); void g.offsetWidth; g.classList.add("flip"); }
+    render(false);
+  }
+
+  function loadLevel(idx) {
+    curLevel = idx;
+    L = LEVELS[idx];
+    instanceSeed = 1;
+    BONDS = makeBonds();
+    const a = analyse(); groundE = a.lo; worstE = a.hi;
+    frustrated = groundE > -BONDS.length;
+    spins = L.nodes.map(() => 1);
+    nameEl.textContent = L.name; blurbEl.textContent = L.blurb;
+    gameEl.classList.toggle("is-glass", !!L.glass);
+    Array.prototype.forEach.call(levelsEl.children, (b,i) => b.setAttribute("aria-current", i===idx ? "true":"false"));
+    buildLandscape();
+    render(true);
+    lsBallPos = energyTarget(energyOf(spins)); placeBall();
+  }
+
+  function reshuffle() {
+    if (annealing || !L.glass) return;
+    instanceSeed++;
+    BONDS = makeBonds();
+    const a = analyse(); groundE = a.lo; worstE = a.hi;
+    frustrated = groundE > -BONDS.length;
+    spins = L.nodes.map(() => 1);
+    buildLandscape();
+    render(true);
+    lsBallPos = energyTarget(energyOf(spins)); placeBall();
+  }
+
+  resetBtn.addEventListener("click", () => { if (annealing) return; spins = spins.map(()=>1); render(false); });
+  shuffleBtn.addEventListener("click", reshuffle);
+
+  // ---------- Quantum Anneal ----------
+  annealBtn.addEventListener("click", () => {
+    if (annealing) return;
+    if (prefersReduced) { spins = groundConfig(); render(false); return; }
+
+    annealing = true;
+    annealBtn.disabled = resetBtn.disabled = shuffleBtn.disabled = true;
+    annealBtn.textContent = "Cooling\u2026";
+    gameEl.classList.add("annealing");
+
+    let T = 4.0; const cool = 0.95;
+    const tick = () => {
+      for (let k = 0; k < L.nodes.length * 2; k++) {
+        const i = (Math.random() * spins.length) | 0;
+        const before = energyOf(spins);
+        spins[i] *= -1;
+        const dE = energyOf(spins) - before;
+        if (dE > 0 && Math.random() > Math.exp(-dE / Math.max(T, 1e-4))) spins[i] *= -1;
+      }
+      render(false);
+      tempLabel.textContent = T > 1.2 ? "hot" : T > 0.4 ? "warm" : "cooling";
+      tempLabel.classList.toggle("hot", T > 1.2);
+      T *= cool;
+      if (T > 0.05 && energyOf(spins) !== groundE) { setTimeout(tick, 60); }
+      else {
+        if (energyOf(spins) !== groundE) spins = groundConfig();
+        render(false);
+        annealing = false;
+        annealBtn.disabled = resetBtn.disabled = shuffleBtn.disabled = false;
+        annealBtn.innerHTML = "Quantum&nbsp;Anneal";
+        gameEl.classList.remove("annealing");
+        tempLabel.classList.remove("hot"); tempLabel.textContent = "cool";
+      }
+    };
+    setTimeout(tick, 60);
+  });
+
+  // ---------- level pills ----------
+  LEVELS.forEach((lv, i) => {
+    const b = document.createElement("button");
+    b.className = "lvl"; b.type = "button"; b.setAttribute("role","tab");
+    b.textContent = (i+1) + ". " + lv.name;
+    b.addEventListener("click", () => { if (!annealing) loadLevel(i); });
+    levelsEl.appendChild(b);
+  });
+
+  // ---------- ambient spin-field background ----------
+  const bg = $("spin-bg"), bgx = bg ? bg.getContext("2d") : null;
+  let BW = 0, BH = 0, bgSpins = [], bgPlaq = [], tA = 0;
+
+  function bgResize() {
+    if (!bg) return;
+    BW = bg.width = window.innerWidth; BH = bg.height = window.innerHeight;
+    bgSpins = [];
+    const step = 82;
+    for (let y = step*0.5; y < BH+step; y += step)
+      for (let x = step*0.5; x < BW+step; x += step)
+        bgSpins.push({ x: x + (Math.random()-0.5)*18, y: y + (Math.random()-0.5)*18,
+                       up: Math.random()<0.5, next: Math.random()*300+120, flash: 0, phase: Math.random()*6.283 });
+    bgPlaq = [];
+    const count = Math.max(3, Math.floor(BW*BH/260000));
+    for (let i=0;i<count;i++)
+      bgPlaq.push({ cx: Math.random()*BW, cy: Math.random()*BH, r: 42+Math.random()*46, a: Math.random()*6.283, phase: Math.random()*6.283 });
+  }
+
+  function drawArrow(x, y, up, style) {
+    const len = 9, dir = up ? -1 : 1;
+    bgx.strokeStyle = style; bgx.lineWidth = 1.6; bgx.lineCap = "round";
+    bgx.beginPath(); bgx.moveTo(x, y - dir*len); bgx.lineTo(x, y + dir*len); bgx.stroke();
+    bgx.beginPath();
+    bgx.moveTo(x, y + dir*len); bgx.lineTo(x - 3, y + dir*(len-4));
+    bgx.moveTo(x, y + dir*len); bgx.lineTo(x + 3, y + dir*(len-4));
+    bgx.stroke();
+  }
+
+  function drawAmbient() {
+    bgx.clearRect(0, 0, BW, BH);
+    for (const p of bgPlaq) {
+      const pulse = 0.5 + 0.5*Math.sin(tA*0.03 + p.phase);
+      bgx.beginPath();
+      for (let k=0;k<3;k++) {
+        const ang = p.a + k*2.0944, X = p.cx + Math.cos(ang)*p.r, Y = p.cy + Math.sin(ang)*p.r;
+        if (k) bgx.lineTo(X,Y); else bgx.moveTo(X,Y);
+      }
+      bgx.closePath();
+      bgx.strokeStyle = "rgba(25,23,18," + (0.025 + 0.04*pulse).toFixed(3) + ")";
+      bgx.lineWidth = 1.2; bgx.stroke();
+    }
+    for (const s of bgSpins) {
+      if (tA > s.next) { s.up = !s.up; s.next = tA + Math.random()*360 + 160; s.flash = 14; }
+      const rgb = s.up ? "31,78,140" : "106,74,156";
+      const fl = s.flash > 0 ? (s.flash-- / 14) : 0;
+      const a = 0.09 + 0.06*Math.sin(tA*0.01 + s.phase) + fl*0.25;
+      drawArrow(s.x, s.y, s.up, "rgba(" + rgb + "," + Math.max(0.05, a).toFixed(3) + ")");
+    }
+  }
+
+  // ---------- animation loop ----------
+  function tickAnim() {
+    tA++;
+    if (bgx) drawAmbient();
+    // ease the landscape marker toward its target
+    lsBallPos.x += (lsTarget.x - lsBallPos.x) * 0.18;
+    lsBallPos.y += (lsTarget.y - lsBallPos.y) * 0.18;
+    placeBall();
+    requestAnimationFrame(tickAnim);
+  }
+
+  // ---------- boot ----------
+  loadLevel(0);
+  if (!prefersReduced) {
+    bgResize();
+    window.addEventListener("resize", bgResize);
+    requestAnimationFrame(tickAnim);
+  }
+})();
+</script>
+<script>
+/* glass-phase illustrations: shattering + replica symmetry breaking */
+(function () {
+  "use strict";
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (id) => document.getElementById(id);
+  const C = { blue:"#1f4e8c", purple:"#6a4a9c", teal:"#2f7d6e", amber:"#9a5b2e", pink:"#c0492f",
+              muted:"rgba(25,23,18,0.5)", grid:"rgba(25,23,18,0.14)" };
+  const PAL = [C.blue, C.purple, C.teal, C.amber, C.pink];
+  const lerp = (a,b,t) => a + (b-a)*t;
+  const ease = (t) => t*t*(3-2*t);
+  const mk = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  function rng(seed){ let s=seed>>>0; return () => { s=(s*1103515245+12345)&0x7fffffff; return s/0x7fffffff; }; }
+
+  /* ============ SHATTERING ============ */
+  (function shatter(){
+    const svg = $("shatterSvg"), ctl = $("shatterCtl"), sub = $("shatterSub");
+    if (!svg) return;
+    const map = $("shatterMap"), mctx = map ? map.getContext("2d") : null;
+    const MW = 600, MH = 150; if (map) { map.width = MW; map.height = MH; }
+    const W = 600, H = 230, pad = 16;
+    svg.appendChild(mk("rect", {x:pad-6, y:pad-6, width:W-2*pad+12, height:H-2*pad+12, rx:8,
+      fill:"rgba(25,23,18,0.02)", stroke:C.grid, "stroke-width":1}));
+    const linkPath = mk("path", {fill:"none", stroke:"rgba(25,23,18,0.26)", "stroke-width":1});
+    svg.appendChild(linkPath);
+
+    const K = 6, N = 78, r = rng(20250629);
+    // cluster centres spread across the box
+    const centres = [];
+    for (let k=0;k<K;k++){
+      centres.push({ x: lerp(pad+50, W-pad-50, (k%3)/2) + (r()-0.5)*30,
+                     y: lerp(pad+45, H-pad-45, Math.floor(k/3)) + (r()-0.5)*24 });
+    }
+    const pts = [];
+    for (let i=0;i<N;i++){
+      const k = i % K;
+      pts.push({
+        lx: pad+20 + r()*(W-2*pad-40), ly: pad+16 + r()*(H-2*pad-32),     // liquid (mixed) position
+        cx: centres[k].x + (r()-0.5)*34, cy: centres[k].y + (r()-0.5)*30,  // clustered position
+        k, el: mk("circle", {r:3.1, fill:PAL[k], "fill-opacity":0.85})
+      });
+      svg.appendChild(pts[i].el);
+    }
+
+    let a = parseInt(ctl.value,10)/100, manual = false;
+    ctl.addEventListener("input", () => { manual = true; a = parseInt(ctl.value,10)/100; if (reduced) draw(); });
+
+    function draw(){
+      const t = ease(a);
+      const L2 = (28 - 16*a); const thr = L2*L2;   // link threshold shrinks as it clusters
+      for (const p of pts){ p.x = lerp(p.lx, p.cx, t); p.y = lerp(p.ly, p.cy, t);
+        p.el.setAttribute("cx", p.x.toFixed(1)); p.el.setAttribute("cy", p.y.toFixed(1));
+        p.el.setAttribute("fill-opacity", (0.6 + 0.35*t).toFixed(2)); }
+      let d = "";
+      for (let i=0;i<N;i++) for (let j=i+1;j<N;j++){
+        const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, dd=dx*dx+dy*dy;
+        if (dd < thr) d += "M"+pts[i].x.toFixed(1)+" "+pts[i].y.toFixed(1)+"L"+pts[j].x.toFixed(1)+" "+pts[j].y.toFixed(1);
+      }
+      linkPath.setAttribute("d", d);
+      linkPath.setAttribute("stroke-opacity", (0.32 - 0.12*t).toFixed(2));
+      if (mctx) drawMap(t);
+      sub.textContent = a < 0.3 ? "one connected basin" : a < 0.66 ? "fragmenting\u2026" : "exponentially many clusters";
+    }
+
+    function mapColor(v) {
+      v = v<0?0:v>1?1:v;
+      let r,g,b;
+      if (v < 0.5) { const u=v/0.5; r=lerp(231,196,u); g=lerp(224,120,u); b=lerp(208,80,u); }
+      else { const u=(v-0.5)/0.5; r=lerp(196,120,u); g=lerp(120,40,u); b=lerp(80,28,u); }
+      return "rgb("+(r|0)+","+(g|0)+","+(b|0)+")";
+    }
+    function drawMap(t) {
+      const cols=80, rows=20, cw=MW/cols, ch=MH/rows;
+      const sigma=lerp(82,24,t), h=lerp(0.10,1.0,t), base=0.16*(1-t);
+      const cs = centres.map(c => ({ x: c.x/600*MW, y: c.y/230*MH }));
+      for (let gy=0; gy<rows; gy++) for (let gx=0; gx<cols; gx++) {
+        const px=(gx+0.5)*cw, py=(gy+0.5)*ch; let v=base;
+        for (const c of cs) { const dx=px-c.x, dy=py-c.y; v += h*Math.exp(-(dx*dx+dy*dy)/(2*sigma*sigma)); }
+        mctx.fillStyle = mapColor(v);
+        mctx.fillRect(gx*cw, gy*ch, cw+1, ch+1);
+      }
+    }
+
+    if (reduced){ a = 0.85; ctl.value = 85; draw(); return; }
+    let dir = 1, tcount = 0;
+    (function loop(){
+      if (!manual){ a += dir*0.0016; if (a>=1){a=1;dir=-1;} if (a<=0){a=0;dir=1;} ctl.value = Math.round(a*100); }
+      draw();
+      requestAnimationFrame(loop);
+    })();
+  })();
+
+  /* ============ TRAPPED IN A CLUSTER ============ */
+  (function trapped(){
+    const svg=$("stuckSvg"), sub=$("stuckSub"), ctl=$("stuckCtl"), kspan=$("stuckK");
+    if(!svg) return;
+    const W=600,H=240,pad=28;
+    let K=6, clusters=[], gIdx=0, cur=0, ox=0, oy=0, tries=1, timer=0, mode="walk", walker=null;
+
+    function build(){
+      svg.innerHTML="";
+      const r=rng(7000+K*13);
+      const cols=Math.ceil(Math.sqrt(K)), rows=Math.ceil(K/cols);
+      const cw=(W-2*pad)/cols, ch=(H-2*pad)/rows;
+      const rad=Math.max(8, Math.min(cw,ch)*0.34);
+      clusters=[];
+      for(let i=0;i<K;i++){
+        const gx=i%cols, gy=(i/cols|0);
+        clusters.push({ x:pad+cw*(gx+0.5)+(r()-0.5)*cw*0.25, y:pad+ch*(gy+0.5)+(r()-0.5)*ch*0.25, rad });
+      }
+      gIdx=(K*0.42|0)%K;
+      clusters.forEach((c,i)=>{
+        const isG=i===gIdx;
+        svg.appendChild(mk("circle",{cx:c.x.toFixed(1),cy:c.y.toFixed(1),r:rad.toFixed(1),
+          fill:isG?"rgba(47,125,110,0.14)":"rgba(25,23,18,0.04)",
+          stroke:isG?C.teal:"rgba(25,23,18,0.28)","stroke-width":isG?1.8:1}));
+        const md=Math.min(4, Math.max(2,(40/K|0)));
+        for(let k=0;k<md;k++){ const ang=r()*6.283, rr=r()*rad*0.7;
+          svg.appendChild(mk("circle",{cx:(c.x+Math.cos(ang)*rr).toFixed(1),cy:(c.y+Math.sin(ang)*rr).toFixed(1),
+            r:2, fill:isG?C.teal:C.purple, "fill-opacity":0.5})); }
+      });
+      const gt=mk("text",{x:clusters[gIdx].x.toFixed(1),y:(clusters[gIdx].y-rad-5).toFixed(1),"text-anchor":"middle",class:"gf-axis"});
+      gt.textContent="ground state cluster"; gt.style.fill=C.teal; svg.appendChild(gt);
+      walker=mk("circle",{r:5.5,fill:C.blue}); walker.style.filter="drop-shadow(0 1px 2px rgba(31,78,140,0.35))"; svg.appendChild(walker);
+      cur=(gIdx+1)%K; if(cur===gIdx)cur=(cur+1)%K;
+      ox=0; oy=0; tries=1; mode="walk"; timer=0;
+      if(kspan) kspan.textContent=K;
+      place(); setSub();
+    }
+    function place(){ const c=clusters[cur]; walker.setAttribute("cx",(c.x+ox).toFixed(1)); walker.setAttribute("cy",(c.y+oy).toFixed(1)); }
+    function setSub(){ const inG=cur===gIdx;
+      sub.textContent = inG ? ("found it after "+tries+" runs") : ("run "+tries+", stuck in a cluster");
+      sub.style.color = inG ? C.teal : C.pink;
+      walker.setAttribute("fill", inG?C.teal:C.blue);
+    }
+    ctl.addEventListener("input",()=>{ K=parseInt(ctl.value,10); build(); });
+
+    build();
+    if(reduced) return;
+    (function step(){
+      if(mode==="walk"){
+        const c=clusters[cur];
+        ox+=(Math.random()-0.5)*c.rad*0.45; oy+=(Math.random()-0.5)*c.rad*0.45;
+        const d=Math.hypot(ox,oy)||1, lim=c.rad*0.76;
+        if(d>lim){ ox=ox/d*lim; oy=oy/d*lim; }   // bounce off the barrier, cannot leave
+        place(); timer++;
+        if(timer>95){ mode="jump"; timer=0; }
+      } else {
+        cur=(Math.random()*K)|0; ox=0; oy=0; if(cur!==gIdx) tries++; mode="walk"; setSub();
+      }
+      requestAnimationFrame(step);
+    })();
+  })();
+
+  /* ============ REPLICA SYMMETRY BREAKING ============ */
+  (function rsb(){
+    const treeSvg = $("treeSvg"), pqSvg = $("pqSvg"), ctl = $("rsbCtl"), sub = $("rsbSub");
+    if (!treeSvg || !pqSvg) return;
+    const W = 300, H = 230;
+
+    // ---- tree (ultrametric dendrogram, up to 3 levels => 8 leaves) ----
+    treeSvg.appendChild(mk("text", {x:10, y:18, class:"gf-axis"})).textContent = "pure states";
+    const rootY = 34, botY = H-30, rootX = W/2;
+    const tg = mk("g", {}); treeSvg.appendChild(tg);
+    const leafG = mk("g", {}); treeSvg.appendChild(leafG);
+
+    function drawTree(r){
+      tg.innerHTML = ""; leafG.innerHTML = "";
+      // three split thresholds; spread grows with r
+      const lv1 = Math.max(0,(r-0.12)/0.30), lv2 = Math.max(0,(r-0.40)/0.30), lv3 = Math.max(0,(r-0.68)/0.30);
+      const s1 = Math.min(1,lv1), s2 = Math.min(1,lv2), s3 = Math.min(1,lv3);
+      const yMid = lerp(rootY, botY, 0.34), yLow = lerp(rootY, botY, 0.64);
+      const span = (W/2 - 24);
+      const line = (x1,y1,x2,y2,op) => tg.appendChild(mk("line",{x1,y1,x2,y2,
+        stroke:"rgba(25,23,18,"+op.toFixed(2)+")","stroke-width":1.6,"stroke-linecap":"round"}));
+      // root stem
+      line(rootX, rootY, rootX, yMid, 0.8);
+      const leaves = [];
+      const off1 = span*0.55*s1;
+      [-1,1].forEach((d1) => {
+        const x1 = rootX + d1*off1;
+        line(rootX, yMid, x1, yMid, 0.5*s1+0.05);
+        line(x1, yMid, x1, yLow, 0.3+0.5*s1);
+        const off2 = span*0.28*s2;
+        [-1,1].forEach((d2) => {
+          const x2 = x1 + d2*off2;
+          line(x1, yLow, x2, yLow, 0.5*s2);
+          line(x2, yLow, x2, botY, 0.25+0.5*s2);
+          const off3 = span*0.13*s3;
+          [-1,1].forEach((d3) => {
+            const x3 = x2 + d3*off3;
+            if (s3>0.02){ line(x2, botY-14, x3, botY-14, 0.5*s3); line(x3, botY-14, x3, botY, 0.5*s3); }
+            leaves.push(s3>0.05 ? x3 : x2);
+          });
+        });
+      });
+      // dedupe leaf x's that coincide (before splits open) and draw state dots
+      const uniq = []; leaves.forEach(x => { if (!uniq.some(u => Math.abs(u-x)<2)) uniq.push(x); });
+      uniq.forEach((x,i) => leafG.appendChild(mk("circle",{cx:x.toFixed(1), cy:botY, r:4.2,
+        fill: PAL[i % PAL.length], "fill-opacity":0.9})));
+    }
+
+    // ---- P(q) ----
+    const pad=34, x0=pad, x1=W-14, y0=H-26, y1=24;
+    const qEA = 0.82;
+    pqSvg.appendChild(mk("line",{x1:x0,y1:y0,x2:x1,y2:y0,stroke:C.muted,"stroke-width":1}));
+    pqSvg.appendChild(mk("line",{x1:x0,y1:y0,x2:x0,y2:y1,stroke:C.muted,"stroke-width":1}));
+    pqSvg.appendChild(mk("text",{x:(x0+x1)/2-8,y:H-8,class:"gf-axis"})).textContent = "overlap q";
+    const pqAxisP = mk("text",{x:6,y:y1+4,class:"gf-axis"}); pqAxisP.textContent="P(q)"; pqSvg.appendChild(pqAxisP);
+    const eaTick = mk("text",{x:lerp(x0,x1,qEA)-12,y:y0+12,class:"gf-axis"}); eaTick.textContent="q_EA"; pqSvg.appendChild(eaTick);
+    const area = mk("path",{fill:"rgba(31,78,140,0.14)",stroke:C.blue,"stroke-width":1.6,"stroke-linejoin":"round"});
+    pqSvg.appendChild(area);
+    const spike = mk("line",{stroke:C.purple,"stroke-width":2.4,"stroke-linecap":"round"}); pqSvg.appendChild(spike);
+
+    function Xq(q){ return lerp(x0,x1,q); }
+    function drawPq(r){
+      const n=60, ys=[];
+      // RS: single bump near low q (q0). RSB: continuous plateau on [0,qEA] + delta at qEA.
+      const q0 = lerp(0.12, 0.0, Math.min(1,r/0.3));
+      const wRS = Math.max(0, 1 - r/0.35);              // weight of the RS bump
+      const wPlateau = Math.min(1, Math.max(0,(r-0.2)/0.7));
+      let mx=1e-6;
+      for (let i=0;i<n;i++){
+        const q=i/(n-1);
+        const bump = wRS * Math.exp(-Math.pow((q-q0)/0.10,2));
+        const plat = wPlateau * (q < qEA ? (0.18 + 0.5*q/qEA) : 0) * Math.exp(-Math.pow(Math.max(0,q-qEA)/0.04,2));
+        const v = bump + plat;
+        ys.push(v); if (v>mx) mx=v;
+      }
+      let d = "M"+x0+" "+y0;
+      for (let i=0;i<n;i++){ const q=i/(n-1); const Y = y0 - (ys[i]/mx)*(y0-y1)*0.82; d += "L"+Xq(q).toFixed(1)+" "+Y.toFixed(1); }
+      d += "L"+x1+" "+y0+"Z";
+      area.setAttribute("d", d);
+      // delta spike at q_EA grows with r
+      const sH = Math.min(1, Math.max(0,(r-0.25)/0.6));
+      const sx = Xq(qEA);
+      spike.setAttribute("x1",sx); spike.setAttribute("x2",sx);
+      spike.setAttribute("y1",y0); spike.setAttribute("y2", (y0 - sH*(y0-y1)*0.92).toFixed(1));
+      spike.setAttribute("stroke-opacity", (0.25+0.7*sH).toFixed(2));
+    }
+
+    let r = parseInt(ctl.value,10)/100, manual = false;
+    function render(){ drawTree(r); drawPq(r);
+      sub.textContent = r < 0.22 ? "replica symmetric \u00b7 one state"
+                      : r < 0.6 ? "one step RSB \u00b7 clusters of states"
+                      : "full RSB \u00b7 ultrametric hierarchy"; }
+    ctl.addEventListener("input", () => { manual = true; r = parseInt(ctl.value,10)/100; render(); });
+
+    if (reduced){ r = 0.9; ctl.value = 90; render(); return; }
+    let dir=1;
+    (function loop(){
+      if (!manual){ r += dir*0.0013; if (r>=1){r=1;dir=-1;} if (r<=0){r=0;dir=1;} ctl.value=Math.round(r*100); }
+      render();
+      requestAnimationFrame(loop);
+    })();
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,28 +1,585 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>First</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kartik Anand — Quantum Complexity</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=Rock+Salt&family=Yuji+Boku&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --paper:#ece6d8;
+  --paper-warm:#e7e0d0;
+  --ink:#191712;
+  --ink-soft:rgba(25,23,18,0.72);
+  --ink-faint:rgba(25,23,18,0.45);
+  --serif:'Fraunces',Georgia,serif;
+  --display:'Rock Salt','Fraunces',serif;   /* dip-pen ink, rough splatter edges */
+  --hand:'Caveat',cursive;
+  --sans:'Inter',system-ui,sans-serif;
+}
+/* give Fraunces a hand-cut, non-Anthropic character */
+.about-lede,.about-p,.lede,.body,.pub .ti,.pub .venue{font-variation-settings:'SOFT' 40,'WONK' 1,'opsz' 40}
+html,body{margin:0;background:var(--paper)}
+body{color:var(--ink);font-family:var(--sans);overflow-x:hidden}
+a{color:inherit}
+
+/* ───────────────── quantum-ink loading screen ───────────────── */
+#loader{
+  position:fixed;inset:0;z-index:120;background:var(--paper);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6rem;
+  transition:opacity .9s ease;
+}
+#loader.hide{opacity:0;pointer-events:none}
+#loader::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:0.35;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+.atom{width:120px;height:120px}
+.atom .orbit{fill:none;stroke:var(--ink);stroke-width:1.4;opacity:0.7;stroke-dasharray:1 5;animation:dash 9s linear infinite}
+.atom .o1{animation:spin1 3.2s linear infinite;transform-origin:60px 60px}
+.atom .o2{animation:spin2 4.1s linear infinite;transform-origin:60px 60px}
+.atom .o3{animation:spin3 5s linear infinite;transform-origin:60px 60px}
+.atom .nucleus{fill:var(--ink)}
+.atom .e{fill:var(--ink)}
+@keyframes spin1{to{transform:rotate(360deg)}}
+@keyframes spin2{to{transform:rotate(-360deg)}}
+@keyframes spin3{to{transform:rotate(360deg)}}
+@keyframes dash{to{stroke-dashoffset:-60}}
+@keyframes orb1{from{transform:rotate(0) translateX(46px) rotate(0)}to{transform:rotate(360deg) translateX(46px) rotate(-360deg)}}
+@keyframes orb2{from{transform:rotate(120deg) translateX(46px) rotate(-120deg)}to{transform:rotate(480deg) translateX(46px) rotate(-480deg)}}
+.atom .e1{animation:orb1 3.2s linear infinite}
+.atom .e2{animation:orb2 4.1s linear infinite}
+.load-label{font-family:var(--hand);font-size:1.5rem;color:var(--ink-soft);letter-spacing:0.02em}
+.load-sub{font-family:var(--sans);font-size:0.58rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--ink-faint)}
+.load-bar{width:160px;height:1px;background:var(--ink-faint);position:relative;overflow:hidden}
+.load-bar i{position:absolute;left:0;top:0;height:100%;width:0%;background:var(--ink);transition:width .25s linear}
+.load-skip{font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none;border-bottom:1px solid var(--ink-faint);padding-bottom:2px;margin-top:.4rem}
+.load-skip:hover{color:var(--ink-soft)}
+
+/* fixed UI chrome */
+/* top scrim keeps the fixed chrome legible over dark areas of the clip */
+.topscrim{position:fixed;top:0;left:0;right:0;height:88px;z-index:55;pointer-events:none;
+  background:linear-gradient(180deg, rgba(236,230,216,0.92), rgba(236,230,216,0.5) 45%, rgba(236,230,216,0))}
+.brand{position:fixed;top:1.4rem;left:1.9rem;z-index:60;font-family:var(--serif);font-style:italic;font-size:1.05rem;letter-spacing:.01em;color:var(--ink);text-shadow:0 0 10px rgba(236,230,216,0.9),0 0 20px rgba(236,230,216,0.8)}
+.nav{position:fixed;top:1.5rem;right:1.9rem;z-index:60;display:flex;gap:1.4rem;font-size:.6rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft);align-items:center;text-shadow:0 0 10px rgba(236,230,216,0.9),0 0 18px rgba(236,230,216,0.8)}
+.nav a{text-decoration:none;opacity:.8;transition:opacity .2s}
+.nav a:hover{opacity:1}
+.nav .plain{border:1px solid var(--ink-faint);padding:.42rem .8rem;border-radius:1px;opacity:.85}
+.nav .plain:hover{background:rgba(25,23,18,.06)}
+.progress{position:fixed;left:0;top:0;height:2px;width:0;background:var(--ink);z-index:60;opacity:.55}
+
+/* ───────────────── the film: one sticky stage, stacked scrubbed layers ───────────────── */
+.track{position:relative}
+.film{position:sticky;top:0;height:100vh;overflow:hidden;background:var(--paper)}
+.layer{position:absolute;inset:0;opacity:0;will-change:opacity,transform,filter;transform-origin:50% 52%}
+.layer video{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  mix-blend-mode:multiply;
+}
+.layer[data-ch="0"] video{object-position:58% center}
+.layer[data-ch="1"] video{object-position:50% center}
+.film::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:5;opacity:0.3;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+.film::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:4;
+  box-shadow:inset 0 0 180px 40px rgba(25,23,18,0.10);
+}
+
+/* corner marks */
+.corner{position:absolute;z-index:6;font-size:0.56rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--ink-faint);mix-blend-mode:multiply}
+.corner.bl{bottom:1.5rem;left:1.9rem}.corner.br{bottom:1.5rem;right:1.9rem}
+
+/* ───────────────── scrubbed text beats ───────────────── */
+.beat{
+  position:absolute;z-index:8;top:50%;transform:translateY(-50%);
+  max-width:34rem;opacity:0;will-change:opacity;
+  padding:2.4rem 2.6rem;border-radius:3px;
+  background:radial-gradient(120% 120% at 30% 40%, rgba(236,230,216,0.97), rgba(236,230,216,0.86) 62%, rgba(236,230,216,0) 100%);
+}
+.beat.left{left:6vw}
+.beat.right{right:6vw;text-align:right}
+.beat .lede,.beat .eyebrow,.beat .h2,.beat .kicker,.beat .body{
+  text-shadow:0 1px 1px rgba(236,230,216,0.95),0 0 14px rgba(236,230,216,0.85)}
+/* the brush name is dark ink — a tight halo for legibility, not a wash */
+.beat .name{color:#14110b;text-shadow:0 0 2px rgba(236,230,216,0.9),0 1px 0 rgba(236,230,216,0.7)}
+.eyebrow{font-size:0.64rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:1rem}
+.name{font-family:var(--display);font-weight:400;font-size:clamp(2.1rem,5.6vw,4rem);line-height:1.32;letter-spacing:0}
+.h2{font-family:var(--display);font-weight:400;font-size:clamp(1.7rem,3.8vw,2.7rem);line-height:1.3}
+.rule{width:58px;height:2px;background:var(--ink);opacity:0.85;margin:1.3rem 0}
+.right .rule{margin-left:auto}
+.lede{font-family:var(--serif);font-size:clamp(1.15rem,2vw,1.55rem);line-height:1.55;color:var(--ink);max-width:26ch}
+.right .lede{margin-left:auto}
+.body{font-family:var(--serif);font-size:clamp(1.02rem,1.6vw,1.28rem);line-height:1.6;color:var(--ink-soft);max-width:30ch}
+.right .body{margin-left:auto}
+.tags{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem}
+.right .tags{justify-content:flex-end}
+.tag{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--ink-faint);border-radius:1px;padding:0.36rem 0.85rem;background:rgba(236,230,216,0.5)}
+.kicker{font-family:var(--hand);font-size:1.8rem;color:var(--ink-soft);line-height:1.3}
+.cue{position:absolute;bottom:2.0rem;left:50%;transform:translateX(-50%);z-index:9;font-size:0.56rem;letter-spacing:0.34em;text-transform:uppercase;color:var(--ink-faint);mix-blend-mode:multiply}
+.cue .bar{display:block;width:1px;height:30px;margin:0.6rem auto 0;background:var(--ink-faint)}
+
+/* ── the interlude: a quiet text passage over the bokeh'd clip ── */
+/* no card — the words are written straight onto the broken/bokeh field.
+   a layered paper-glow keeps them legible wherever the dark figure drifts behind. */
+.interlude{
+  position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(48rem,90vw);text-align:center;opacity:0;will-change:opacity,transform;
+}
+/* the headline rides the ink-splat font; the soft paper glow keeps it legible on the bokeh */
+.interlude .il-big{font-family:var(--display);font-weight:400;font-size:clamp(1.9rem,4.6vw,3.3rem);line-height:1.35;color:#14110b;
+  text-shadow:
+    0 0 10px rgba(236,230,216,0.98),
+    0 0 24px rgba(236,230,216,0.96),
+    0 0 46px rgba(236,230,216,0.92),
+    0 0 78px rgba(236,230,216,0.85);}
+.interlude .il-big em{font-style:normal;color:#000;position:relative}
+.interlude .il-cap{font-family:var(--serif);font-size:clamp(0.95rem,1.7vw,1.18rem);line-height:1.6;color:var(--ink-soft);margin-top:1.7rem;
+  text-shadow:0 0 10px rgba(236,230,216,0.98),0 0 24px rgba(236,230,216,0.92),0 0 44px rgba(236,230,216,0.85)}
+.interlude .il-mark{font-family:var(--display);font-size:2rem;color:var(--ink-faint);margin-bottom:1rem;
+  text-shadow:0 0 14px rgba(236,230,216,0.95)}
+/* scattered ink splats — decorative, low opacity, behind the words */
+.interlude .splat{position:absolute;z-index:-1;opacity:0.13;mix-blend-mode:multiply;pointer-events:none}
+.interlude .sp1{width:120px;height:120px;top:-46px;left:-30px;transform:rotate(-18deg)}
+.interlude .sp2{width:96px;height:96px;bottom:-30px;right:-18px;transform:rotate(24deg);opacity:0.1}
+.interlude .sp3{width:64px;height:64px;top:8px;right:4%;opacity:0.09}
+
+/* ───────────────── prose / publications (normal scroll, notebook) ───────────────── */
+.prose{position:relative;z-index:20;background:var(--paper);padding:11vh 0 12vh}
+/* faint ruled-notebook lines + paper grain */
+.prose::before{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:0.5;
+  background-image:repeating-linear-gradient(to bottom, transparent 0 37px, rgba(25,23,18,0.05) 37px 38px);
+}
+.prose::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:0.22;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+.wrap{max-width:62rem;margin:0 auto;padding:0 7vw;position:relative}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease, transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ── notebook section header: ink title + hand-drawn squiggle underline ── */
+.nb-head{position:relative;display:inline-flex;align-items:baseline;gap:.9rem;margin:7rem 0 2.2rem}
+.nb-head:first-child{margin-top:0}
+.nb-num{font-family:var(--hand);font-size:1.5rem;color:var(--ink-faint)}
+.nb-title{font-family:var(--display);font-weight:400;font-size:clamp(1.7rem,4.4vw,2.9rem);line-height:1;color:#14110b}
+.squig{position:absolute;left:2.4rem;bottom:-0.7rem;width:min(15rem,46vw);height:11px;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;opacity:.7}
+
+/* ── about: text + handwritten margin ── */
+.lane{display:grid;grid-template-columns:1fr 16rem;gap:3.5rem}
+.about-lede{font-family:var(--serif);font-size:clamp(1.4rem,2.8vw,2.05rem);line-height:1.5;max-width:32ch;margin-bottom:1.5rem}
+.about-lede em{font-style:italic}
+.about-p{font-family:var(--serif);font-size:1.12rem;line-height:1.72;color:var(--ink-soft);max-width:54ch;margin-bottom:1.1rem}
+.about-p a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink-faint)}
+.margin{border-left:2px solid var(--ink-faint);padding-left:1.4rem;align-self:start;position:sticky;top:12vh}
+.m-label{font-family:var(--hand);font-size:1.35rem;color:var(--ink-soft);margin-bottom:1rem;transform:rotate(-2deg)}
+.trajectory{list-style:none;display:flex;flex-direction:column;gap:1rem}
+.trajectory li{display:flex;flex-direction:column;font-family:var(--sans)}
+.trajectory b{font-size:.82rem;letter-spacing:.02em}
+.trajectory span{font-size:.74rem;color:var(--ink-soft)}
+.m-note{font-family:var(--hand);font-size:1.2rem;color:var(--ink-faint);margin-top:1.6rem;transform:rotate(-1.5deg)}
+
+/* ── news: inked timeline ── */
+.news{list-style:none;position:relative;margin-left:.3rem;padding-left:1.8rem}
+.news::before{content:'';position:absolute;left:4px;top:.5rem;bottom:.5rem;width:2px;background:var(--ink-faint)}
+.news li{position:relative;padding:0 0 1.5rem 0;display:grid;grid-template-columns:6.5rem 1fr;gap:1rem}
+.news li::before{content:'';position:absolute;left:-1.8rem;top:.45rem;width:9px;height:9px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 4px var(--paper)}
+.news .when{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-family:var(--sans);padding-top:.15rem}
+.news .what{font-family:var(--serif);font-size:1.06rem;line-height:1.55;color:var(--ink-soft)}
+.news .what em{font-style:italic;color:var(--ink)}
+.news .what a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink-faint)}
+
+/* ── publications ledger ── */
+.ledger{display:flex;flex-direction:column}
+.pub{border-top:1px solid var(--ink-faint);padding:1.7rem 0;position:relative}
+.ledger .pub:last-child{border-bottom:1px solid var(--ink-faint)}
+.pub .yr{font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);font-family:var(--sans)}
+.pub .ti{font-family:var(--serif);font-weight:500;font-size:clamp(1.2rem,2.3vw,1.6rem);line-height:1.28;margin:0.4rem 0 0.5rem;max-width:50ch}
+.pub .authors{font-size:0.9rem;color:var(--ink-soft);font-family:var(--sans);margin-bottom:.9rem}
+.plinks{display:flex;gap:.6rem;flex-wrap:wrap}
+.axv,.pdf{font-family:var(--sans);font-size:.72rem;letter-spacing:.04em;text-decoration:none;padding:.35rem .7rem;border-radius:1px;transition:background .2s,color .2s}
+.axv{color:var(--ink-soft);border:1px solid var(--ink-faint);background:rgba(25,23,18,.03)}
+.axv:hover{background:var(--ink);color:var(--paper)}
+.pdf{color:var(--ink);border:1px solid transparent}
+.pdf:hover{border-color:var(--ink-faint)}
+
+/* ── contact ── */
+.contact{display:flex;flex-wrap:wrap;gap:2.4rem 5rem;align-items:flex-start;justify-content:space-between}
+.say{font-family:var(--serif);font-size:clamp(1.3rem,2.6vw,1.9rem);line-height:1.5;max-width:24ch;color:var(--ink)}
+.contact .links{display:flex;flex-direction:column;gap:.6rem;font-size:.98rem}
+.contact .links a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--ink-faint);padding-bottom:2px;width:fit-content;transition:color .2s}
+.contact .links a:hover{color:var(--ink)}
+.foot{margin-top:7rem;padding-top:2rem;border-top:1px solid var(--ink-faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint)}
+.foot .hand{font-family:var(--hand);font-size:1.05rem;letter-spacing:0;text-transform:none;color:var(--ink-soft)}
+.foot a{text-decoration:none;border-bottom:1px solid var(--ink-faint)}
+
+@media(max-width:760px){
+  .nav .anchor{display:none}              /* in-page anchors reachable by scroll; keep Playground + Plain */
+  .nav{gap:1rem;font-size:.56rem;right:1.2rem}
+  .brand{font-size:.95rem;left:1.2rem}
+  .beat{left:0 !important;right:0 !important;top:auto;bottom:8vh;transform:none;max-width:none;text-align:center;
+    background:linear-gradient(0deg, rgba(236,230,216,0.96) 30%, rgba(236,230,216,0) 100%);padding:2rem 7vw 3rem}
+  .beat.right{text-align:center}
+  .right .rule,.right .lede,.right .body{margin-left:auto;margin-right:auto}
+  .tags,.right .tags{justify-content:center}
+  .contact{flex-direction:column;align-items:flex-start}
+  .lane{grid-template-columns:1fr;gap:2.4rem}
+  .margin{position:static;border-left:none;border-top:2px solid var(--ink-faint);padding-left:0;padding-top:1.4rem}
+  .news li{grid-template-columns:5rem 1fr;gap:.7rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .atom *{animation:none !important}
+}
+</style>
 </head>
 <body>
-    <a href="/about.html" target="_blank">See about us!</a>
-    <h3>Sasuke</h3>
-    <a href="/sasuke.html" target="_blank">
-        <img src="/images/saske.jpg" width="280" height="400"alt="Kawai Saske" />
-    </a>
-    
-    <br>
-    
-    
-    <h3>Itachi</h3>
-    <a href="/itachi.html" target="_blank">
-        <img src="/images/itachi.png" width="350" height="450" alt="Kawai Itachi"> <br>
-    </a>
-    
-    <br>
 
-    <a href="#top">Go to the Top</a>
+  <!-- ░░ loader ░░ -->
+  <div id="loader">
+    <svg class="atom" viewBox="0 0 120 120">
+      <g class="o1"><ellipse class="orbit" cx="60" cy="60" rx="46" ry="18"/></g>
+      <g class="o2"><ellipse class="orbit" cx="60" cy="60" rx="46" ry="18" transform="rotate(60 60 60)"/></g>
+      <g class="o3"><ellipse class="orbit" cx="60" cy="60" rx="46" ry="18" transform="rotate(120 60 60)"/></g>
+      <circle class="nucleus" cx="60" cy="60" r="4"/>
+      <circle class="e e1" cx="60" cy="60" r="3"/>
+      <circle class="e e2" cx="60" cy="60" r="3"/>
+    </svg>
+    <div class="load-label">drawing the worldline…</div>
+    <div class="load-bar"><i id="loadFill"></i></div>
+    <div class="load-sub">Kartik Anand · Quantum Complexity</div>
+    <a class="load-skip" href="./plain.html">skip the animation →</a>
+  </div>
+
+  <!-- ░░ fixed chrome ░░ -->
+  <div class="progress" id="bar"></div>
+  <div class="topscrim"></div>
+  <div class="brand">Kartik Anand</div>
+  <nav class="nav">
+    <a class="lbl anchor" href="#work">Work</a>
+    <a class="lbl anchor" href="#publications">Papers</a>
+    <a class="lbl" href="./frustration.html">Playground&nbsp;✦</a>
+    <a class="lbl anchor" href="#contact">Contact</a>
+    <a class="plain" href="./plain.html" title="Plain, text-only version">Plain</a>
+  </nav>
+
+  <!-- ░░ THE FILM — two scrubbed chapters ░░ -->
+  <div class="track" id="track">
+    <div class="film" id="film">
+
+      <!-- chapter 0 : the river / looking up -->
+      <div class="layer" data-ch="0" data-src="./hero_scrub.mp4">
+        <video muted playsinline preload="auto" poster="./frame_check.png"></video>
+      </div>
+      <!-- chapter 1 : the board / the turn -->
+      <div class="layer" data-ch="1" data-src="./board_scrub.mp4">
+        <video muted playsinline preload="auto" poster="./board_first.png"></video>
+      </div>
+
+      <!-- beats use GLOBAL scroll-progress centers (data-p) so they sit on the
+           phase timeline below. data-fg = which clip must be in focus for them -->
+
+      <!-- ░ chapter 0 — the river ░ -->
+      <div class="beat left" data-p="0.0" data-width="0.09">
+        <div class="eyebrow">Hamburg · Quantum Complexity</div>
+        <h1 class="name">Kartik<br>Anand</h1>
+      </div>
+      <div class="beat left" data-p="0.135" data-width="0.05">
+        <div class="rule"></div>
+        <p class="lede">I like cats, pizzas, and thinking hard about the computational nature of quantum many-body systems.</p>
+      </div>
+      <div class="beat right" data-p="0.215" data-width="0.05">
+        <div class="eyebrow">What I work on</div>
+        <div class="tags">
+          <span class="tag">Quantum Hamiltonian Complexity</span>
+          <span class="tag">Quantum Learning Theory</span>
+          <span class="tag">Quantum Certification</span>
+        </div>
+      </div>
+
+      <!-- ░ the interlude — clip recedes to a broken / bokeh field, text takes over ░ -->
+      <div class="interlude" id="interlude">
+        <svg class="splat sp1" viewBox="0 0 100 100" aria-hidden="true"><g fill="#191712"><path d="M50 18 C63 16 72 29 67 44 C80 50 73 67 58 64 C56 80 37 80 35 62 C20 62 18 43 33 41 C29 27 40 18 50 18 Z"/><circle cx="80" cy="28" r="3.2"/><circle cx="20" cy="74" r="2.6"/><circle cx="86" cy="60" r="1.9"/><circle cx="12" cy="40" r="1.6"/><circle cx="62" cy="88" r="2.2"/></g></svg>
+        <svg class="splat sp2" viewBox="0 0 100 100" aria-hidden="true"><g fill="#191712"><path d="M52 24 C66 22 74 36 66 50 C76 60 64 74 50 68 C40 80 24 70 30 56 C18 50 24 34 38 36 C40 24 46 22 52 24 Z"/><circle cx="22" cy="26" r="2.6"/><circle cx="82" cy="74" r="2.2"/><circle cx="16" cy="62" r="1.5"/></g></svg>
+        <svg class="splat sp3" viewBox="0 0 100 100" aria-hidden="true"><g fill="#191712"><circle cx="50" cy="50" r="14"/><circle cx="74" cy="34" r="4"/><circle cx="28" cy="70" r="3"/><circle cx="80" cy="66" r="2.2"/></g></svg>
+        <div class="il-mark">~</div>
+        <p class="il-big">From computer vision —<br>to the <em>quantum</em>.</p>
+        <p class="il-cap">deep learning at IIT Delhi's Vision&nbsp;Lab · a paper at ACCV&nbsp;2024,<br>then, in 2024, a decisive turn toward quantum complexity.</p>
+      </div>
+
+      <!-- ░ chapter 1 — the board (figure faces LEFT → text rides the eyeline left) ░ -->
+      <div class="beat left" data-p="0.775" data-width="0.05">
+        <div class="eyebrow">2019 — 2025 · the turn</div>
+        <h2 class="h2">Toward the<br>quantum.</h2>
+      </div>
+      <div class="beat left" data-p="0.865" data-width="0.055">
+        <div class="rule"></div>
+        <p class="body">Independent research in Quantum Hamiltonian Complexity, focused on the quantum PCP conjecture and its hardness-of-approximation formulation.</p>
+      </div>
+      <div class="beat right" data-p="0.965" data-width="0.045">
+        <p class="kicker">…and it all ends up<br>on the board.</p>
+      </div>
+
+      <div class="corner bl" id="cornerL">Worldline · ’19—’25</div>
+      <div class="corner br">↓ scroll</div>
+      <div class="cue" id="cue">scroll<span class="bar"></span></div>
+    </div>
+  </div>
+
+  <!-- ░░ PROSE : about · papers · contact ░░ -->
+  <section class="prose" id="work">
+    <div class="wrap">
+
+      <!-- ░ ABOUT — notebook page with a handwritten margin ░ -->
+      <div class="nb-head reveal">
+        <span class="nb-num">i.</span>
+        <h2 class="nb-title">About</h2>
+        <svg class="squig" viewBox="0 0 240 12" preserveAspectRatio="none"><path d="M1 7 C 30 1, 50 11, 80 6 S 140 1, 170 7 S 220 11, 239 5"/></svg>
+      </div>
+      <div class="lane">
+        <div>
+          <p class="about-lede reveal">Hi — I'm Kartik. I like cats, pizzas, and thinking hard about the <em>computational nature of quantum many-body systems</em>.</p>
+          <p class="about-p reveal">I'm a Master's student in Computer Science at the Hamburg University of Technology (TUHH), working in <a href="http://www.mkliesch.eu" target="_blank" rel="noopener">Prof. Martin Kliesch</a>'s group at the Institute for Quantum Inspired &amp; Quantum Optimization.</p>
+          <p class="about-p reveal">Before quantum, I did deep-learning research at IIT Delhi's Vision Lab — a paper at ACCV 2024. In 2024 my interests shifted decisively toward <em>quantum complexity</em>: Quantum Hamiltonian Complexity, the quantum PCP conjecture and its hardness-of-approximation formulation. I've also collaborated with the Quantum Information Theory Group at Seoul National University.</p>
+        </div>
+        <aside class="margin reveal" aria-label="trajectory">
+          <div class="m-label">the short version</div>
+          <ul class="trajectory">
+            <li><b>B.Tech CSE</b><span>IIT Goa · 2019–2023</span></li>
+            <li><b>Vision Lab</b><span>IIT Delhi · ACCV 2024</span></li>
+            <li><b>M.Sc CS</b><span>TUHH · Kliesch group</span></li>
+            <li><b>Now</b><span>QHC · Learning Theory · Certification</span></li>
+          </ul>
+          <div class="m-note">Hamburg ✦ open to collaboration</div>
+        </aside>
+      </div>
+
+      <!-- ░ NEWS — hand-inked timeline ░ -->
+      <div class="nb-head reveal" id="news">
+        <span class="nb-num">ii.</span>
+        <h2 class="nb-title">News</h2>
+        <svg class="squig" viewBox="0 0 240 12" preserveAspectRatio="none"><path d="M1 6 C 30 11, 50 1, 80 7 S 140 11, 170 5 S 220 1, 239 7"/></svg>
+      </div>
+      <ol class="news reveal">
+        <li><span class="when">Oct 2025</span><span class="what">Joined the <a href="https://www.tuhh.de/quantum/" target="_blank" rel="noopener">Institute for Quantum Inspired &amp; Quantum Optimization</a> at TUHH (Kliesch group).</span></li>
+        <li><span class="when">Jun 2025</span><span class="what">Preprint — <em>Collapses in quantum-classical PCPs and the quantum polynomial hierarchy</em>, with Kabgyun Jeong &amp; Junseo Lee (SNU).</span></li>
+        <li><span class="when">Feb 2025</span><span class="what">Preprint — <em>Constructing Fermionic Hamiltonians with Non-Gaussianic low-energy states</em>.</span></li>
+        <li><span class="when">Nov 2024</span><span class="what">Preprint — <em>Feynman's Entangled Paths to Optimized Circuit Design</em>.</span></li>
+        <li><span class="when">Oct 2024</span><span class="what"><em>Calibration Transfer via Knowledge Distillation</em> accepted at ACCV 2024.</span></li>
+      </ol>
+
+      <!-- ░ PUBLICATIONS — ledger with arXiv stamps ░ -->
+      <div class="nb-head reveal" id="publications">
+        <span class="nb-num">iii.</span>
+        <h2 class="nb-title">Publications</h2>
+        <svg class="squig" viewBox="0 0 240 12" preserveAspectRatio="none"><path d="M1 7 C 30 2, 50 10, 80 6 S 140 2, 170 8 S 220 10, 239 4"/></svg>
+      </div>
+      <div class="ledger">
+        <article class="pub reveal">
+          <div class="yr">2025 · Preprint</div>
+          <h3 class="ti">Collapses in quantum-classical probabilistically checkable proofs and the quantum polynomial hierarchy</h3>
+          <div class="authors">Kartik Anand, Kabgyun Jeong, Junseo Lee</div>
+          <div class="plinks">
+            <a class="axv" href="https://arxiv.org/abs/2506.19792" target="_blank" rel="noopener">arXiv:2506.19792</a>
+            <a class="pdf" href="https://arxiv.org/pdf/2506.19792v2.pdf" target="_blank" rel="noopener">PDF ↗</a>
+          </div>
+        </article>
+        <article class="pub reveal">
+          <div class="yr">2025 · Preprint</div>
+          <h3 class="ti">Constructing Fermionic Hamiltonians with Non-Gaussianic low-energy states</h3>
+          <div class="authors">Kartik Anand</div>
+          <div class="plinks">
+            <a class="axv" href="https://arxiv.org/abs/2502.15368" target="_blank" rel="noopener">arXiv:2502.15368</a>
+            <a class="pdf" href="https://arxiv.org/pdf/2502.15368.pdf" target="_blank" rel="noopener">PDF ↗</a>
+          </div>
+        </article>
+        <article class="pub reveal">
+          <div class="yr">2024 · Preprint</div>
+          <h3 class="ti">Feynman's Entangled Paths to Optimized Circuit Design</h3>
+          <div class="authors">Kartik Anand</div>
+          <div class="plinks">
+            <a class="axv" href="https://arxiv.org/abs/2411.08928" target="_blank" rel="noopener">arXiv:2411.08928</a>
+            <a class="pdf" href="https://arxiv.org/pdf/2411.08928.pdf" target="_blank" rel="noopener">PDF ↗</a>
+          </div>
+        </article>
+        <article class="pub reveal">
+          <div class="yr">2024 · Conference</div>
+          <h3 class="ti">Calibration Transfer via Knowledge Distillation</h3>
+          <div class="authors">R. Hebbalaguppe, M. Baranwal, K. Anand, C. Arora · ACCV 2024, pp. 513–530</div>
+          <div class="plinks">
+            <a class="pdf" href="https://openaccess.thecvf.com/content/ACCV2024/papers/Hebbalaguppe_Calibration_Transfer_via_Knowledge_Distillation_ACCV_2024_paper.pdf" target="_blank" rel="noopener">PDF ↗</a>
+          </div>
+        </article>
+      </div>
+
+      <!-- ░ CONTACT ░ -->
+      <div class="nb-head reveal" id="contact">
+        <span class="nb-num">iv.</span>
+        <h2 class="nb-title">Say hi</h2>
+        <svg class="squig" viewBox="0 0 240 12" preserveAspectRatio="none"><path d="M1 6 C 30 11, 50 1, 80 7 S 140 11, 170 5 S 220 1, 239 7"/></svg>
+      </div>
+      <div class="contact">
+        <p class="say reveal">Always happy to talk about Quantum Hamiltonian Complexity, quantum PCP, Quantum Learning Theory, and anything in the same orbit.</p>
+        <div class="links reveal">
+          <a href="mailto:Kartik.anand@tuhh.de">Kartik.anand@tuhh.de</a>
+          <a href="https://k-styles.github.io/" target="_blank" rel="noopener">k-styles.github.io</a>
+          <a href="./frustration.html">Playground ✦</a>
+          <a href="https://scholar.google.com/" target="_blank" rel="noopener">Scholar</a>
+        </div>
+      </div>
+
+      <div class="foot reveal">
+        <span>© 2025 Kartik Anand · Hamburg</span>
+        <span class="hand">drawn between proofs.</span>
+        <span><a href="./plain.html">Plain version</a></span>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function(){
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const smooth=o=>o*o*(3-2*o);
+
+  const track=document.getElementById('track');
+  const cue=document.getElementById('cue');
+  const cornerL=document.getElementById('cornerL');
+  const bar=document.getElementById('bar');
+  const beats=[...document.querySelectorAll('.beat')];
+
+  // build chapter list from the DOM layers
+  const chapters=[...document.querySelectorAll('.layer')].map(el=>{
+    const v=el.querySelector('video');
+    return {el, v, dur:0, ready:false, cur:0, tgt:0, op:0, src:el.dataset.src};
+  });
+  const interlude=document.getElementById('interlude');
+
+  // taller track = each clip is spread over more scroll = SLOWER head motion
+  track.style.height='820vh';
+
+  // ── phase timeline over global scroll progress p∈[0,1] ──
+  //  [0      .26] clip-1 scrubs   (the river)
+  //  [.26   .33]  clip-1 recedes + blurs into a broken/bokeh background
+  //  [.33   .56]  INTERLUDE  — text section over the bokeh field
+  //  [.56   .70]  DISSOLVE — blurred clip-1 fades out as clip-2 emerges & sharpens
+  //               (clip-1 stays soft through the swap, so no pose-pop / frame gap)
+  //  [.70    1 ]  clip-2 resumes & scrubs   (the board)
+  const PH={ v1:0.26, blur:0.33, inter:0.56, diss:0.70 };
+  const lerp=(a,b,t)=>a+(b-a)*clamp(t,0,1);
+  const seg=(p,a,b)=>clamp((p-a)/(b-a),0,1);
+
+  // ── loader ──
+  const loader=document.getElementById('loader');
+  const loadFill=document.getElementById('loadFill');
+  let hidden=false;
+  function hideLoader(){ if(hidden)return; hidden=true; loader.classList.add('hide'); }
+  function setFill(p){ loadFill.style.width=Math.round(clamp(p,0,1)*100)+'%'; }
+
+  chapters.forEach((c)=>{
+    c.v.addEventListener('loadedmetadata',()=>{ c.dur=c.v.duration||10; c.ready=true; });
+    c.v.addEventListener('canplay',()=>{ c.v.play().then(()=>c.v.pause()).catch(()=>{}); },{once:true});
+    c.v.src=c.src;
+    c.v.load();
+  });
+  const c0=chapters[0];
+  c0.v.addEventListener('progress',()=>{
+    try{ if(c0.v.buffered.length){ setFill(c0.v.buffered.end(0)/(c0.v.duration||10)); } }catch(e){}
+  });
+  c0.v.addEventListener('canplaythrough',()=>{ setFill(1); setTimeout(hideLoader,250); },{once:true});
+  setTimeout(()=>{ setFill(1); hideLoader(); },6500); // safety net
+
+  // ── scroll → progress ──
+  function globalP(){
+    const top=track.offsetTop;
+    const scrollable=track.offsetHeight-window.innerHeight;
+    return clamp((window.scrollY-top)/scrollable,0,1);
+  }
+
+  function onScroll(){
+    const p=globalP();
+    bar.style.width=(p*100).toFixed(2)+'%';
+    const c0=chapters[0], c1=chapters[1];
+    const D0=(c0.dur||10)-0.05, D1=(c1.dur||10)-0.05;
+
+    // reset depth state
+    c0.op=0;c0.scale=1;c0.blur=0;c0.z=2;
+    c1.op=0;c1.scale=1;c1.blur=0;c1.z=1;
+    let interOp=0, corner="Worldline · ’19—’25";
+
+    if(p<PH.v1){                                   // clip-1 scrubs
+      c0.op=1; c0.tgt=seg(p,0,PH.v1)*D0;
+    } else if(p<PH.blur){                          // clip-1 recedes into bokeh
+      const u=seg(p,PH.v1,PH.blur);
+      c0.op=lerp(1,0.42,u); c0.scale=lerp(1,0.86,u); c0.blur=lerp(0,9,u); c0.tgt=D0;
+      corner="a pause in the proof";
+    } else if(p<PH.inter){                         // the interlude (text over bokeh)
+      c0.op=0.42; c0.scale=0.86; c0.blur=9; c0.tgt=D0;
+      // fade IN only and HOLD at 1 — the dissolve below owns the fade-out,
+      // so the text never blinks off-and-on-again at the phase boundary
+      interOp=clamp(seg(p,PH.blur,PH.blur+0.12)*1,0,1);
+      corner="a pause in the proof";
+    } else if(p<PH.diss){                          // DISSOLVE: blurred clip-1 → clip-2
+      // clip-1 NEVER refocuses here — it stays soft and just fades out, while
+      // clip-2 emerges already a touch blurred and sharpens. the cross-blur hides
+      // the pose change between clip-1's end and clip-2's start (no frame-pop).
+      const u=smooth(seg(p,PH.inter,PH.diss));
+      c0.op=lerp(0.42,0,u); c0.scale=0.86; c0.blur=9; c0.z=1; c0.tgt=D0;
+      c1.op=u; c1.scale=lerp(1.04,1,u); c1.blur=lerp(6,0,u); c1.z=3; c1.tgt=0;
+      interOp=clamp(1-u/0.30,0,1);                 // continuous fade-out from 1
+      corner = interOp>0.05 ? "a pause in the proof" : "At the board · Hamburg";
+    } else {                                       // clip-2 resumes & scrubs
+      c1.op=1; c1.z=2; c1.tgt=seg(p,PH.diss,1)*D1;
+      c0.op=0; corner="At the board · Hamburg";
+    }
+
+    chapters.forEach(c=>{
+      c.el.style.opacity=c.op.toFixed(3);
+      c.el.style.zIndex=c.z;
+      c.el.style.transform='scale('+c.scale.toFixed(3)+')';
+      c.el.style.filter=c.blur>0.05?('blur('+c.blur.toFixed(2)+'px)'):'none';
+    });
+    interlude.style.opacity=smooth(interOp).toFixed(3);
+    interlude.style.transform='translate(-50%,-50%) translateY('+((1-interOp)*22).toFixed(1)+'px)';
+
+    // beats by GLOBAL progress; suppressed while the interlude owns the screen
+    beats.forEach(b=>{
+      const ctr=+b.dataset.p, w=+b.dataset.width;
+      let o=clamp(1-Math.abs(p-ctr)/w,0,1);
+      if(interOp>0.05) o=0;
+      b.style.opacity=smooth(o).toFixed(3);
+    });
+
+    cue.style.opacity = p<0.04 ? '0.7' : '0';
+    cornerL.textContent=corner;
+  }
+
+  function loop(){
+    chapters.forEach(c=>{
+      if(!c.ready || c.op<=0.01) return;
+      // ease toward the scroll target
+      c.cur += (c.tgt-c.cur)*0.2;
+      // only issue a new seek once the previous one has LANDED.
+      // setting currentTime while v.seeking is true makes the browser
+      // cancel/queue seeks → the picture appears frozen. gating on the
+      // built-in flag paces scrubbing to the decoder and stays fluid.
+      if(!c.v.seeking && Math.abs(c.cur-c.v.currentTime)>0.01){
+        try{ c.v.currentTime=c.cur; }catch(e){}
+      }
+    });
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',onScroll);
+  onScroll(); loop();
+
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:0.18});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{ el.style.transitionDelay=(i%4*0.06)+'s'; io.observe(el); });
+})();
+</script>
 </body>
 </html>
