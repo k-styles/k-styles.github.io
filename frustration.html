@@ -286,6 +286,8 @@ button.act:focus-visible { outline: 2px solid var(--quantum); outline-offset: 2p
 .ls-head .temp.hot { color: var(--strain); }
 #lsSvg { width: 100%; height: auto; display: block; }
 .ls-cap { font-size: 0.66rem; color: rgba(150,175,220,0.5); margin-top: 0.25rem; font-style: italic; }
+.temp-bar { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--entangle); text-align: center; min-height: 1em; margin-top: 0.6rem; }
+.temp-bar.hot { color: var(--strain); }
 
 /* disorder controls (spin-glass levels only) */
 .glass-only { display: none; }
@@ -479,16 +481,8 @@ footer a:hover { text-decoration: underline; }
           <button class="act glass-only" id="shuffleBtn">New&nbsp;disorder</button>
           <button class="act primary" id="annealBtn">Quantum&nbsp;Anneal</button>
         </div>
+        <div class="temp-bar" id="tempLabel"></div>
       </div>
-    </div>
-
-    <div class="landscape">
-      <div class="ls-head">
-        <span>Energy landscape</span>
-        <span class="temp" id="tempLabel">cool</span>
-      </div>
-      <svg id="lsSvg" viewBox="0 0 600 120" role="img" aria-label="Cartoon of the energy landscape with a marker for the current state"></svg>
-      <div class="ls-cap">A cartoon of the rugged landscape. Lower the energy and the marker drops into a deeper valley.</div>
     </div>
 
     <div class="legend">
@@ -524,10 +518,6 @@ footer a:hover { text-decoration: underline; }
       </div>
     </div>
 
-    <div class="callout">
-      <p><strong>Add disorder and you get a spin glass.</strong> Mix the bond types at random (try the <em>Spin glass</em> puzzles, and hit New disorder for a fresh one) and the landscape turns rugged. There are countless almost best valleys, no clean pattern, and the system freezes wherever it lands. Disorder plus frustration is what makes a <span class="term">glass</span>, and that same ruggedness is what makes real optimization hard.</p>
-    </div>
-
     <div class="eyebrow" style="margin-top:2.4rem">Deeper, inside the glass phase</div>
     <p class="big" style="font-size:1.12rem">
       Push the disorder and cool it down. The low energy states reorganise in two famous ways. Drag the sliders.
@@ -544,6 +534,19 @@ footer a:hover { text-decoration: underline; }
         is tiny and sits far from the rest. Local moves get trapped inside a single cluster, so simple dynamics
         stall and the system stops exploring. You see this in real glasses and in random problems like SAT and
         graph colouring.
+      </p>
+    </div>
+
+    <div class="glassfig">
+      <div class="gf-head"><h3>Trapped in a cluster</h3><span class="gf-sub" id="stuckSub">stuck</span></div>
+      <svg id="stuckSvg" viewBox="0 0 600 240" role="img" aria-label="A walker trapped inside one cluster, unable to cross to the ground state cluster"></svg>
+      <input type="range" id="stuckCtl" class="gf-slider" min="2" max="40" value="6" aria-label="number of clusters">
+      <p class="gf-cap">
+        The walker only makes small local moves, so it stays inside the cluster it started in. The barriers
+        between clusters are too high to cross, and the ground state lives in a different cluster (in teal),
+        so the walker never reaches it. Random restarts drop it into a random cluster, but with this many the
+        odds of hitting the right one are about 1 in <span id="stuckK">6</span>. Push the slider up. When the
+        clusters grow exponentially, restarting stops working.
       </p>
     </div>
 
@@ -723,6 +726,7 @@ footer a:hover { text-decoration: underline; }
       lsBallPos = {x:300,y:60}, lsTarget = {x:300,y:60}, lsN = 80;
 
   function buildLandscape() {
+    if (!lsSvg) return;
     const rnd = seeded(curLevel*7919 + instanceSeed*523 + 31);
     const a1 = 10+rnd()*16, a2 = 6+rnd()*12, a3 = 3+rnd()*9;
     const p1 = rnd()*6.283, p2 = rnd()*6.283, p3 = rnd()*6.283;
@@ -1148,6 +1152,68 @@ footer a:hover { text-decoration: underline; }
       if (!manual){ a += dir*0.0016; if (a>=1){a=1;dir=-1;} if (a<=0){a=0;dir=1;} ctl.value = Math.round(a*100); }
       draw();
       requestAnimationFrame(loop);
+    })();
+  })();
+
+  /* ============ TRAPPED IN A CLUSTER ============ */
+  (function trapped(){
+    const svg=$("stuckSvg"), sub=$("stuckSub"), ctl=$("stuckCtl"), kspan=$("stuckK");
+    if(!svg) return;
+    const W=600,H=240,pad=28;
+    let K=6, clusters=[], gIdx=0, cur=0, ox=0, oy=0, tries=1, timer=0, mode="walk", walker=null;
+
+    function build(){
+      svg.innerHTML="";
+      const r=rng(7000+K*13);
+      const cols=Math.ceil(Math.sqrt(K)), rows=Math.ceil(K/cols);
+      const cw=(W-2*pad)/cols, ch=(H-2*pad)/rows;
+      const rad=Math.max(8, Math.min(cw,ch)*0.34);
+      clusters=[];
+      for(let i=0;i<K;i++){
+        const gx=i%cols, gy=(i/cols|0);
+        clusters.push({ x:pad+cw*(gx+0.5)+(r()-0.5)*cw*0.25, y:pad+ch*(gy+0.5)+(r()-0.5)*ch*0.25, rad });
+      }
+      gIdx=(K*0.42|0)%K;
+      clusters.forEach((c,i)=>{
+        const isG=i===gIdx;
+        svg.appendChild(mk("circle",{cx:c.x.toFixed(1),cy:c.y.toFixed(1),r:rad.toFixed(1),
+          fill:isG?"rgba(69,212,189,0.10)":"rgba(90,171,255,0.05)",
+          stroke:isG?C.teal:"rgba(120,160,255,0.28)","stroke-width":isG?1.6:1}));
+        const md=Math.min(4, Math.max(2,(40/K|0)));
+        for(let k=0;k<md;k++){ const ang=r()*6.283, rr=r()*rad*0.7;
+          svg.appendChild(mk("circle",{cx:(c.x+Math.cos(ang)*rr).toFixed(1),cy:(c.y+Math.sin(ang)*rr).toFixed(1),
+            r:2, fill:isG?C.teal:C.purple, "fill-opacity":0.5})); }
+      });
+      const gt=mk("text",{x:clusters[gIdx].x.toFixed(1),y:(clusters[gIdx].y-rad-5).toFixed(1),"text-anchor":"middle",class:"gf-axis"});
+      gt.textContent="ground state cluster"; gt.style.fill=C.teal; svg.appendChild(gt);
+      walker=mk("circle",{r:5.5,fill:C.blue}); walker.style.filter="drop-shadow(0 0 6px rgba(90,171,255,0.7))"; svg.appendChild(walker);
+      cur=(gIdx+1)%K; if(cur===gIdx)cur=(cur+1)%K;
+      ox=0; oy=0; tries=1; mode="walk"; timer=0;
+      if(kspan) kspan.textContent=K;
+      place(); setSub();
+    }
+    function place(){ const c=clusters[cur]; walker.setAttribute("cx",(c.x+ox).toFixed(1)); walker.setAttribute("cy",(c.y+oy).toFixed(1)); }
+    function setSub(){ const inG=cur===gIdx;
+      sub.textContent = inG ? ("found it after "+tries+" runs") : ("run "+tries+", stuck in a cluster");
+      sub.style.color = inG ? C.teal : C.pink;
+      walker.setAttribute("fill", inG?C.teal:C.blue);
+    }
+    ctl.addEventListener("input",()=>{ K=parseInt(ctl.value,10); build(); });
+
+    build();
+    if(reduced) return;
+    (function step(){
+      if(mode==="walk"){
+        const c=clusters[cur];
+        ox+=(Math.random()-0.5)*c.rad*0.45; oy+=(Math.random()-0.5)*c.rad*0.45;
+        const d=Math.hypot(ox,oy)||1, lim=c.rad*0.76;
+        if(d>lim){ ox=ox/d*lim; oy=oy/d*lim; }   // bounce off the barrier, cannot leave
+        place(); timer++;
+        if(timer>95){ mode="jump"; timer=0; }
+      } else {
+        cur=(Math.random()*K)|0; ox=0; oy=0; if(cur!==gIdx) tries++; mode="walk"; setSub();
+      }
+      requestAnimationFrame(step);
     })();
   })();
 
