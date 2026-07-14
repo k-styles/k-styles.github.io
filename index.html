@@ -118,6 +118,14 @@ header {
   flex-direction: column;
   gap: 0.55rem;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.photo-slot .profile-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .photo-slot span {
@@ -163,8 +171,10 @@ header {
 
 nav {
   display: flex;
+  align-items: center;
   gap: 2rem;
   padding: 1.5rem 0 0;
+  flex-wrap: wrap;
 }
 nav a {
   font-size: 0.76rem;
@@ -178,6 +188,21 @@ nav a {
 nav a:hover { color: var(--quantum); }
 nav a.nav-fun { color: rgba(180,155,255,0.78); }
 nav a.nav-fun:hover { color: var(--entangle); }
+
+/* Contact call-to-action button, sits right after Playground */
+nav a.nav-contact {
+  color: var(--quantum);
+  border: 1px solid var(--rule-bright);
+  border-radius: 2px;
+  padding: 0.35rem 0.9rem;
+  background: var(--quantum-dim);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+nav a.nav-contact:hover {
+  background: rgba(90,171,255,0.28);
+  border-color: var(--quantum);
+  color: #dbeeff;
+}
 
 /* ── SECTIONS ── */
 section {
@@ -403,8 +428,8 @@ footer a:hover { text-decoration: underline; }
           <a href="#about">About</a>
           <a href="#publications">Publications</a>
           <a href="blogs.html">Blog</a>
-          <a href="frustration.html" class="nav-fun">Playground&#8202;✦</a>
-          <a href="mailto:Kartik.anand@tuhh.de">Contact</a>
+          <a href="frustration.html" class="nav-fun">Playground&#8202;&#10022;</a>
+          <a href="mailto:Kartik.anand@tuhh.de" class="nav-contact">Contact</a>
         </nav>
       </div>
 
