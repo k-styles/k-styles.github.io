@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Frustration Game — Kartik Anand</title>
-<meta name="description" content="A playable introduction to ground states, frustration, and quantum Hamiltonian complexity.">
+<meta name="description" content="Spin puzzles about ground states, frustration, and why finding the minimum gets hard.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -448,10 +448,11 @@ footer a:hover { text-decoration: underline; }
   <div class="hero">
     <h1>The <em>Frustration</em> Game</h1>
     <p class="lede">
-      Every dot is a spin, up or down. Every line is a rule. Some bonds want their two spins to
-      <strong>match</strong>, some want them to <strong>differ</strong>. Flip spins to satisfy as many rules
-      as you can and reach the <strong>ground state</strong>, the lowest energy arrangement. It starts easy.
-      Then you hit a shape where you cannot please everyone at once. That feeling is <em>frustration</em>.
+      Every dot is a spin, up or down. Every line is a rule: some bonds want their two spins to
+      <strong>match</strong>, others want them to <strong>differ</strong>. Flip spins until as many rules
+      as possible are satisfied and you've found the <strong>ground state</strong>, the lowest energy
+      arrangement. The first few boards are easy. Somewhere around the triangle you hit a shape where no
+      arrangement works at all. Physicists call that <em>frustration</em>.
     </p>
   </div>
 
@@ -498,42 +499,40 @@ footer a:hover { text-decoration: underline; }
     <div class="eyebrow">The idea behind the game</div>
 
     <p class="big">
-      The board is a <span class="term">Hamiltonian</span>. It is a stack of small local rules, and each one
-      scores two spins. The lowest total score is the <span class="term">ground state</span>, and finding it
-      is the whole game.
+      The board is a <span class="term">Hamiltonian</span>: a pile of small local terms, each one scoring a
+      single pair of spins. Minimise the total and you've found the <span class="term">ground state</span>.
     </p>
 
     <div class="cards">
       <div class="card">
         <h3>Frustration</h3>
-        <p>An odd loop of opposite wanting bonds can never be fully happy. Some bond always loses. The rules are simple, but there is no perfect answer. That is why the big lattices get hard.</p>
+        <p>Take an odd loop where every bond wants disagreement. Walk around it and you come back to a contradiction, so some bond has to lose. No individual rule is complicated. The difficulty is entirely in the compromise.</p>
       </div>
       <div class="card">
         <h3>The quantum jump</h3>
-        <p>Let the spins go quantum, so they can be superposed and entangled. Now even estimating the ground energy is <span class="term">QMA complete</span>, the quantum cousin of NP complete.</p>
+        <p>Let the spins be quantum, so they can superpose and entangle. Estimating the ground energy then becomes <span class="term">QMA complete</span>, roughly the quantum analogue of NP complete.</p>
       </div>
       <div class="card">
         <h3>Still open</h3>
-        <p>Does even a rough estimate stay this hard? That is the <a href="https://arxiv.org/abs/1309.7495" target="_blank" rel="noopener">quantum PCP conjecture</a>. Nobody has proved it, and that is why this corner stays alive.</p>
+        <p>Does it stay hard when a rough estimate is all you want? That's the <a href="https://arxiv.org/abs/1309.7495" target="_blank" rel="noopener">quantum PCP conjecture</a>, unresolved for over a decade.</p>
       </div>
     </div>
 
     <div class="eyebrow" style="margin-top:2.4rem">Deeper, inside the glass phase</div>
     <p class="big" style="font-size:1.12rem">
-      Push the disorder and cool it down. The low energy states reorganise in two famous ways. Drag the sliders.
+      Turn up the disorder and cool it down. The low energy states reorganise in two well known ways. Drag the sliders.
     </p>
 
     <div class="glassfig">
       <div class="gf-head"><h3>Shattering</h3><span class="gf-sub" id="shatterSub">one connected basin</span></div>
       <svg id="shatterSvg" viewBox="0 0 600 230" role="img" aria-label="Solution space fragmenting into clusters as disorder increases"></svg>
       <canvas id="shatterMap" role="img" aria-label="Energy landscape as a 2D map, growing peaks at the clusters as it cools"></canvas>
-      <div class="gf-cap" style="margin-top:0.35rem">The map below is the same landscape from above. Cool it down and peaks rise where the clusters sit.</div>
+      <div class="gf-cap" style="margin-top:0.35rem">Same landscape seen from above. Cool it and peaks rise where the clusters sit.</div>
       <input type="range" id="shatterCtl" class="gf-slider" min="0" max="100" value="6" aria-label="disorder">
       <p class="gf-cap">
-        Below the <b>clustering transition</b>, the set of low energy states breaks into many clusters. Each one
-        is tiny and sits far from the rest. Local moves get trapped inside a single cluster, so simple dynamics
-        stall and the system stops exploring. You see this in real glasses and in random problems like SAT and
-        graph colouring.
+        Below the <b>clustering transition</b> the set of low energy states breaks into many clusters, each
+        one tiny and far from the others. Local moves can't get out of the cluster they start in, so simple
+        dynamics stall. Real glasses do this, and so do random SAT and random graph colouring.
       </p>
     </div>
 
@@ -542,11 +541,11 @@ footer a:hover { text-decoration: underline; }
       <svg id="stuckSvg" viewBox="0 0 600 240" role="img" aria-label="A walker trapped inside one cluster, unable to cross to the ground state cluster"></svg>
       <input type="range" id="stuckCtl" class="gf-slider" min="2" max="40" value="6" aria-label="number of clusters">
       <p class="gf-cap">
-        The walker only makes small local moves, so it stays inside the cluster it started in. The barriers
-        between clusters are too high to cross, and the ground state lives in a different cluster (in teal),
-        so the walker never reaches it. Random restarts drop it into a random cluster, but with this many the
-        odds of hitting the right one are about 1 in <span id="stuckK">6</span>. Push the slider up. When the
-        clusters grow exponentially, restarting stops working.
+        The walker only makes small local moves, so it never leaves the cluster it started in. The barriers
+        are too high to cross and the ground state lives somewhere else (in teal), so it never arrives.
+        A restart drops it into a random cluster, which at this size gives it roughly a 1 in
+        <span id="stuckK">6</span> shot. Push the slider up. Once the cluster count grows exponentially,
+        restarting stops being a strategy.
       </p>
     </div>
 
@@ -558,42 +557,42 @@ footer a:hover { text-decoration: underline; }
       </div>
       <input type="range" id="rsbCtl" class="gf-slider" min="0" max="100" value="4" aria-label="replica symmetry breaking">
       <p class="gf-cap">
-        The Gibbs measure splits into many <b>pure states</b>, and they organise into a hierarchy. On the left,
-        that hierarchy is an <b>ultrametric</b> tree. On the right, the overlap <code>q</code> between two
-        independent replicas stops being one fixed number. Its distribution <b>P(q)</b> widens from a single
-        spike at <code>q<sub>EA</sub></code> into a whole spread of values down to small <code>q</code>. That
+        The Gibbs measure splits into many <b>pure states</b> arranged in a hierarchy, and on the left that
+        hierarchy is an <b>ultrametric</b> tree. On the right, the overlap <code>q</code> between two
+        independent replicas stops being one fixed number: <b>P(q)</b> widens from a single spike at
+        <code>q<sub>EA</sub></code> into a spread of values reaching down to small <code>q</code>. That
         function is Parisi's order parameter.
       </p>
     </div>
 
     <div class="eyebrow" style="margin-top:2.4rem">Why the lowest energy state matters</div>
-    <p class="big" style="font-size:1.12rem">Hunting for ground states is not a toy. The same math shows up everywhere.</p>
+    <p class="big" style="font-size:1.12rem">The same optimisation problem turns up well outside physics.</p>
 
     <div class="cards two">
       <div class="card">
         <h3>Optimization</h3>
-        <p>Routing, scheduling, and MAX CUT all map straight onto spins like these. Quantum annealers such as D Wave hunt for exactly these minima.</p>
+        <p>Routing, scheduling and MAX CUT map straight onto spins like these. Annealers such as D-Wave are built to search for exactly these minima.</p>
       </div>
       <div class="card">
         <h3>Magnets and materials</h3>
-        <p>The resting state of a real magnet or material is the ground state of its Hamiltonian. Predict one and you predict the other.</p>
+        <p>A real magnet or material at low temperature sits in the ground state of its Hamiltonian. Predicting the state is predicting the material.</p>
       </div>
       <div class="card">
         <h3>Memory and learning</h3>
-        <p>Hopfield networks store memories as energy minima. Recalling one is just rolling downhill into the nearest valley.</p>
+        <p>Hopfield networks store memories as energy minima. Recall is downhill motion into the nearest valley.</p>
       </div>
       <div class="card">
         <h3>Quantum simulation</h3>
-        <p>Ground state energies drive chemistry and materials design. That is one of the main reasons to build a quantum computer at all.</p>
+        <p>Ground state energies are what chemistry and materials design actually need, and one of the better arguments for building a quantum computer.</p>
       </div>
     </div>
 
     <div class="callout">
-      <p><strong>The anneal button</strong> heats the system so spins can jump out of bad spots, then slowly cools it until everything settles low. That is simulated annealing. Real quantum annealers do the same thing, but they tunnel through barriers instead of hopping over them.</p>
+      <p><strong>Anneal</strong> heats the system so spins can hop out of bad configurations, then cools it slowly until things settle low. That's simulated annealing, and it's entirely classical. A real quantum annealer tunnels through the barriers instead of climbing over them.</p>
     </div>
 
     <div class="closing">
-      More on the work at the <a href="index.html">main page</a>, the <a href="blogs.html">writing</a>, or just <a href="mailto:Kartik.anand@tuhh.de">say hi</a>.
+      More at the <a href="index.html">main page</a> or the <a href="blogs.html">writing</a>. Or <a href="mailto:Kartik.anand@tuhh.de">email me</a>.
     </div>
   </div>
 
@@ -615,59 +614,59 @@ footer a:hover { text-decoration: underline; }
   // Glass levels define `edges` + glass:true; their bond signs are randomised on load.
   const LEVELS = [
     { name: "Pair",
-      blurb: "Two spins and one rule. This bond wants them to match. Tap a spin to flip it.",
+      blurb: "Two spins, one rule. This bond wants them to match. Tap a spin to flip it.",
       nodes: [[225,210],[375,210]],
       bonds: [[0,1,-1]] },
     { name: "Chain",
-      blurb: "A row where every neighbour wants to disagree. There is a clean answer here.",
+      blurb: "A row where every neighbour wants to disagree. Alternate them and you're done.",
       nodes: [[120,210],[260,210],[400,210],[540,210]],
       bonds: [[0,1,1],[1,2,1],[2,3,1]] },
     { name: "Square",
-      blurb: "Four spins in a loop, all wanting opposites. An even loop can still please everyone.",
+      blurb: "Four spins in a loop, all wanting opposites. Even loops close cleanly.",
       nodes: [[230,120],[370,120],[370,300],[230,300]],
       bonds: [[0,1,1],[1,2,1],[2,3,1],[3,0,1]] },
     { name: "Hexagon",
-      blurb: "Six in a ring, all wanting opposites. The loop is even, so it works out.",
+      blurb: "Six in a ring. Still an even loop, so the alternating pattern survives.",
       nodes: [[300,80],[413,145],[413,275],[300,340],[187,275],[187,145]],
       bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1]] },
     { name: "Triangle",
-      blurb: "Three spins, all wanting to disagree. One bond always loses.",
+      blurb: "Three spins, all wanting to disagree. Go around the loop and you contradict yourself.",
       nodes: [[300,110],[200,300],[400,300]],
       bonds: [[0,1,1],[1,2,1],[2,0,1]] },
     { name: "Pentagon",
-      blurb: "Any odd ring of opposite wanting bonds gets stuck, not just the triangle.",
+      blurb: "Any odd ring breaks the same way. The triangle isn't a special case.",
       nodes: [[300,95],[414,178],[370,312],[230,312],[186,178]],
       bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,0,1]] },
     { name: "House",
-      blurb: "A square with a roof. The roof adds a triangle, and that triangle gets stuck.",
+      blurb: "A square with a roof. The roof is a triangle, and the triangle is stuck.",
       nodes: [[230,300],[370,300],[370,180],[230,180],[300,90]],
       bonds: [[0,1,1],[1,2,1],[2,3,1],[3,0,1],[3,4,1],[2,4,1]] },
     { name: "Mixed signs",
-      blurb: "Three bonds want opposites and one wants a match. An odd count of opposite bonds still breaks the loop.",
+      blurb: "Three bonds want opposites, one wants a match. What matters is that the count of opposite bonds is odd.",
       nodes: [[230,120],[370,120],[370,300],[230,300]],
       bonds: [[0,1,1],[1,2,1],[2,3,1],[3,0,-1]] },
     { name: "Bowtie",
-      blurb: "Two triangles sharing one spin. You settle two frustrations at once.",
+      blurb: "Two triangles sharing a spin. Settle both frustrations at once.",
       nodes: [[300,210],[180,130],[180,290],[420,130],[420,290]],
       bonds: [[0,1,1],[1,2,1],[2,0,1],[0,3,1],[3,4,1],[4,0,1]] },
     { name: "Grid 3\u00d73",
-      blurb: "It looks big, but a square grid is even all over, so a perfect checkerboard exists.",
+      blurb: "Bigger, but a square grid has no odd loops, so the checkerboard works.",
       nodes: [[180,90],[300,90],[420,90],[180,210],[300,210],[420,210],[180,330],[300,330],[420,330]],
       bonds: [[0,1,1],[1,2,1],[3,4,1],[4,5,1],[6,7,1],[7,8,1],[0,3,1],[3,6,1],[1,4,1],[4,7,1],[2,5,1],[5,8,1]] },
     { name: "Triangular",
-      blurb: "A hub ringed by triangles. Every small triangle fights and nothing comes out clean.",
+      blurb: "A hub ringed by triangles. Every triangle fights, and they can't all be settled.",
       nodes: [[300,210],[420,210],[360,106],[240,106],[180,210],[240,314],[360,314]],
       bonds: [[0,1,1],[0,2,1],[0,3,1],[0,4,1],[0,5,1],[0,6,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,6,1],[6,1,1]] },
     { name: "Big lattice",
-      blurb: "Ten spins and nineteen fighting bonds. Hard to crack by hand, so let it anneal.",
+      blurb: "Ten spins, nineteen fighting bonds. Not really doable by hand. Anneal it.",
       nodes: [[210,110],[300,110],[390,110],[165,188],[255,188],[345,188],[435,188],[210,266],[300,266],[390,266]],
       bonds: [[0,1,1],[1,2,1],[3,4,1],[4,5,1],[5,6,1],[7,8,1],[8,9,1],[0,3,1],[0,4,1],[1,4,1],[1,5,1],[2,5,1],[2,6,1],[3,7,1],[4,7,1],[4,8,1],[5,8,1],[5,9,1],[6,9,1]] },
     { name: "Spin glass", glass: true,
-      blurb: "Random rules on a tidy grid. The disorder alone makes it glassy. Hit New disorder for a fresh one.",
+      blurb: "Random rules on a tidy grid. No odd geometry needed, the disorder does it. Hit New disorder for another instance.",
       nodes: [[180,90],[300,90],[420,90],[180,210],[300,210],[420,210],[180,330],[300,330],[420,330]],
       edges: [[0,1],[1,2],[3,4],[4,5],[6,7],[7,8],[0,3],[3,6],[1,4],[4,7],[2,5],[5,8]] },
     { name: "Frozen glass", glass: true,
-      blurb: "Disorder on a triangular web, so random rules and geometry both fight. Very rugged. Let it anneal.",
+      blurb: "Random rules on a triangular web, so disorder and geometry both fight. Very rugged. Anneal it.",
       nodes: [[300,210],[420,210],[360,106],[240,106],[180,210],[240,314],[360,314]],
       edges: [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[1,2],[2,3],[3,4],[4,5],[5,6],[6,1]] }
   ];
@@ -884,12 +883,12 @@ footer a:hover { text-decoration: underline; }
     if (E === groundE) {
       if (frustrated) {
         const red = BONDS.length - satCount;
-        const redTxt = red === 1 ? "one bond stays red" : red + " bonds stay red";
+        const redTxt = red === 1 ? "one bond is still red" : red + " bonds are still red";
         statusEl.classList.add("frustrated");
-        statusEl.innerHTML = "Ground state reached. Still, " + redTxt + ". <strong>That is frustration.</strong> Even the best arrangement cannot make every rule happy.";
+        statusEl.innerHTML = "Lowest energy, and " + redTxt + ". Nothing does better than this. <strong>The board is frustrated.</strong>";
       } else {
         statusEl.classList.add("win");
-        statusEl.innerHTML = "Ground state reached. Every rule is happy. This is the lowest energy state.";
+        statusEl.innerHTML = "Ground state. Every rule satisfied.";
       }
       if (!annealing && !solvedSet.has(curLevel)) {
         solvedSet.add(curLevel);
@@ -897,7 +896,7 @@ footer a:hover { text-decoration: underline; }
       }
     } else {
       const gap = E - groundE;
-      statusEl.textContent = "Above the ground state by " + gap + ". Keep flipping, or let it anneal.";
+      statusEl.textContent = gap + " above the ground state. Keep flipping, or anneal it.";
     }
   }
 
