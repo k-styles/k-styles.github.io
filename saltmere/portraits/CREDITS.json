@@ -1,0 +1,91 @@
+[
+  {
+    "file": "portrait_00.jpg",
+    "title": "Portrait of the Artist",
+    "artist": "John Vanderlyn",
+    "date": "1800",
+    "credit": "Bequest of Ann S. Stephens, in memory of her mother, Mrs. Ann S. Stephens, 1918",
+    "url": "https://www.metmuseum.org/art/collection/search/13053",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "portrait_01.jpg",
+    "title": "Portrait of a Woman",
+    "artist": "Henri Fantin-Latour",
+    "date": "1885",
+    "credit": "Catharine Lorillard Wolfe Collection, Wolfe Fund, 1910",
+    "url": "https://www.metmuseum.org/art/collection/search/436295",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "portrait_02.jpg",
+    "title": "Portrait of Monsieur Aublet",
+    "artist": "Guillaume Voiriot",
+    "date": "ca. 1782",
+    "credit": "Gift of The Bradford & Dorothea Endicott Foundation, 2007",
+    "url": "https://www.metmuseum.org/art/collection/search/505722",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "portrait_03.jpg",
+    "title": "Self-Portrait with Two Pupils, Marie Gabrielle Capet (1761\u20131818) and Marie Marguerite Carraux de Rosemond (1765\u20131788)",
+    "artist": "Ad\u00e9la\u00efde Labille-Guiard",
+    "date": "1785",
+    "credit": "Gift of Julia A. Berwind, 1953",
+    "url": "https://www.metmuseum.org/art/collection/search/436840",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "portrait_04.jpg",
+    "title": "Portrait of a Man",
+    "artist": "Gustave Courbet",
+    "date": "probably ca. 1862",
+    "credit": "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
+    "url": "https://www.metmuseum.org/art/collection/search/436019",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "portrait_05.jpg",
+    "title": "Portrait of a Young Woman",
+    "artist": "Mather Brown",
+    "date": "1801",
+    "credit": "Gift of Caroline Newhouse, 1965",
+    "url": "https://www.metmuseum.org/art/collection/search/10247",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "portrait_06.jpg",
+    "title": "Self-Portrait with a Harp",
+    "artist": "Rose Ad\u00e9la\u00efde Ducreux",
+    "date": "1791",
+    "credit": "Bequest of Susan Dwight Bliss, 1966",
+    "url": "https://www.metmuseum.org/art/collection/search/436222",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "portrait_07.jpg",
+    "title": "Portrait of a Boy",
+    "artist": "Louis L\u00e9opold Boilly",
+    "date": "ca. 1805",
+    "credit": "Gift of the Eugene V. and Clare E. Thaw Charitable Trust, 2019",
+    "url": "https://www.metmuseum.org/art/collection/search/817504",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "portrait_08.jpg",
+    "title": "Portrait of the Artist",
+    "artist": "George P. A. Healy",
+    "date": "1851",
+    "credit": "Gift of Samuel P. Avery, 1891",
+    "url": "https://www.metmuseum.org/art/collection/search/11058",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  },
+  {
+    "file": "christ.jpg",
+    "title": "Christ Crowned with Thorns",
+    "artist": "Antonello da Messina (Antonello di Giovanni d'Antonio)",
+    "date": "",
+    "url": "https://www.metmuseum.org/art/collection/search/435580",
+    "licence": "CC0 Public Domain \u2014 The Metropolitan Museum of Art, Open Access"
+  }
+]

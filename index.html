@@ -189,6 +189,23 @@ nav a:hover { color: var(--quantum); }
 nav a.nav-fun { color: rgba(180,155,255,0.78); }
 nav a.nav-fun:hover { color: var(--entangle); }
 
+/* Games button. Shares the Contact pill's geometry so it belongs to the same
+   set, but takes the warm accent already used by News rather than borrowing
+   Playground's purple — the two are different things and should not look alike. */
+nav a.nav-games {
+  color: var(--news-accent);
+  border: 1px solid rgba(240,192,96,0.26);
+  border-radius: 2px;
+  padding: 0.35rem 0.9rem;
+  background: rgba(240,192,96,0.10);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+nav a.nav-games:hover {
+  background: rgba(240,192,96,0.20);
+  border-color: rgba(240,192,96,0.55);
+  color: #ffe0a8;
+}
+
 /* Contact call-to-action button, sits right after Playground */
 nav a.nav-contact {
   color: var(--quantum);
@@ -429,6 +446,7 @@ footer a:hover { text-decoration: underline; }
           <a href="#publications">Publications</a>
           <a href="blogs.html">Blog</a>
           <a href="frustration.html" class="nav-fun">Playground&#8202;&#10022;</a>
+          <a href="saltmere/" class="nav-games">Games&#8202;&#10023;</a>
           <a href="mailto:Kartik.anand@tuhh.de" class="nav-contact">Contact</a>
         </nav>
       </div>
