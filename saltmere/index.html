@@ -96,6 +96,29 @@
 		/* The two ways to play. Deliberately plain: this is a choice about how
 		   punishing the dark is, not a difficulty boast, so neither is styled as
 		   the recommended one. */
+		/* The scare meter. Three segments that fill rather than three words in a
+		   list, so the level reads as a quantity at a glance. The filled bars are
+		   the whole affordance — the labels only name what the bars already say. */
+		#fear { display:flex; gap:10px; z-index:2; flex-wrap:wrap; justify-content:center; margin:2px 0 10px; }
+		#title .fl {
+			appearance:none; cursor:pointer; text-align:left; width:212px;
+			background:rgba(10,12,15,.5); border:1px solid #232220; padding:12px 14px;
+			color:#6f6857; font-family:inherit;
+			transition:border-color .22s ease, background .22s ease, color .22s ease;
+		}
+		#title .fl b { display:block; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#9c937f; margin:7px 0 4px; }
+		#title .fl span { display:block; font-size:11px; line-height:1.5; color:#4d483f; }
+		#title .fl .bars { display:flex; gap:3px; }
+		#title .fl .bars s { display:block; width:26px; height:4px; background:#26251f; text-decoration:none; }
+		#title .fl .bars s.on { background:#5d5544; }
+		#title .fl:hover, #title .fl:focus-visible { border-color:#57503f; background:rgba(18,20,24,.7); outline:none; }
+		#title .fl:hover b { color:#cbc0a6; }
+		/* Chosen. The bars go warm so the selection is visible without colour alone. */
+		#title .fl.sel { border-color:#8a7a52; background:rgba(28,25,18,.8); }
+		#title .fl.sel b { color:#e8dcbc; }
+		#title .fl.sel span { color:#726a5a; }
+		#title .fl.sel .bars s.on { background:#c8a95f; }
+
 		#modes {
 			display: flex; gap: 14px; z-index: 2; flex-wrap: wrap;
 			justify-content: center; margin: 4px 0 6px;
@@ -278,7 +301,7 @@
 			text-indent: .42em; color: #4a463f;
 		}
 	</style>
-  <script type="module" crossorigin src="/saltmere/assets/index-Cx9FL3kt.js"></script>
+  <script type="module" crossorigin src="/saltmere/assets/index-CCNoDWpp.js"></script>
 </head>
 <body>
 	<div id="hud">
@@ -293,7 +316,22 @@
 		<canvas class="tbg"></canvas>
 		<div class="tvig"></div>
 		<h1>SALTMERE</h1>
-		<div class="sub">Choose how you want the torch to work</div>
+		<div class="sub">How frightening should it be</div>
+		<div id="fear">
+			<button class="fl" data-fear="unsettled">
+				<i class="bars"><s class="on"></s><s></s><s></s></i>
+				<b>Unsettled</b><span>Atmosphere and story. Nothing lunges at you.</span>
+			</button>
+			<button class="fl sel" data-fear="haunted">
+				<i class="bars"><s class="on"></s><s class="on"></s><s></s></i>
+				<b>Haunted</b><span>The house is against you.</span>
+			</button>
+			<button class="fl" data-fear="saltmere">
+				<i class="bars"><s class="on"></s><s class="on"></s><s class="on"></s></i>
+				<b>Saltmere</b><span>Everything, sooner, and closer.</span>
+			</button>
+		</div>
+		<div class="sub">And how the torch works</div>
 		<div id="modes">
 			<button class="mode" data-mode="drain">
 				<b>Failing torch</b>
