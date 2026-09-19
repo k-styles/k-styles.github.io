@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Frustration Game · Kartik Anand</title>
-<meta name="description" content="Playable spin puzzles about ground states, frustration, and why finding the minimum energy arrangement gets hard.">
+<meta name="description" content="Playable spin puzzles about ground states, frustration, and why finding the lowest energy arrangement gets hard.">
 <link rel="canonical" href="https://k-styles.github.io/frustration.html">
 <meta property="og:type" content="article">
 <meta property="og:title" content="The Frustration Game">
@@ -18,12 +18,12 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --void: #03040a;
+  --void: #020309;
   --rule: rgba(120,160,255,0.11);
-  --rule-bright: rgba(120,160,255,0.22);
+  --rule-bright: rgba(120,160,255,0.2);
   --rule-strong: rgba(120,160,255,0.38);
 
-  --star-bright: rgba(228,240,255,0.97);
+  --star-bright: #eaf2ff;
   --star: rgba(215,228,255,0.92);
   --muted: rgba(172,197,242,0.62);
 
@@ -44,13 +44,9 @@
   --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
   --micro: 0.75rem;   /* 12px: the floor for uppercase functional labels */
-  --radius: 12px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* One surface treatment, shared by every panel on the page. */
-  --panel-bg: rgba(8,11,20,0.93);
-  --panel-lip: inset 0 1px 0 rgba(150,185,255,0.07);
-  --panel-cast: 0 22px 48px -32px rgba(0,0,0,0.95);
+  --band-bg: rgba(6,9,17,0.94);
 }
 
 html {
@@ -62,7 +58,7 @@ html {
 
 body {
   background-color: var(--void);
-  background-image: radial-gradient(1200px 700px at 50% -10%, rgba(90,171,255,0.06), transparent 60%);
+  background-image: radial-gradient(1400px 800px at 50% -12%, rgba(90,171,255,0.07), transparent 62%);
   background-repeat: no-repeat;
   color: var(--star);
   font-family: var(--sans);
@@ -72,15 +68,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: rgba(156,124,255,0.32); color: #f4f0ff; }
+::selection { background: rgba(156,124,255,0.34); color: #f6f2ff; }
 
-:focus-visible {
-  outline: 2px solid var(--quantum);
-  outline-offset: 3px;
-  border-radius: 3px;
-}
+:focus-visible { outline: 2px solid var(--quantum); outline-offset: 3px; border-radius: 3px; }
 
 a { text-underline-offset: 0.18em; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: rgba(90,171,255,0.28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(90,171,255,0.45); }
 
 .skip-link {
   position: absolute; left: 1rem; top: -3rem; z-index: 10;
@@ -91,98 +88,89 @@ a { text-underline-offset: 0.18em; }
 }
 .skip-link:focus { top: 1rem; }
 
-/* ambient spin-field behind the content */
 #spin-bg {
   position: fixed; inset: 0; width: 100%; height: 100%;
-  z-index: 0; pointer-events: none; opacity: 0.36;
+  z-index: 0; pointer-events: none; opacity: 0.34;
 }
 
+/* ── the full-bleed grid ──
+   Text sits in a narrow column. Figures take the whole viewport width.
+   Nothing else decides how wide anything is. */
 .wrapper {
   position: relative;
   z-index: 1;
-  max-width: 840px;
-  margin: 0 auto;
-  padding: 0 1.75rem 5rem;
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(1.15rem, 1fr)
+    [wide-start] minmax(0, 6rem)
+    [txt-start] minmax(0, 660px) [txt-end]
+    minmax(0, 6rem) [wide-end]
+    minmax(1.15rem, 1fr) [full-end];
+  padding-bottom: 6rem;
 }
+.wrapper > *      { grid-column: txt; }
+.wrapper > .wide  { grid-column: wide; }
+.wrapper > .band  { grid-column: full; }
 
 /* ── top bar ── */
 .topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.6rem 0 1.2rem;
-  border-bottom: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 1.5rem 0 1.1rem;
 }
 .topbar nav { display: flex; gap: 1.5rem; }
 .topbar a {
-  font-size: var(--micro);
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  text-decoration: none;
-  transition: color 0.2s;
+  font-size: var(--micro); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
 }
 .topbar a:hover { color: var(--quantum); }
 .home-link span { color: var(--quantum); }
 
 /* ── hero ── */
-.hero { padding: 3.4rem 0 1.4rem; }
+.hero { padding: 4.5rem 0 3rem; animation: rise 1s var(--ease-out) both; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
 .hero h1 {
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(2.2rem, 6.4vw, 3.5rem);
-  line-height: 1.06;
-  letter-spacing: -0.008em;
+  font-size: clamp(3.2rem, 11.5vw, 7rem);
+  line-height: 0.9;
+  letter-spacing: -0.035em;
   color: var(--star-bright);
-  text-wrap: balance;
 }
 .hero h1 em { font-style: italic; color: var(--entangle); }
 .hero .lede {
   font-family: var(--serif);
-  font-size: 1.14rem;
-  line-height: 1.78;
-  color: rgba(213,227,255,0.85);
-  max-width: 62ch;
-  margin-top: 1.2rem;
+  font-size: clamp(1.15rem, 1.9vw, 1.35rem);
+  line-height: 1.62;
+  color: rgba(216,229,255,0.86);
+  max-width: 48ch;
+  margin-top: 2rem;
 }
 .hero .lede strong { color: var(--star-bright); font-weight: 500; }
 
-/* One authored entrance, on the masthead only. */
-@keyframes rise {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: none; }
+/* ── full-bleed bands ── */
+.band {
+  margin: 4rem 0;
+  padding: 1.2rem 0 1.4rem;
+  border-top: 1px solid var(--rule-bright);
+  border-bottom: 1px solid var(--rule-bright);
+  background: var(--band-bg);
 }
-.hero { animation: rise 0.9s var(--ease-out) both; }
+.band-in { max-width: 1280px; margin: 0 auto; }
+/* The band spans the viewport; its contents do not have to. */
+.band-in.fig { max-width: 1100px; padding: 0.4rem 1.5rem 0.6rem; }
 
-/* ── the shared panel surface ── */
-.game, .glassfig {
-  border: 1px solid var(--rule-bright);
-  border-radius: var(--radius);
-  background: var(--panel-bg);
-  box-shadow: var(--panel-lip), var(--panel-cast);
-}
-
-/* ── game card ── */
-.game {
-  margin-top: 2.4rem;
-  overflow: hidden;
-}
-
-/* level pills */
+/* ── the puzzle ── */
 .levels {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  padding: 0.9rem 1rem;
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--rule);
 }
 .lvl {
   font-family: var(--sans);
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  font-size: 0.8rem; font-weight: 500; letter-spacing: 0.01em;
   color: rgba(178,201,244,0.78);
   background: transparent;
   border: 1px solid var(--rule-bright);
@@ -191,140 +179,116 @@ a { text-underline-offset: 0.18em; }
   cursor: pointer;
   transition: color .2s, border-color .2s, background .2s;
 }
-.lvl:hover { color: var(--star-bright); border-color: var(--quantum); background: rgba(90,171,255,0.07); }
+.lvl:hover { color: var(--star-bright); border-color: var(--quantum); background: rgba(90,171,255,0.08); }
 .lvl[aria-current="true"] {
-  color: #04070f;
-  background: var(--quantum);
-  border-color: var(--quantum);
-  font-weight: 600;
+  color: #04070f; background: var(--quantum); border-color: var(--quantum); font-weight: 600;
 }
 .lvl.solved::after { content: " ✓"; color: var(--sat); }
 .lvl[aria-current="true"].solved::after { color: rgba(3,4,10,0.7); }
 
-/* stage layout */
-.stage {
-  display: grid;
-  grid-template-columns: 1fr 256px;
-}
-.board-wrap {
-  position: relative;
-  padding: 0.5rem 0.5rem 0.2rem;
-  border-right: 1px solid var(--rule);
-}
+.stage { display: grid; grid-template-columns: 1fr 300px; }
+.board-wrap { position: relative; padding: 1.1rem 1.5rem 0.6rem; border-right: 1px solid var(--rule); }
 .level-name {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 1.2rem;
-  color: var(--star-bright);
-  padding: 0.6rem 0.65rem 0;
+  font-family: var(--serif); font-style: italic; font-size: 1.5rem;
+  color: var(--star-bright); line-height: 1.2;
 }
 .level-blurb {
-  font-size: 0.86rem;
-  color: rgba(178,201,244,0.75);
-  padding: 0.2rem 0.65rem 0.4rem;
-  min-height: 2.6em;
-  max-width: 54ch;
+  font-size: 0.9rem; color: rgba(178,201,244,0.78);
+  margin-top: 0.3rem; min-height: 2.6em; max-width: 56ch;
 }
-svg.board { width: 100%; height: auto; max-height: 430px; display: block; touch-action: manipulation; }
+svg.board { width: 100%; height: auto; display: block; touch-action: manipulation; margin-top: 0.4rem; }
 
-/* spins */
 .spin { cursor: pointer; outline: none; }
-.spin .disc { transition: fill .18s ease, stroke .18s ease; }
+.spin .disc { transition: fill .18s ease, stroke .18s ease; transform-box: fill-box; transform-origin: center; }
 .spin .arrow {
-  font-family: var(--sans);
-  font-weight: 600;
-  font-size: 19px;
-  text-anchor: middle;
-  dominant-baseline: central;
-  fill: rgba(5,7,14,0.92);
-  pointer-events: none;
-  user-select: none;
+  font-family: var(--sans); font-weight: 600; font-size: 19px;
+  text-anchor: middle; dominant-baseline: central;
+  fill: rgba(4,6,12,0.92); pointer-events: none; user-select: none;
 }
 .spin:focus-visible .ring { opacity: 1; }
 .spin .ring { opacity: 0; transition: opacity .15s; }
 .spin.flip .disc { animation: flip .26s ease; }
 @keyframes flip {
-  0% { transform: scale(1); }
-  45% { transform: scale(0.72); }
-  100% { transform: scale(1); }
+  0% { transform: scale(1); } 45% { transform: scale(0.72); } 100% { transform: scale(1); }
 }
-.spin .disc { transform-box: fill-box; transform-origin: center; }
+.spin .shimmer { opacity: 0; }
+.game.annealing .spin .shimmer { opacity: 1; animation: shimmer 0.7s ease-in-out infinite; }
+@keyframes shimmer { 0%,100% { opacity: 0.15; } 50% { opacity: 0.7; } }
 
 /* control panel */
-.panel { padding: 1rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.9rem; }
-.readout { display: flex; flex-direction: column; gap: 0.55rem; }
+.panel { padding: 1.2rem 1.5rem 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
+.readout { display: flex; flex-direction: column; gap: 0.6rem; }
 .stat { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; font-size: 0.83rem; }
-.stat .k { color: rgba(178,201,244,0.75); letter-spacing: 0.01em; }
-.stat .v { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.98rem; color: var(--star-bright); }
+.stat .k { color: rgba(178,201,244,0.78); letter-spacing: 0.01em; }
+.stat .v {
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  font-weight: 500; font-size: 1.05rem; color: var(--star-bright);
+}
 .stat .v.energy { color: var(--quantum); }
 
-.meter {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(255,122,92,0.18);
-  overflow: hidden;
-  border: 1px solid var(--rule);
-}
+.meter { height: 5px; border-radius: 999px; background: rgba(255,122,92,0.2); overflow: hidden; }
 /* Animate the transform, never the width: a width transition relays out the
    whole panel on every frame. */
 .meter > i {
-  display: block;
-  height: 100%;
-  width: 100%;
-  transform: scaleX(0);
-  transform-origin: left center;
+  display: block; height: 100%; width: 100%;
+  transform: scaleX(0); transform-origin: left center;
   background: linear-gradient(90deg, var(--strain), var(--sat));
   transition: transform .35s var(--ease-out);
 }
 
 .status {
-  font-size: 0.87rem;
-  line-height: 1.55;
-  min-height: 4.6em;
-  padding: 0.65rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid var(--rule);
-  background: rgba(90,171,255,0.04);
+  font-size: 0.88rem; line-height: 1.55; min-height: 4.6em;
+  padding: 0.7rem 0.8rem; border-radius: 8px;
+  border: 1px solid var(--rule); background: rgba(90,171,255,0.04);
   color: rgba(205,222,252,0.88);
   transition: border-color .3s, background .3s;
 }
 .status.win { border-color: rgba(69,212,189,0.5); background: rgba(69,212,189,0.08); color: #c6f5ec; }
 .status.frustrated { border-color: rgba(255,122,92,0.45); background: rgba(255,122,92,0.07); color: #ffd8ce; }
-.status strong { color: inherit; font-weight: 600; }
 
 .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 button.act {
   flex: 1 1 auto;
-  font-family: var(--sans);
-  font-size: var(--micro);
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  padding: 0.58rem 0.7rem;
-  border-radius: 7px;
-  border: 1px solid var(--rule-bright);
-  background: rgba(90,171,255,0.06);
-  color: var(--quantum);
-  cursor: pointer;
+  font-family: var(--sans); font-size: var(--micro); font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.6rem 0.7rem; border-radius: 7px;
+  border: 1px solid var(--rule-bright); background: rgba(90,171,255,0.06);
+  color: var(--quantum); cursor: pointer;
   transition: background .2s, border-color .2s, color .2s, opacity .2s;
 }
-button.act:hover { background: rgba(90,171,255,0.14); border-color: var(--quantum); }
+button.act:hover { background: rgba(90,171,255,0.15); border-color: var(--quantum); }
 button.act.primary {
-  border-color: rgba(156,124,255,0.42);
-  background: rgba(156,124,255,0.11);
-  color: rgba(201,180,255,0.97);
+  border-color: rgba(156,124,255,0.42); background: rgba(156,124,255,0.12);
+  color: rgba(203,183,255,0.98);
 }
-button.act.primary:hover { background: rgba(156,124,255,0.21); border-color: var(--entangle); }
+button.act.primary:hover { background: rgba(156,124,255,0.22); border-color: var(--entangle); }
 button.act:disabled { opacity: 0.4; cursor: default; }
 
-.legend {
-  display: flex; flex-wrap: wrap; gap: 0.55rem 1.2rem;
-  padding: 0.8rem 1rem 1rem;
-  border-top: 1px solid var(--rule);
-  font-size: 0.8rem;
-  color: rgba(178,201,244,0.75);
+/* energy landscape strip: built by the script all along, never placed in the
+   markup until now */
+.landscape { padding: 1.1rem 1.5rem 1.3rem; border-top: 1px solid var(--rule); }
+.landscape > * { max-width: 1000px; margin-left: auto; margin-right: auto; }
+.ls-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: var(--micro); letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(178,201,244,0.78); margin-bottom: 0.5rem;
 }
-.legend .li { display: inline-flex; align-items: center; gap: 0.45rem; }
+.ls-head .temp {
+  color: var(--entangle); font-variant-numeric: tabular-nums;
+  transition: color .3s;
+}
+.ls-head .temp.hot { color: var(--strain); }
+#lsSvg { width: 100%; height: auto; display: block; }
+.ls-cap { font-size: 0.83rem; color: rgba(172,197,242,0.7); margin-top: 0.4rem; font-style: italic; }
+
+.legend {
+  display: flex;
+  flex-direction: column; gap: 0.55rem;
+  margin-top: 0.4rem; padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.83rem; color: rgba(178,201,244,0.78);
+}
+.legend .li { display: inline-flex; align-items: center; gap: 0.55rem; }
 .swatch { width: 22px; height: 3px; border-radius: 2px; display: inline-block; }
 .swatch.sat { background: var(--sat); }
 .swatch.strain { background: var(--strain); }
@@ -333,240 +297,163 @@ button.act:disabled { opacity: 0.4; cursor: default; }
   border: 1px solid var(--rule-bright); border-radius: 50%; font-size: 0.78rem; color: var(--star);
 }
 
-/* energy landscape band */
-.landscape {
-  border-top: 1px solid var(--rule);
-  padding: 0.75rem 1rem 0.95rem;
-}
-.ls-head {
-  display: flex; justify-content: space-between; align-items: baseline;
-  font-size: var(--micro); letter-spacing: 0.1em; text-transform: uppercase;
-  color: rgba(178,201,244,0.75);
-  margin-bottom: 0.35rem;
-}
-.ls-head .temp { color: var(--entangle); font-variant-numeric: tabular-nums; }
-.ls-head .temp.hot { color: var(--strain); }
-#lsSvg { width: 100%; height: auto; display: block; }
-.ls-cap { font-size: 0.8rem; color: rgba(170,195,238,0.7); margin-top: 0.3rem; font-style: italic; }
-.temp-bar {
-  font-size: var(--micro); letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--entangle); text-align: center; min-height: 1em; margin-top: 0.6rem;
-}
-.temp-bar.hot { color: var(--strain); }
-
-/* disorder controls (spin-glass levels only) */
 .glass-only { display: none; }
 .game.is-glass .glass-only { display: inline-flex; }
 
-/* shimmer ring shown on spins while annealing */
-.spin .shimmer { opacity: 0; }
-.game.annealing .spin .shimmer { opacity: 1; animation: shimmer 0.7s ease-in-out infinite; }
-@keyframes shimmer {
-  0%,100% { opacity: 0.15; }
-  50% { opacity: 0.7; }
-}
-
-/* ── the reading half ── */
-.read {
-  margin-top: 4rem;
-  padding-top: 2.6rem;
-  border-top: 1px solid var(--rule);
-}
-.read h2 {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: clamp(1.7rem, 3.6vw, 2.15rem);
-  line-height: 1.16;
-  letter-spacing: -0.006em;
+/* ── the reading column ── */
+h2 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(2.1rem, 5.4vw, 3.1rem);
+  line-height: 1.04; letter-spacing: -0.028em;
   color: var(--star-bright);
-  margin: 4.2rem 0 1.1rem;
+  margin: 1rem 0 1.4rem;
   text-wrap: balance;
 }
-.read h2:first-child { margin-top: 0; }
-.read h2 em { font-style: italic; color: var(--entangle); }
+h2 em { font-style: italic; color: var(--entangle); }
 
-.read p {
-  font-family: var(--serif);
-  font-size: 1.08rem;
-  line-height: 1.85;
-  color: rgba(214,228,255,0.87);
-  margin-bottom: 1rem;
-  max-width: 68ch;
+p.body {
+  font-family: var(--serif); font-size: 1.12rem; line-height: 1.82;
+  color: rgba(216,230,255,0.88); margin-bottom: 1.1rem;
 }
-.read p a, .read .closing a {
-  color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.28);
-  transition: border-color .2s;
+p.big {
+  font-family: var(--serif); font-size: 1.32rem; line-height: 1.62;
+  color: rgba(226,238,255,0.93); margin-bottom: 1rem;
 }
-.read p a:hover, .read .closing a:hover { border-color: var(--quantum); }
-.read em { color: rgba(203,184,255,0.94); font-style: italic; }
-.read .term { color: var(--star-bright); font-weight: 500; font-style: normal; }
+a.lnk, p a {
+  color: var(--quantum); text-decoration: none;
+  border-bottom: 1px solid rgba(90,171,255,0.3); transition: border-color .2s;
+}
+a.lnk:hover, p a:hover { border-color: var(--quantum); }
+.term { color: var(--star-bright); font-weight: 500; }
 
-.read .big {
-  font-family: var(--serif);
-  font-size: 1.3rem;
-  line-height: 1.66;
-  color: rgba(224,236,255,0.93);
-  max-width: 64ch;
-  margin-bottom: 1.9rem;
-}
-.read .big.sub { font-size: 1.15rem; }
-
-/* ── the terms list: what replaced the card grid ──
-   A hanging term in the margin, the explanation beside it. One component,
-   used by both runs on this page, so they read as the same kind of thing. */
-.terms { margin: 1.6rem 0 0; }
+/* the hanging-term list */
+.terms { margin: 2.2rem 0 1rem; }
 .terms > div {
-  display: grid;
-  grid-template-columns: 12rem 1fr;
-  gap: 0 2.2rem;
-  padding: 1.35rem 0;
-  border-top: 1px solid var(--rule);
+  display: grid; grid-template-columns: 13rem 1fr; gap: 0 2.5rem;
+  padding: 1.5rem 0; border-top: 1px solid var(--rule);
 }
 .terms > div:last-child { border-bottom: 1px solid var(--rule); }
 .terms dt {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 1.12rem;
-  line-height: 1.45;
-  color: rgba(170,199,255,0.96);
-  text-wrap: balance;
+  font-family: var(--serif); font-style: italic; font-size: 1.2rem; line-height: 1.4;
+  color: rgba(172,200,255,0.96); text-wrap: balance;
 }
 .terms dd {
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: rgba(199,215,248,0.86);
-  max-width: 58ch;
+  font-family: var(--sans); font-size: 0.97rem; line-height: 1.72;
+  color: rgba(201,217,249,0.87); max-width: 60ch;
 }
 .terms dd a {
-  color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.28);
-  transition: border-color .2s;
+  color: var(--quantum); text-decoration: none;
+  border-bottom: 1px solid rgba(90,171,255,0.3); transition: border-color .2s;
 }
 .terms dd a:hover { border-color: var(--quantum); }
-.terms dd .term { color: var(--star-bright); font-weight: 500; }
 
 .note {
-  margin: 2rem 0 0;
-  padding: 1.15rem 1.35rem;
-  border: 1px solid rgba(156,124,255,0.26);
-  border-radius: 10px;
+  margin: 2.4rem 0 0; padding: 1.3rem 1.5rem;
+  border: 1px solid rgba(156,124,255,0.26); border-radius: 10px;
   background: rgba(156,124,255,0.05);
 }
 .note p {
-  font-family: var(--sans); font-size: 0.95rem; line-height: 1.7;
-  color: rgba(203,213,247,0.88); margin: 0; max-width: 64ch;
+  font-family: var(--sans); font-size: 0.97rem; line-height: 1.72;
+  color: rgba(205,215,248,0.89); margin: 0; max-width: 66ch;
 }
-.note p strong { color: rgba(201,180,255,0.97); font-weight: 600; }
+.note p strong { color: rgba(203,183,255,0.98); font-weight: 600; }
 
 .closing {
-  margin-top: 3rem; padding-top: 1.7rem; border-top: 1px solid var(--rule);
-  font-size: 0.92rem; color: rgba(178,201,244,0.75);
+  margin-top: 3.5rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+  font-size: 0.95rem; color: rgba(178,201,244,0.78);
 }
+.closing a {
+  color: var(--quantum); text-decoration: none;
+  border-bottom: 1px solid rgba(90,171,255,0.3); transition: border-color .2s;
+}
+.closing a:hover { border-color: var(--quantum); }
 
 footer {
-  margin-top: 3rem; padding-top: 1.7rem; border-top: 1px solid var(--rule);
+  margin-top: 3rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
   display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.6rem;
   font-size: 0.78rem; color: rgba(172,197,242,0.62);
 }
 footer a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid transparent; }
 footer a:hover { border-color: var(--quantum); }
 
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--void); }
-::-webkit-scrollbar-thumb { background: rgba(90,171,255,0.28); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(90,171,255,0.45); }
-
 /* ── glass-phase figures ── */
-.glassfig {
-  margin: 1.6rem 0;
-  padding: 1.15rem 1.25rem 1.25rem;
-}
 .gf-head {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 0.8rem; margin-bottom: 0.75rem;
-  padding-bottom: 0.65rem; border-bottom: 1px solid var(--rule);
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  margin-bottom: 1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--rule);
 }
 .gf-head h3 {
-  font-family: var(--serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.22rem;
-  line-height: 1.3;
-  color: var(--star-bright);
-  margin: 0;
+  font-family: var(--serif); font-style: italic; font-weight: 400;
+  font-size: clamp(1.4rem, 2.6vw, 1.9rem); line-height: 1.2;
+  color: var(--star-bright); margin: 0;
 }
 .gf-sub {
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  color: var(--entangle);
-  letter-spacing: 0.01em;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--mono); font-size: 0.82rem; color: var(--entangle);
+  text-align: right; font-variant-numeric: tabular-nums;
 }
-.glassfig svg { width: 100%; height: auto; display: block; }
+.fig svg { width: 100%; height: auto; display: block; }
 #shatterMap {
-  width: 100%; height: auto; display: block;
-  border: 1px solid var(--rule); border-radius: 8px; margin-top: 0.55rem;
+  width: 100%; height: 165px; display: block;
+  border: 1px solid var(--rule); border-radius: 8px; margin-top: 0.7rem;
 }
-.rsb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.rsb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+/* Two 300-unit figures stretched across a full-bleed band read as mostly
+   empty; cap them and centre each in its half. */
+.rsb-row svg { max-width: 430px; margin: 0 auto; }
 
 /* A measuring instrument, not a toy: hairline track, hollow ring for the grip. */
 .gf-slider {
   -webkit-appearance: none; appearance: none;
-  width: 100%; height: 20px; margin: 1.1rem 0 0;
+  width: 100%; height: 20px; margin: 1.4rem 0 0;
   background: transparent; cursor: pointer; display: block;
 }
-.gf-slider::-webkit-slider-runnable-track {
-  height: 2px; border-radius: 2px; background: var(--rule-bright);
-}
-.gf-slider::-moz-range-track {
-  height: 2px; border-radius: 2px; background: var(--rule-bright);
-}
+.gf-slider::-webkit-slider-runnable-track { height: 2px; border-radius: 2px; background: var(--rule-bright); }
+.gf-slider::-moz-range-track { height: 2px; border-radius: 2px; background: var(--rule-bright); }
 .gf-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 15px; height: 15px; margin-top: -6.5px; border-radius: 50%;
-  background: #080c16; border: 1.5px solid var(--quantum);
+  background: #060a13; border: 1.5px solid var(--quantum);
   box-shadow: 0 3px 8px -2px rgba(0,0,0,0.9);
   transition: transform .18s var(--ease-out), border-color .18s, background .18s;
 }
 .gf-slider::-moz-range-thumb {
   width: 15px; height: 15px; border-radius: 50%;
-  background: #080c16; border: 1.5px solid var(--quantum);
+  background: #060a13; border: 1.5px solid var(--quantum);
   box-shadow: 0 3px 8px -2px rgba(0,0,0,0.9);
 }
-.gf-slider:hover::-webkit-slider-thumb { transform: scale(1.14); background: #0d1322; }
+.gf-slider:hover::-webkit-slider-thumb { transform: scale(1.14); background: #0c1220; }
 .gf-slider:active::-webkit-slider-thumb { transform: scale(1.02); border-color: #9fd0ff; }
 .gf-slider:focus-visible { outline: none; }
 .gf-slider:focus-visible::-webkit-slider-thumb { border-color: #9fd0ff; box-shadow: 0 0 0 3px rgba(90,171,255,0.28); }
 
 .gf-scale {
   display: flex; justify-content: space-between;
-  font-size: var(--micro); letter-spacing: 0.08em; text-transform: uppercase;
-  color: rgba(172,197,242,0.62);
-  margin-top: 0.15rem;
+  font-size: var(--micro); letter-spacing: 0.09em; text-transform: uppercase;
+  color: rgba(172,197,242,0.62); margin-top: 0.2rem;
 }
-
-.gf-axis { font-family: var(--sans); font-size: 11px; fill: rgba(178,201,244,0.75); letter-spacing: 0.04em; }
-.read .gf-cap, .gf-cap {
-  font-family: var(--sans); font-size: 0.88rem; line-height: 1.68;
-  color: rgba(190,209,245,0.84); margin-top: 0.8rem; margin-bottom: 0; max-width: 66ch;
+.gf-axis { font-family: var(--sans); font-size: 11px; fill: rgba(178,201,244,0.78); letter-spacing: 0.04em; }
+.gf-note { font-size: 0.83rem; color: rgba(172,197,242,0.7); margin-top: 0.45rem; font-style: italic; }
+.gf-cap {
+  font-family: var(--sans); font-size: 0.95rem; line-height: 1.72;
+  color: rgba(196,213,247,0.86); margin-top: 1.2rem; max-width: 64ch;
 }
-.read .gf-cap b, .gf-cap b { color: var(--star-bright); font-weight: 600; }
-.read .gf-cap code, .gf-cap code {
-  font-family: var(--mono); font-size: 0.88em;
+.gf-cap b { color: var(--star-bright); font-weight: 600; }
+.gf-cap code {
+  font-family: var(--mono); font-size: 0.86em;
   background: rgba(120,160,255,0.1); padding: 0.08em 0.34em; border-radius: 4px; color: #c3d9ff;
 }
 
-@media (max-width: 760px) {
-  .terms > div { grid-template-columns: 1fr; gap: 0.4rem; padding: 1.2rem 0; }
-}
-@media (max-width: 680px) {
-  .wrapper { padding: 0 1.15rem 4rem; }
+@media (max-width: 900px) {
   .stage { grid-template-columns: 1fr; }
   .board-wrap { border-right: none; border-bottom: 1px solid var(--rule); }
-  .rsb-row { grid-template-columns: 1fr; }
-  .read h2 { margin-top: 3.2rem; }
-  .topbar { flex-wrap: wrap; }
+  .terms > div { grid-template-columns: 1fr; gap: 0.45rem; padding: 1.3rem 0; }
+}
+@media (max-width: 680px) {
+  .band { margin: 2.6rem 0; }
+  .band-in.fig { padding: 0.3rem 1.15rem 0.5rem; }
+  .levels, .board-wrap, .panel, .legend, .landscape { padding-left: 1.15rem; padding-right: 1.15rem; }
+  .rsb-row { grid-template-columns: 1fr; gap: 0.8rem; }
+  .hero { padding: 2.6rem 0 2rem; }
+  .hero .lede { margin-top: 1.3rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -583,7 +470,7 @@ footer a:hover { border-color: var(--quantum); }
 <canvas id="spin-bg" aria-hidden="true"></canvas>
 <div class="wrapper">
 
-  <div class="topbar">
+  <div class="topbar wide">
     <a class="home-link" href="index.html"><span>←</span> Kartik Anand</a>
     <nav aria-label="Secondary">
       <a href="blogs.html">Writing</a>
@@ -591,116 +478,129 @@ footer a:hover { border-color: var(--quantum); }
     </nav>
   </div>
 
-  <div class="hero">
+  <header class="hero wide">
     <h1>The <em>Frustration</em> Game</h1>
     <p class="lede">
-      Every dot is a spin, up or down. Every line is a rule: some bonds want their two spins to
-      <strong>match</strong>, others want them to <strong>differ</strong>. Flip spins until as many rules
-      as possible are satisfied and you've found the <strong>ground state</strong>, the lowest energy
-      arrangement. The first few boards are easy. Somewhere around the triangle you hit a shape where no
-      arrangement works at all. Physicists call that <em>frustration</em>.
+      Each dot is a spin, pointing up or down. Each line is a rule about two of them: some bonds want
+      their spins to <strong>match</strong>, others want them to <strong>differ</strong>. Click a spin to
+      flip it and satisfy as many rules as you can. The best you can do is the
+      <strong>ground state</strong>, and on the first few boards you'll get there in a handful of clicks.
+      Then you reach the triangle.
     </p>
-  </div>
+  </header>
 
-  <!-- GAME -->
-  <div class="game" id="game">
-    <div class="levels" id="levels" role="tablist" aria-label="Puzzles"></div>
+  <section class="band" aria-label="Spin puzzles">
+    <div class="band-in game" id="game">
+      <div class="levels" id="levels" role="tablist" aria-label="Puzzles"></div>
 
-    <div class="stage">
-      <div class="board-wrap">
-        <div class="level-name" id="levelName"></div>
-        <div class="level-blurb" id="levelBlurb"></div>
-        <svg class="board" id="board" viewBox="0 0 600 420" role="group" aria-label="Spin puzzle board"></svg>
-      </div>
-
-      <div class="panel">
-        <div class="readout">
-          <div class="stat"><span class="k">Energy</span><span class="v energy" id="energyVal">0</span></div>
-          <div class="meter"><i id="meterFill"></i></div>
-          <div class="stat"><span class="k">Best possible</span><span class="v" id="groundVal">0</span></div>
-          <div class="stat"><span class="k">Rules satisfied</span><span class="v" id="satVal">0 / 0</span></div>
+      <div class="stage">
+        <div class="board-wrap">
+          <div class="level-name" id="levelName"></div>
+          <div class="level-blurb" id="levelBlurb"></div>
+          <svg class="board" id="board" viewBox="0 0 600 420" role="group" aria-label="Spin puzzle board"></svg>
         </div>
 
-        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <div class="panel">
+          <div class="readout">
+            <div class="stat"><span class="k">Energy</span><span class="v energy" id="energyVal">0</span></div>
+            <div class="meter"><i id="meterFill"></i></div>
+            <div class="stat"><span class="k">Best possible</span><span class="v" id="groundVal">0</span></div>
+            <div class="stat"><span class="k">Rules satisfied</span><span class="v" id="satVal">0 / 0</span></div>
+          </div>
 
-        <div class="btns">
-          <button class="act" id="resetBtn">Reset</button>
-          <button class="act glass-only" id="shuffleBtn">New&nbsp;disorder</button>
-          <button class="act primary" id="annealBtn">Quantum&nbsp;Anneal</button>
+          <div class="status" id="status" role="status" aria-live="polite"></div>
+
+          <div class="btns">
+            <button class="act" id="resetBtn">Reset</button>
+            <button class="act glass-only" id="shuffleBtn">New&nbsp;disorder</button>
+            <button class="act primary" id="annealBtn">Quantum&nbsp;Anneal</button>
+          </div>
+
+          <div class="legend">
+            <span class="li"><span class="glyph">≠</span> wants opposite spins</span>
+            <span class="li"><span class="glyph">=</span> wants matching spins</span>
+            <span class="li"><span class="swatch sat"></span> satisfied bond</span>
+            <span class="li"><span class="swatch strain"></span> frustrated bond</span>
+          </div>
         </div>
-        <div class="temp-bar" id="tempLabel"></div>
+      </div>
+
+      <div class="landscape">
+        <div class="ls-head">
+          <span>Energy landscape</span>
+          <span class="temp" id="tempLabel"></span>
+        </div>
+        <svg id="lsSvg" viewBox="0 0 600 130" role="img" aria-label="The energy landscape for this board, with a marker showing where the current arrangement sits and a ring on the deepest valley"></svg>
+        <div class="ls-cap">Every arrangement of the board, sorted by energy. The ring is the ground state. Watch the marker fall as you flip spins.</div>
       </div>
     </div>
+  </section>
 
-    <div class="legend">
-      <span class="li"><span class="glyph">≠</span> wants opposite spins</span>
-      <span class="li"><span class="glyph">=</span> wants matching spins</span>
-      <span class="li"><span class="swatch sat"></span> satisfied</span>
-      <span class="li"><span class="swatch strain"></span> frustrated</span>
+  <h2>What the board is</h2>
+
+  <p class="big">
+    A <span class="term">Hamiltonian</span>. Each bond contributes one small term that scores a single pair
+    of spins, the energy is the sum of those terms, and the ground state is whichever arrangement makes
+    that sum as small as it will go.
+  </p>
+
+  <dl class="terms wide">
+    <div>
+      <dt>Frustration</dt>
+      <dd>Take a loop with an odd number of bonds, all of them wanting their two spins to disagree. Start anywhere, walk round the loop forcing each bond in turn, and you arrive back where you began needing the first spin to be both up and down at once. No single rule here is hard. They just cannot all hold together, so one of them loses and the energy never reaches zero.</dd>
     </div>
-  </div>
+    <div>
+      <dt>The quantum jump</dt>
+      <dd>Now let the spins be quantum, so they can sit in superposition and become entangled. The question does not change, you still want the ground energy, but answering it becomes <span class="term">QMA complete</span>, which is roughly the quantum analogue of NP complete.</dd>
+    </div>
+    <div>
+      <dt>Still open</dt>
+      <dd>Nobody knows whether it stays that hard when a rough estimate would do instead of the exact number. That gap is the <a href="https://arxiv.org/abs/1309.7495" target="_blank" rel="noopener">quantum PCP conjecture</a>, and it has been open for well over a decade.</dd>
+    </div>
+  </dl>
 
-  <!-- EXPLAINER -->
-  <div class="read">
+  <h2>Inside the glass phase</h2>
 
-    <h2>What the board actually <em>is</em></h2>
+  <p class="big">
+    Turn the disorder up and cool the system down, and the low energy states stop being one connected
+    blob. Three sliders, three things that happen to them.
+  </p>
 
-    <p class="big">
-      A <span class="term">Hamiltonian</span>: a pile of small local terms, each one scoring a single pair
-      of spins. Minimise the total and you have the <span class="term">ground state</span>.
-    </p>
-
-    <dl class="terms">
-      <div>
-        <dt>Frustration</dt>
-        <dd>Take an odd loop where every bond wants disagreement. Walk around it and you come back to a contradiction, so some bond has to lose. No individual rule is complicated; the difficulty is entirely in the compromise.</dd>
-      </div>
-      <div>
-        <dt>The quantum jump</dt>
-        <dd>Let the spins be quantum, so they can superpose and entangle. Estimating the ground energy then becomes <span class="term">QMA complete</span>, roughly the quantum analogue of NP complete.</dd>
-      </div>
-      <div>
-        <dt>Still open</dt>
-        <dd>Does it stay hard when a rough estimate is all you want? That is the <a href="https://arxiv.org/abs/1309.7495" target="_blank" rel="noopener">quantum PCP conjecture</a>, unresolved for over a decade.</dd>
-      </div>
-    </dl>
-
-    <h2>Inside the glass phase</h2>
-
-    <p class="big sub">
-      Turn up the disorder and cool it down. The low energy states reorganise, and the three figures below
-      are the shapes that reorganisation takes. Drag the sliders.
-    </p>
-
-    <div class="glassfig">
+  <section class="band" aria-label="Shattering">
+    <div class="band-in fig">
       <div class="gf-head"><h3>Shattering</h3><span class="gf-sub" id="shatterSub">one connected basin</span></div>
       <svg id="shatterSvg" viewBox="0 0 600 230" role="img" aria-label="Solution space fragmenting into clusters as disorder increases"></svg>
       <canvas id="shatterMap" role="img" aria-label="Energy landscape as a 2D map, growing peaks at the clusters as it cools"></canvas>
-      <div class="gf-cap" style="margin-top:0.4rem">Same landscape seen from above. Cool it and peaks rise where the clusters sit.</div>
+      <div class="gf-note">The same landscape from above. Cool it and peaks rise where the clusters sit.</div>
       <input type="range" id="shatterCtl" class="gf-slider" min="0" max="100" value="6" aria-label="Disorder">
       <div class="gf-scale" aria-hidden="true"><span>Ordered</span><span>Disordered</span></div>
       <p class="gf-cap">
-        Below the <b>clustering transition</b> the set of low energy states breaks into many clusters, each
-        one tiny and far from the others. Local moves cannot get out of the cluster they start in, so simple
-        dynamics stall. Real glasses do this, and so do random SAT and random graph colouring.
+        Past the <b>clustering transition</b>, the set of low energy states breaks into many separate
+        clusters, each one small and sitting a long way from the rest. A local move cannot get you out of
+        the cluster you started in, so anything that only makes local moves stalls. Real glasses do this.
+        So do random SAT and random graph colouring.
       </p>
     </div>
+  </section>
 
-    <div class="glassfig">
+  <section class="band" aria-label="Trapped in a cluster">
+    <div class="band-in fig">
       <div class="gf-head"><h3>Trapped in a cluster</h3><span class="gf-sub" id="stuckSub">stuck</span></div>
       <svg id="stuckSvg" viewBox="0 0 600 240" role="img" aria-label="A walker trapped inside one cluster, unable to cross to the ground state cluster"></svg>
       <input type="range" id="stuckCtl" class="gf-slider" min="2" max="40" value="6" aria-label="Number of clusters">
       <div class="gf-scale" aria-hidden="true"><span>2 clusters</span><span>40 clusters</span></div>
       <p class="gf-cap">
         The walker only makes small local moves, so it never leaves the cluster it started in. The barriers
-        are too high to cross and the ground state lives somewhere else, in teal, so it never arrives.
-        A restart drops it into a random cluster, which at this size gives it roughly a 1 in
-        <span id="stuckK">6</span> shot. Push the slider up. Once the cluster count grows exponentially,
-        restarting stops being a strategy.
+        around it are too high and the ground state is somewhere else, in the teal cluster, so it never
+        arrives. Restarting drops it in a random cluster, which at this size is about a 1 in
+        <span id="stuckK">6</span> chance. Now push the slider up. Once the number of clusters grows
+        exponentially, restarting stops helping.
       </p>
     </div>
+  </section>
 
-    <div class="glassfig">
+  <section class="band" aria-label="Replica symmetry breaking">
+    <div class="band-in fig">
       <div class="gf-head"><h3>Replica symmetry breaking</h3><span class="gf-sub" id="rsbSub">replica symmetric &middot; one state</span></div>
       <div class="rsb-row">
         <svg id="treeSvg" viewBox="0 0 300 230" role="img" aria-label="Pure states organising into an ultrametric hierarchy"></svg>
@@ -713,43 +613,45 @@ footer a:hover { border-color: var(--quantum); }
         hierarchy is an <b>ultrametric</b> tree. On the right, the overlap <code>q</code> between two
         independent replicas stops being one fixed number: <b>P(q)</b> widens from a single spike at
         <code>q<sub>EA</sub></code> into a spread of values reaching down to small <code>q</code>. That
-        function is Parisi's order parameter.
+        function is Parisi's order parameter, and it won him a Nobel prize in 2021.
       </p>
     </div>
+  </section>
 
-    <h2>Why the ground state matters</h2>
+  <h2>Where else this turns up</h2>
 
-    <p class="big sub">The same optimisation problem turns up well outside physics.</p>
+  <p class="big">
+    Minimising a sum of pairwise terms is not a physics problem. It is just written down first in physics.
+  </p>
 
-    <dl class="terms">
-      <div>
-        <dt>Optimization</dt>
-        <dd>Routing, scheduling and MAX CUT map straight onto spins like these. Annealers such as D-Wave are built to search for exactly these minima.</dd>
-      </div>
-      <div>
-        <dt>Magnets and materials</dt>
-        <dd>A real magnet or material at low temperature sits in the ground state of its Hamiltonian. Predicting the state is predicting the material.</dd>
-      </div>
-      <div>
-        <dt>Memory and learning</dt>
-        <dd>Hopfield networks store memories as energy minima. Recall is downhill motion into the nearest valley.</dd>
-      </div>
-      <div>
-        <dt>Quantum simulation</dt>
-        <dd>Ground state energies are what chemistry and materials design actually need, and one of the better arguments for building a quantum computer.</dd>
-      </div>
-    </dl>
-
-    <div class="note">
-      <p><strong>Anneal</strong> heats the system so spins can hop out of bad configurations, then cools it slowly until things settle low. That is simulated annealing, and it is entirely classical. A real quantum annealer tunnels through the barriers instead of climbing over them.</p>
+  <dl class="terms wide">
+    <div>
+      <dt>Optimisation</dt>
+      <dd>Routing, scheduling and MAX CUT all map straight onto spins like these. Annealers such as D-Wave are machines built to hunt for exactly these minima.</dd>
     </div>
-
-    <div class="closing">
-      More at the <a href="index.html">main page</a> or the <a href="blogs.html">writing</a>. Or <a href="mailto:Kartik.anand@tuhh.de">email me</a>.
+    <div>
+      <dt>Magnets and materials</dt>
+      <dd>A magnet or a material at low temperature settles into the ground state of its own Hamiltonian, so if you can work out that state, you have worked out what the material will do.</dd>
     </div>
+    <div>
+      <dt>Memory and learning</dt>
+      <dd>Hopfield networks store each memory as an energy minimum, and recalling one means rolling downhill into whichever valley you started nearest.</dd>
+    </div>
+    <div>
+      <dt>Quantum simulation</dt>
+      <dd>Ground state energies are the quantity chemistry and materials design actually want, which is why they keep showing up as a reason to build a quantum computer at all.</dd>
+    </div>
+  </dl>
+
+  <div class="note wide">
+    <p><strong>Quantum Anneal</strong> heats the board so spins can hop out of bad configurations, then cools it slowly so they settle somewhere low. That is simulated annealing and it is entirely classical, despite the label on the button. A real quantum annealer would tunnel through the barriers instead of climbing over them.</p>
   </div>
 
-  <footer>
+  <div class="closing">
+    There is more on the <a href="index.html">main page</a> and in the <a href="blogs.html">writing</a>. Or <a href="mailto:Kartik.anand@tuhh.de">email me</a>.
+  </div>
+
+  <footer class="wide">
     <span>Kartik Anand · Quantum Complexity Theory</span>
     <span><a href="index.html">← back home</a></span>
   </footer>
@@ -936,8 +838,31 @@ footer a:hover { border-color: var(--quantum); }
   }
 
   // ---------- render board ----------
+  function fitBoard() {
+    if (!L || !L.nodes || !L.nodes.length) return;
+    const xs = L.nodes.map(n => n[0]), ys = L.nodes.map(n => n[1]);
+    const pad = 66;
+    const cx = (Math.min.apply(null,xs) + Math.max.apply(null,xs)) / 2;
+    const cy = (Math.min.apply(null,ys) + Math.max.apply(null,ys)) / 2;
+    let w = (Math.max.apply(null,xs) - Math.min.apply(null,xs)) + 2*pad;
+    let h = (Math.max.apply(null,ys) - Math.min.apply(null,ys)) + 2*pad;
+
+    // Grow the box to the shape of the space it is drawn into, so the board
+    // fills its panel instead of letterboxing inside it.
+    const cw = boardEl.clientWidth || 760;
+    const aspect = cw / Math.min(420, Math.max(240, cw * 0.46));
+    if (w / h < aspect) w = h * aspect; else h = w / aspect;
+
+    // and stop a two-spin level from zooming in to absurdity
+    const MIN_W = 470;
+    if (w < MIN_W) { const k = MIN_W / w; w *= k; h *= k; }
+
+    boardEl.setAttribute("viewBox",
+      (cx - w/2).toFixed(1) + " " + (cy - h/2).toFixed(1) + " " + w.toFixed(1) + " " + h.toFixed(1));
+  }
+
   function render(rebuild) {
-    if (rebuild) boardEl.innerHTML = "";
+    if (rebuild) { boardEl.innerHTML = ""; fitBoard(); }
     const E = energyOf(spins);
     let satCount = 0;
 
@@ -1211,6 +1136,7 @@ footer a:hover { border-color: var(--quantum); }
   if (!prefersReduced) {
     bgResize();
     window.addEventListener("resize", bgResize);
+    window.addEventListener("resize", fitBoard);
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) { cancelAnimationFrame(animId); animId = null; }
       else if (animId === null) { animId = requestAnimationFrame(tickAnim); }
