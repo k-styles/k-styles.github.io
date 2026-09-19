@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Separations, explained · Kartik Anand</title>
+<meta name="description" content="Interactive explanations of quantum complexity class separations: QMA vs QCMA, QMA vs QMA(2), and StoqMA.">
+<link rel="canonical" href="https://k-styles.github.io/separations.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Separations, explained">
+<meta property="og:description" content="QMA vs QCMA, QMA vs QMA(2), and StoqMA, each with the mechanism you can push on.">
+<meta property="og:url" content="https://k-styles.github.io/separations.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2303040a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%235aabff' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='3.2' fill='%239c7cff'/%3E%3Ccircle cx='16' cy='7' r='2' fill='%235aabff'/%3E%3Ccircle cx='24' cy='20.5' r='2' fill='%235aabff'/%3E%3Ccircle cx='8' cy='20.5' r='2' fill='%2345d4bd'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #020309;
+  --rule: rgba(120,160,255,0.11);
+  --rule-bright: rgba(120,160,255,0.2);
+  --rule-strong: rgba(120,160,255,0.38);
+
+  --star-bright: #eaf2ff;
+  --star: rgba(215,228,255,0.92);
+  --muted: rgba(172,197,242,0.62);
+
+  --quantum: #5aabff;
+  --entangle: #9c7cff;
+  --accent: #f0c060;
+  --good: #45d4bd;
+  --bad: #ff7a5c;
+
+  --serif: 'EB Garamond', Georgia, serif;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  --micro: 0.75rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --band-bg: rgba(6,9,17,0.94);
+}
+
+html {
+  scroll-behavior: smooth;
+  caret-color: var(--quantum);
+  scrollbar-color: rgba(90,171,255,0.28) var(--void);
+  scrollbar-width: thin;
+}
+
+body {
+  background-color: var(--void);
+  background-image: radial-gradient(1400px 800px at 50% -12%, rgba(90,171,255,0.07), transparent 62%);
+  background-repeat: no-repeat;
+  color: var(--star);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: rgba(90,171,255,0.32); color: #f2f8ff; }
+:focus-visible { outline: 2px solid var(--quantum); outline-offset: 3px; border-radius: 3px; }
+a { text-underline-offset: 0.18em; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: rgba(90,171,255,0.28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(90,171,255,0.45); }
+
+.skip-link {
+  position: absolute; left: 1rem; top: -3rem; z-index: 10;
+  padding: 0.5rem 0.9rem; font-size: var(--micro); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--quantum); background: #070b16;
+  border: 1px solid var(--rule-strong); border-radius: 3px; text-decoration: none;
+  transition: top 0.2s var(--ease-out);
+}
+.skip-link:focus { top: 1rem; }
+
+/* full-bleed grid: text narrow, figures the whole viewport */
+.wrapper {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(1.15rem, 1fr)
+    [wide-start] minmax(0, 6rem)
+    [txt-start] minmax(0, 660px) [txt-end]
+    minmax(0, 6rem) [wide-end]
+    minmax(1.15rem, 1fr) [full-end];
+  padding-bottom: 6rem;
+}
+/* <main> carries display:contents so its children become grid items, but CSS
+   selectors match the DOM, not the box tree, so they need naming at both depths. */
+.wrapper > *,
+.wrapper > main > *     { grid-column: txt; }
+.wrapper > .wide,
+.wrapper > main > .wide { grid-column: wide; }
+.wrapper > .band,
+.wrapper > main > .band { grid-column: full; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 1.5rem 0 1.1rem;
+}
+.topbar nav { display: flex; gap: 1.5rem; }
+.topbar a {
+  font-size: var(--micro); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
+}
+.topbar a:hover { color: var(--quantum); }
+.home-link span { color: var(--quantum); }
+
+.hero { padding: 4.5rem 0 2.5rem; animation: rise 1s var(--ease-out) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+.hero h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(3.2rem, 11.5vw, 7rem);
+  line-height: 0.9; letter-spacing: -0.035em; color: var(--star-bright);
+}
+.hero h1 em { font-style: italic; color: var(--entangle); }
+.hero .lede {
+  font-family: var(--serif); font-size: clamp(1.15rem, 1.9vw, 1.35rem);
+  line-height: 1.62; color: rgba(216,229,255,0.86); max-width: 50ch; margin-top: 2rem;
+}
+
+h2 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  line-height: 1.05; letter-spacing: -0.028em; color: var(--star-bright);
+  margin: 4.5rem 0 0.6rem; text-wrap: balance;
+}
+h2 em { font-style: italic; color: var(--entangle); }
+h2 + .cite { margin-bottom: 1.5rem; }
+
+.cite {
+  font-family: var(--mono); font-size: 0.82rem; line-height: 1.6;
+  color: rgba(163,193,243,0.78);
+}
+.cite a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); }
+.cite a:hover { border-color: var(--quantum); }
+
+p.body {
+  font-family: var(--serif); font-size: 1.12rem; line-height: 1.82;
+  color: rgba(216,230,255,0.88); margin-bottom: 1.1rem;
+}
+p.big {
+  font-family: var(--serif); font-size: 1.3rem; line-height: 1.62;
+  color: rgba(226,238,255,0.93); margin-bottom: 1.2rem;
+}
+p a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); transition: border-color .2s; }
+p a:hover { border-color: var(--quantum); }
+.term { color: var(--star-bright); font-weight: 500; }
+code {
+  font-family: var(--mono); font-size: 0.86em;
+  background: rgba(120,160,255,0.1); padding: 0.08em 0.34em; border-radius: 4px; color: #c3d9ff;
+}
+
+/* full-bleed figure bands */
+.band {
+  margin: 2.6rem 0 3.4rem;
+  padding: 1.2rem 0 1.4rem;
+  border-top: 1px solid var(--rule-bright);
+  border-bottom: 1px solid var(--rule-bright);
+  background: var(--band-bg);
+}
+.band-in { max-width: 1100px; margin: 0 auto; padding: 0.4rem 1.5rem 0.6rem; }
+.fig-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--rule);
+}
+.fig-head h3 {
+  font-family: var(--serif); font-style: italic; font-weight: 400;
+  font-size: clamp(1.35rem, 2.5vw, 1.8rem); line-height: 1.2; color: var(--star-bright); margin: 0;
+}
+.fig-sub {
+  font-family: var(--mono); font-size: 0.82rem; color: var(--entangle);
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.band svg { width: 100%; height: auto; display: block; }
+.axis { font-family: var(--sans); font-size: 11px; fill: rgba(178,201,244,0.78); letter-spacing: 0.03em; }
+.axis-dim { fill: rgba(150,180,235,0.55); }
+
+.ctl-row { display: grid; gap: 1.4rem 2rem; margin-top: 1.3rem; }
+.ctl-row.two { grid-template-columns: 1fr 1fr; }
+.ctl label {
+  display: block; font-size: 0.84rem; letter-spacing: 0.01em;
+  color: rgba(178,201,244,0.8); margin-bottom: 0.15rem;
+}
+.ctl label b { color: var(--star-bright); font-family: var(--mono); font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 20px; margin: 0.5rem 0 0; background: transparent; cursor: pointer; display: block;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 2px; border-radius: 2px; background: var(--rule-bright); }
+input[type=range]::-moz-range-track { height: 2px; border-radius: 2px; background: var(--rule-bright); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 15px; height: 15px; margin-top: -6.5px; border-radius: 50%;
+  background: #060a13; border: 1.5px solid var(--quantum);
+  box-shadow: 0 3px 8px -2px rgba(0,0,0,0.9);
+  transition: transform .18s var(--ease-out), border-color .18s, background .18s;
+}
+input[type=range]::-moz-range-thumb {
+  width: 15px; height: 15px; border-radius: 50%; background: #060a13;
+  border: 1.5px solid var(--quantum); box-shadow: 0 3px 8px -2px rgba(0,0,0,0.9);
+}
+input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.14); background: #0c1220; }
+input[type=range]:focus-visible { outline: none; }
+input[type=range]:focus-visible::-webkit-slider-thumb { border-color: #9fd0ff; box-shadow: 0 0 0 3px rgba(90,171,255,0.28); }
+/* These axis ends are phrases, not micro-labels. All caps turns
+   "Maximally entangled" into a wall, so they stay in sentence case. */
+.scale {
+  display: flex; justify-content: space-between;
+  font-size: 0.8rem; letter-spacing: 0.01em;
+  color: rgba(172,197,242,0.68); margin-top: 0.2rem;
+}
+
+.fig-cap {
+  font-family: var(--sans); font-size: 0.95rem; line-height: 1.72;
+  color: rgba(196,213,247,0.86); margin-top: 1.3rem; max-width: 64ch;
+}
+.fig-cap b { color: var(--star-bright); font-weight: 600; }
+
+.readouts { display: flex; flex-wrap: wrap; gap: 0.5rem 2.4rem; margin-top: 1.2rem; }
+.ro { display: flex; flex-direction: column; gap: 0.1rem; }
+.ro .k { font-size: 0.8rem; letter-spacing: 0.01em; color: rgba(178,201,244,0.8); }
+.ro .v { font-family: var(--mono); font-size: 1.15rem; font-variant-numeric: tabular-nums; color: var(--star-bright); }
+.ro .v.good { color: var(--good); }
+.ro .v.bad { color: var(--bad); }
+.ro .v.q { color: var(--quantum); }
+
+.note {
+  margin: 2.2rem 0 0; padding: 1.3rem 1.5rem;
+  border: 1px solid rgba(156,124,255,0.26); border-radius: 10px; background: rgba(156,124,255,0.05);
+}
+.note p {
+  font-family: var(--sans); font-size: 0.97rem; line-height: 1.72;
+  color: rgba(205,215,248,0.89); margin: 0; max-width: 66ch;
+}
+.note p + p { margin-top: 0.8rem; }
+.note strong { color: rgba(203,183,255,0.98); font-weight: 600; }
+.note a { color: rgba(190,168,255,0.96); text-decoration: none; border-bottom: 1px solid rgba(156,124,255,0.4); }
+.note a:hover { border-color: var(--entangle); }
+
+.refs { list-style: none; margin: 1.6rem 0 0; }
+.refs li {
+  padding: 0.85rem 0; border-top: 1px solid var(--rule);
+  font-size: 0.93rem; line-height: 1.65; color: rgba(196,213,247,0.86);
+}
+.refs li:last-child { border-bottom: 1px solid var(--rule); }
+.refs b { color: var(--star-bright); font-weight: 600; }
+.refs a {
+  font-family: var(--mono); font-size: 0.85em; color: var(--quantum);
+  text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); white-space: nowrap;
+}
+.refs a:hover { border-color: var(--quantum); }
+
+.closing {
+  margin-top: 3.5rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+  font-size: 0.95rem; color: rgba(178,201,244,0.78);
+}
+.closing a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); }
+.closing a:hover { border-color: var(--quantum); }
+
+footer {
+  margin-top: 3rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.6rem;
+  font-size: 0.78rem; color: rgba(172,197,242,0.62);
+}
+footer a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid transparent; }
+footer a:hover { border-color: var(--quantum); }
+
+@media (max-width: 760px) {
+  .ctl-row.two { grid-template-columns: 1fr; }
+  .band { margin: 2rem 0 2.6rem; }
+  .band-in { padding: 0.3rem 1.15rem 0.5rem; }
+  .hero { padding: 2.6rem 0 1.8rem; }
+  .hero .lede { margin-top: 1.3rem; }
+  h2 { margin-top: 3.2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="wrapper">
+
+  <div class="topbar wide">
+    <a class="home-link" href="index.html"><span>←</span> Kartik Anand</a>
+    <nav aria-label="Secondary">
+      <a href="frustration.html">Playground</a>
+      <a href="blogs.html">Writing</a>
+      <a href="mailto:Kartik.anand@tuhh.de">Contact</a>
+    </nav>
+  </div>
+
+  <header class="hero wide">
+    <h1>Separations, <em>explained</em></h1>
+    <p class="lede">
+      A proof is a string you hand a verifier. Quantum complexity keeps running into the same question in
+      different clothes: does it matter what the string is made of, and does it matter how many pieces it
+      arrives in? Three of those questions, with the machinery you can push on yourself.
+    </p>
+  </header>
+
+  <main id="main" style="display:contents">
+
+  <p class="big">
+    QMA is the quantum analogue of NP. A prover hands over a witness, a polynomial-time quantum verifier
+    checks it, and the local Hamiltonian problem is complete for it. Change one thing about the witness and
+    you get a different class nobody can relate to the first one.
+  </p>
+
+  <h2>QMA versus QCMA</h2>
+  <p class="cite">Does the witness have to be quantum?</p>
+
+  <p class="body">
+    QCMA is QMA with a classical witness: the prover sends bits, the verifier is still a quantum computer.
+    Aharonov and Naveh asked in 2002 whether that costs you anything, and the question is still open.
+    Everyone believes they differ. Nobody can prove it, for the same reason nobody can prove P ≠ NP, so
+    the field does what complexity theory does when it is stuck and builds oracles.
+  </p>
+
+  <p class="body">
+    The point of an oracle separation is to rule out a class of proof technique. If QMA<sup>A</sup> ≠
+    QCMA<sup>A</sup> for some <code>A</code>, then no argument that relativizes can prove QMA = QCMA. But
+    oracles come in strengths, and a separation is only as convincing as the oracle is ordinary. This is
+    the part worth understanding before reading any headline in this area.
+  </p>
+
+  <section class="band" aria-label="The oracle ladder">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>How ordinary is the oracle?</h3>
+        <span class="fig-sub" id="ladSub">2007 · quantum oracle</span>
+      </div>
+      <svg id="ladSvg" viewBox="0 0 900 300" role="img" aria-label="Four rungs of oracle strength for the QMA versus QCMA separation, from a quantum unitary oracle in 2007 to a plain classical oracle in 2025"></svg>
+      <div class="ctl-row">
+        <div class="ctl">
+          <label for="ladCtl">Rung <b id="ladLbl">1 of 4</b></label>
+          <input type="range" id="ladCtl" min="0" max="3" value="0" step="1" aria-label="Oracle strength rung">
+          <div class="scale" aria-hidden="true"><span>Weakest evidence</span><span>Strongest</span></div>
+        </div>
+      </div>
+      <p class="fig-cap" id="ladCap"></p>
+    </div>
+  </section>
+
+  <p class="body">
+    The 2025 construction is the one that closes the ladder, and its mechanism is worth the price of
+    admission. Bostanci, Haferkamp, Nirkhe and Zhandry separate the classes using a problem they call
+    <span class="term">spectral Forrelation</span>: the oracle hands you two subsets of the Boolean
+    hypercube through membership queries, and you must decide whether some quantum state is concentrated
+    on the first set in the standard basis while its Fourier transform is concentrated on the second.
+  </p>
+
+  <p class="body">
+    The lower bound comes from an observation you can state in one sentence. A classical witness is a
+    string, so the verifier can rerun on it as many times as it likes and collect as many samples as it
+    likes. A quantum witness is used up the moment you measure it, and no-cloning means you cannot make
+    more. So proving that QCMA cannot solve the problem reduces to proving a <em>sampling</em> hardness
+    result, and sampling hardness is something we know how to prove without it accidentally ruling out QMA
+    too.
+  </p>
+
+  <section class="band" aria-label="Reusable versus use-once witnesses">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>A string can be reread. A state cannot.</h3>
+        <span class="fig-sub" id="wSub">4 verification runs</span>
+      </div>
+      <svg id="wSvg" viewBox="0 0 900 340" role="img" aria-label="A classical witness being reused across many verification runs to collect many samples, beside a quantum witness that is destroyed by the first measurement"></svg>
+      <div class="ctl-row">
+        <div class="ctl">
+          <label for="wCtl">Verification runs the verifier attempts <b id="wR">4</b></label>
+          <input type="range" id="wCtl" min="1" max="12" value="4" step="1" aria-label="Number of verification runs">
+          <div class="scale" aria-hidden="true"><span>1</span><span>12</span></div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Samples from a classical witness</span><span class="v good" id="wClassical">4</span></div>
+        <div class="ro"><span class="k">Samples from a quantum witness</span><span class="v bad" id="wQuantum">1</span></div>
+      </div>
+      <p class="fig-cap">
+        The prover sends the same object in both lanes. On the left it is <code>w ∈ {0,1}<sup>m</sup></code>,
+        which sits in memory and can be fed to the circuit again and again. On the right it is
+        <code>|ψ⟩</code>, and the first measurement collapses it. <b>That asymmetry is the whole lower
+        bound</b>: it turns a statement about QCMA into a statement about how many samples you need, and
+        the sampling version does not also apply to QMA.
+      </p>
+    </div>
+  </section>
+
+  <h2>QMA versus QMA(2)</h2>
+  <p class="cite">Does it help if the witness arrives in two pieces that cannot be entangled?</p>
+
+  <p class="body">
+    QMA(2), from Kobayashi, Matsumoto and Yamakami, gives the verifier two witnesses with a promise: they
+    come from two provers who have never met, so the joint state is a product. That promise sounds like a
+    restriction. It is actually a gift, because checking a property of a state is much easier when you know
+    it is not entangled, and the verifier gets that for free.
+  </p>
+
+  <p class="body">
+    How much it buys is embarrassingly unknown. The only bounds anyone has are the ones you get for free:
+    QMA ⊆ QMA(2) ⊆ NEXP. Not EXP. <em>NEXP.</em> Harrow and Montanaro showed that more provers do not help
+    beyond two, so QMA(k) = QMA(2) for every k ≥ 2, which at least means there is one question rather than
+    a family of them. Two restricted variants have since been pinned exactly at NEXP: QMA<sup>+</sup>(2),
+    where the amplitudes are real and non-negative, and an internally separable variant. Neither settles
+    the real thing.
+  </p>
+
+  <p class="body">
+    Underneath it all is that unentanglement is a testable property. Give a verifier two copies of a
+    bipartite state and it can run a swap test on the halves; the pass rate is exactly the purity of the
+    reduced state, which is 1 for a product state and drops as you entangle. Slide the Schmidt coefficient
+    and watch the test notice.
+  </p>
+
+  <section class="band" aria-label="Detecting entanglement with a swap test">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>The promise the verifier gets for free</h3>
+        <span class="fig-sub" id="swSub">product state</span>
+      </div>
+      <svg id="swSvg" viewBox="0 0 900 320" role="img" aria-label="A bipartite state moving from product to maximally entangled, with its Schmidt coefficients, purity and swap test pass probability"></svg>
+      <div class="ctl-row">
+        <div class="ctl">
+          <label for="swCtl">Schmidt coefficient <b id="swL">λ = 1.00</b></label>
+          <input type="range" id="swCtl" min="500" max="1000" value="1000" step="1" aria-label="Schmidt coefficient lambda">
+          <div class="scale" aria-hidden="true"><span>Maximally entangled</span><span>Product</span></div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Purity Tr ρ²</span><span class="v q" id="swPur">1.000</span></div>
+        <div class="ro"><span class="k">Swap test passes</span><span class="v good" id="swPass">100.0%</span></div>
+        <div class="ro"><span class="k">Entropy of entanglement</span><span class="v" id="swEnt">0.000</span></div>
+      </div>
+      <p class="fig-cap">
+        The state is <code>√λ|00⟩ + √(1−λ)|11⟩</code>. A swap test on the A halves of two copies passes with
+        probability <code>(1 + Tr ρ<sub>A</sub>²)/2</code>, which is <b>1 for a product state and 3/4 for a
+        Bell pair</b>. That gap is what a QMA(2) verifier can lean on and a QMA verifier cannot, and it is
+        why the promise of unentanglement is suspected to be worth real computational power.
+      </p>
+    </div>
+  </section>
+
+  <h2>StoqMA and the sign problem</h2>
+  <p class="cite">What if the Hamiltonian is the kind physicists can actually simulate?</p>
+
+  <p class="body">
+    A Hamiltonian is <span class="term">stoquastic</span> when all its off-diagonal entries are real and
+    non-positive in the computational basis. That sounds like a technicality and it is the single most
+    consequential technicality in quantum Monte Carlo. Flip the signs the wrong way and the weights in the
+    path integral start cancelling, the estimator's variance blows up exponentially, and the simulation
+    stops working. This is the sign problem, and stoquastic Hamiltonians are exactly the ones that do not
+    have it.
+  </p>
+
+  <p class="body">
+    Bravyi, Bessen and Terhal defined StoqMA in 2006 as the class for which the stoquastic local
+    Hamiltonian problem is complete. It sits between the classical and quantum worlds: MA ⊆ StoqMA ⊆ SBP ∩
+    QMA. Drag the slider and watch the ground state pick up signs.
+  </p>
+
+  <section class="band" aria-label="The sign problem">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>Where the sign problem comes from</h3>
+        <span class="fig-sub" id="sgSub">stoquastic · no sign problem</span>
+      </div>
+      <svg id="sgSvg" viewBox="0 0 900 330" role="img" aria-label="A six by six Hamiltonian with its off-diagonal signs, and the resulting ground state amplitudes, as positive off-diagonal entries are introduced"></svg>
+      <div class="ctl-row">
+        <div class="ctl">
+          <label for="sgCtl">Off-diagonal entries flipped positive <b id="sgN">0 of 9</b></label>
+          <input type="range" id="sgCtl" min="0" max="9" value="0" step="1" aria-label="Number of positive off-diagonal entries">
+          <div class="scale" aria-hidden="true"><span>Stoquastic</span><span>Sign problem</span></div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Ground energy</span><span class="v q" id="sgE">0.000</span></div>
+        <div class="ro"><span class="k">Negative amplitudes</span><span class="v" id="sgNeg">0</span></div>
+        <div class="ro"><span class="k">Average sign</span><span class="v good" id="sgSign">1.000</span></div>
+      </div>
+      <p class="fig-cap">
+        A real 6 × 6 Hamiltonian, diagonalised in your browser. While every off-diagonal entry is
+        non-positive, Perron–Frobenius guarantees a ground state with all amplitudes of one sign, so the
+        path-integral weights are probabilities and Monte Carlo converges. Flip entries positive and the
+        ground state develops signs; the <b>average sign</b> is the quantity whose decay makes the sampling
+        cost explode. Only the first failure matters: one positive off-diagonal entry is enough to leave
+        the stoquastic world.
+      </p>
+    </div>
+  </section>
+
+  <p class="body">
+    The open question here is error reduction. Every class you would expect has it, and for StoqMA nobody
+    knows, twenty years on. Aharonov, Grilo and Liu showed why that matters: if StoqMA admits error
+    reduction, then StoqMA collapses to MA. So the gap between a class that looks quantum and a class that
+    is plainly classical hinges on whether you are allowed to repeat the protocol and take a majority.
+  </p>
+
+  <div class="note wide">
+    <p>
+      <strong>The two threads met in 2026.</strong> Liu and Wu opened up StoqMA(2), which is the
+      unentangled promise from QMA(2) bolted onto the stoquastic setting, and the point of doing that is to
+      isolate what unentanglement contributes when destructive interference is off the table. They also
+      show StoqMA(k)<sub>log</sub> ⊆ MA and StoqMA<sub>log</sub> = BPP.
+    </p>
+    <p>
+      <a href="https://arxiv.org/abs/2604.27886" target="_blank" rel="noopener">arXiv:2604.27886</a>,
+      revised July 2026. New enough that I would read it before citing it.
+    </p>
+  </div>
+
+  <h2>Reading list</h2>
+
+  <p class="body">
+    Every claim above, in order, so you can check me.
+  </p>
+
+  <ul class="refs">
+    <li><b>Aaronson, Kuperberg.</b> Quantum versus classical proofs and advice, CCC 2007. The quantum oracle separation. <a href="https://arxiv.org/abs/quant-ph/0604056" target="_blank" rel="noopener">quant-ph/0604056</a></li>
+    <li><b>Fefferman, Kimmel.</b> Quantum vs classical proofs and subset verification, MFCS 2018. In-place permutation oracle. <a href="https://arxiv.org/abs/1510.06750" target="_blank" rel="noopener">arXiv:1510.06750</a></li>
+    <li><b>Natarajan, Nirkhe.</b> A distribution testing oracle separation between QMA and QCMA, Quantum 8, 1377 (2024). Randomized classical oracle. <a href="https://arxiv.org/abs/2210.15380" target="_blank" rel="noopener">arXiv:2210.15380</a></li>
+    <li><b>Bostanci, Haferkamp, Nirkhe, Zhandry.</b> Separating QMA from QCMA with a classical oracle, 2025. Spectral Forrelation. <a href="https://arxiv.org/abs/2511.09551" target="_blank" rel="noopener">arXiv:2511.09551</a></li>
+    <li><b>Jeronimo, Wu.</b> The power of unentangled quantum proofs with non-negative amplitudes, STOC 2023. QMA<sup>+</sup>(2) = NEXP. <a href="https://arxiv.org/abs/2402.18790" target="_blank" rel="noopener">arXiv:2402.18790</a></li>
+    <li><b>Aharonov, Grilo, Liu.</b> StoqMA vs MA: the power of error reduction, Quantum 2025. <a href="https://arxiv.org/abs/2010.02835" target="_blank" rel="noopener">arXiv:2010.02835</a></li>
+    <li><b>Liu.</b> StoqMA meets distribution testing, 2020. eStoqMA ⊆ MA. <a href="https://arxiv.org/abs/2011.05733" target="_blank" rel="noopener">arXiv:2011.05733</a></li>
+    <li><b>Liu, Wu.</b> The power of unentanglement without destructive interference, 2026. StoqMA(2). <a href="https://arxiv.org/abs/2604.27886" target="_blank" rel="noopener">arXiv:2604.27886</a></li>
+  </ul>
+
+  <div class="closing">
+    If you work on any of this and I have got something wrong, I would rather know:
+    <a href="mailto:Kartik.anand@tuhh.de">Kartik.anand@tuhh.de</a>. More on the
+    <a href="index.html">main page</a>, and there is a
+    <a href="frustration.html">playable spin glass</a> next door.
+  </div>
+
+  </main>
+
+  <footer class="wide">
+    <span>Kartik Anand · Quantum Complexity Theory</span>
+    <span><a href="index.html">← back home</a></span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (id) => document.getElementById(id);
+  const mk = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const txt = (s, a) => { const e = mk("text", a); e.textContent = s; return e; };
+  const C = { q:"#5aabff", e:"#9c7cff", good:"#45d4bd", bad:"#ff7a5c", amber:"#f0c060",
+              rule:"rgba(120,160,255,0.2)", faint:"rgba(120,160,255,0.09)", ink:"#eaf2ff",
+              dim:"rgba(178,201,244,0.72)" };
+  const clamp = (v,a,b) => v<a?a:v>b?b:v;
+
+  /* ============ 1. THE ORACLE LADDER ============ */
+  (function ladder(){
+    const svg=$("ladSvg"), ctl=$("ladCtl"), sub=$("ladSub"), lbl=$("ladLbl"), cap=$("ladCap");
+    if(!svg) return;
+    const RUNGS = [
+      { year:"2007", kind:"Quantum oracle",
+        who:"Aaronson, Kuperberg",
+        cap:"A <b>quantum oracle</b> is a black-box unitary, not a function you query with bit strings. Separating the classes relative to one rules out proof techniques that relativize with respect to unitaries, which is a much smaller family than the usual notion. Real progress, weakest rung: most people did not regard the question as settled even relative to oracles." },
+      { year:"2018", kind:"In-place permutation oracle",
+        who:"Fefferman, Kimmel",
+        cap:"An <b>in-place permutation oracle</b> applies a permutation to the register rather than writing an answer into a fresh one, so it cannot be queried in superposition the ordinary way and cannot be uncomputed the ordinary way. Closer to classical than a unitary oracle, still not a function you can hand someone on paper. First movement on the question in eleven years." },
+      { year:"2024", kind:"Randomized classical oracle",
+        who:"Natarajan, Nirkhe",
+        cap:"A <b>randomized classical oracle</b>: an honest classical function, but drawn from a distribution rather than fixed. The separating problem is distribution testing on graphs given by adjacency lists, deciding whether the graph has several components or is one expander. Very nearly the real thing. The randomization is the only asterisk left." },
+      { year:"2025", kind:"Classical oracle",
+        who:"Bostanci, Haferkamp, Nirkhe, Zhandry",
+        cap:"A <b>plain classical oracle</b>, no asterisk. The problem is spectral Forrelation: two subsets of the hypercube given by membership queries, and you decide whether some state is concentrated on one in the standard basis and on the other in the Fourier basis. Any proof that QMA = QCMA must now be non-relativizing." },
+    ];
+    const W=900, H=340, x0=70, x1=830, base=232;
+    svg.setAttribute("viewBox", "0 0 900 " + H);
+    function draw(i){
+      svg.innerHTML="";
+      const step=(x1-x0)/RUNGS.length;
+      svg.appendChild(mk("line",{x1:x0-18,y1:base+26,x2:x1+18,y2:base+26,stroke:C.rule,"stroke-width":1}));
+      RUNGS.forEach((r,k)=>{
+        const on = k<=i, cur = k===i;
+        const bx = x0 + k*step, bw = step-22;
+        const bh = 26 + k*38;
+        const col = cur ? C.q : (on ? "rgba(90,171,255,0.34)" : "rgba(120,160,255,0.14)");
+        svg.appendChild(mk("rect",{x:bx.toFixed(1),y:(base-bh).toFixed(1),width:bw.toFixed(1),height:bh.toFixed(1),rx:5,
+          fill: cur ? "rgba(90,171,255,0.16)" : "rgba(90,171,255,0.05)", stroke:col, "stroke-width": cur?1.8:1}));
+        svg.appendChild(txt(r.year,{x:(bx+bw/2).toFixed(1),y:(base-bh-13).toFixed(1),"text-anchor":"middle",
+          class:"axis", fill: cur?C.ink:C.dim, "font-size": cur?14:12}));
+        const words=r.kind.split(" ");
+        let line=[], lines=[];
+        words.forEach(w=>{ if((line.join(" ")+" "+w).length>22){lines.push(line.join(" "));line=[w];} else line.push(w); });
+        lines.push(line.join(" "));
+        lines.forEach((ln,li)=>{
+          svg.appendChild(txt(ln,{x:(bx+bw/2).toFixed(1),y:(base+44+li*15).toFixed(1),"text-anchor":"middle",
+            class:"axis", fill: cur?C.q:"rgba(150,180,235,0.5)"}));
+        });
+        if(cur){
+          svg.appendChild(txt(r.who,{x:(bx+bw/2).toFixed(1),y:(base+44+lines.length*15+4).toFixed(1),
+            "text-anchor":"middle", class:"axis axis-dim","font-size":11}));
+        }
+      });
+      svg.appendChild(txt("evidence that no relativizing proof can show QMA = QCMA",
+        {x:x0-18,y:36,class:"axis axis-dim"}));
+      sub.textContent = RUNGS[i].year + " · " + RUNGS[i].kind.toLowerCase();
+      lbl.textContent = (i+1) + " of " + RUNGS.length;
+      cap.innerHTML = RUNGS[i].cap;
+    }
+    ctl.addEventListener("input", ()=>draw(+ctl.value));
+    draw(+ctl.value);
+  })();
+
+  /* ============ 2. REUSABLE VS USE-ONCE WITNESS ============ */
+  (function witness(){
+    const svg=$("wSvg"), ctl=$("wCtl"), sub=$("wSub"), rl=$("wR"), cl=$("wClassical"), qu=$("wQuantum");
+    if(!svg) return;
+    const W=900, H=340;
+    function draw(){
+      const r = +ctl.value;
+      svg.innerHTML="";
+      const laneW=400, gap=60, lx=30, rx=lx+laneW+gap;
+      const rows = Math.min(r, 12);
+      const rowH = 30, top = 72;
+      const laneH = rows*rowH + 64;
+      svg.setAttribute("viewBox", "0 0 " + W + " " + (20 + laneH + 18));
+      [[lx,"Classical witness  w ∈ {0,1}ᵐ",C.good],[rx,"Quantum witness  |ψ⟩",C.bad]].forEach(([x,label,col])=>{
+        svg.appendChild(mk("rect",{x:x,y:20,width:laneW,height:laneH,rx:10,fill:"rgba(90,171,255,0.025)",stroke:C.faint}));
+        svg.appendChild(txt(label,{x:x+18,y:46,class:"axis",fill:col,"font-size":13}));
+      });
+
+      // the witness object itself
+      function bits(x,y){
+        const g=mk("g",{});
+        "1011".split("").forEach((b,i)=>{
+          g.appendChild(mk("rect",{x:x+i*17,y:y,width:14,height:18,rx:2,fill:"rgba(69,212,189,0.14)",stroke:"rgba(69,212,189,0.5)"}));
+          g.appendChild(txt(b,{x:x+i*17+7,y:y+13,"text-anchor":"middle",class:"axis",fill:C.good,"font-size":11}));
+        });
+        return g;
+      }
+      function ket(x,y,alive){
+        const g=mk("g",{});
+        g.appendChild(mk("circle",{cx:x+34,cy:y+9,r:13,fill:alive?"rgba(255,122,92,0.16)":"rgba(120,140,170,0.08)",
+          stroke:alive?C.bad:"rgba(140,160,190,0.3)","stroke-width":alive?1.4:1}));
+        g.appendChild(txt("|ψ⟩",{x:x+34,y:y+13,"text-anchor":"middle",class:"axis",
+          fill:alive?C.bad:"rgba(140,160,190,0.4)","font-size":11}));
+        return g;
+      }
+
+      for(let i=0;i<rows;i++){
+        const y = top + i*rowH;
+        // classical: a fresh copy every run
+        svg.appendChild(bits(lx+18, y));
+        svg.appendChild(mk("line",{x1:lx+92,y1:y+9,x2:lx+150,y2:y+9,stroke:"rgba(69,212,189,0.45)","stroke-width":1}));
+        svg.appendChild(mk("rect",{x:lx+150,y:y-1,width:58,height:20,rx:4,fill:"rgba(69,212,189,0.08)",stroke:"rgba(69,212,189,0.4)"}));
+        svg.appendChild(txt("verify",{x:lx+179,y:y+13,"text-anchor":"middle",class:"axis",fill:C.good,"font-size":10}));
+        svg.appendChild(mk("line",{x1:lx+208,y1:y+9,x2:lx+256,y2:y+9,stroke:"rgba(69,212,189,0.45)","stroke-width":1}));
+        svg.appendChild(mk("circle",{cx:lx+266,cy:y+9,r:4.5,fill:C.good,"fill-opacity":0.85}));
+        svg.appendChild(txt("sample",{x:lx+280,y:y+13,class:"axis",fill:"rgba(69,212,189,0.75)","font-size":10}));
+
+        // quantum: only the first run gets anything
+        const alive = i===0;
+        svg.appendChild(ket(rx+18, y, alive));
+        svg.appendChild(mk("line",{x1:rx+92,y1:y+9,x2:rx+150,y2:y+9,
+          stroke: alive?"rgba(255,122,92,0.5)":"rgba(140,160,190,0.16)","stroke-width":1,
+          "stroke-dasharray": alive?"":"3 4"}));
+        svg.appendChild(mk("rect",{x:rx+150,y:y-1,width:58,height:20,rx:4,
+          fill: alive?"rgba(255,122,92,0.08)":"rgba(140,160,190,0.03)",
+          stroke: alive?"rgba(255,122,92,0.4)":"rgba(140,160,190,0.16)"}));
+        svg.appendChild(txt("verify",{x:rx+179,y:y+13,"text-anchor":"middle",class:"axis",
+          fill: alive?C.bad:"rgba(140,160,190,0.35)","font-size":10}));
+        if(alive){
+          svg.appendChild(mk("line",{x1:rx+208,y1:y+9,x2:rx+256,y2:y+9,stroke:"rgba(255,122,92,0.5)","stroke-width":1}));
+          svg.appendChild(mk("circle",{cx:rx+266,cy:y+9,r:4.5,fill:C.bad,"fill-opacity":0.85}));
+          svg.appendChild(txt("sample",{x:rx+280,y:y+13,class:"axis",fill:"rgba(255,122,92,0.75)","font-size":10}));
+        } else {
+          svg.appendChild(txt("state already consumed",{x:rx+216,y:y+13,class:"axis",
+            fill:"rgba(140,160,190,0.4)","font-size":10}));
+        }
+      }
+      sub.textContent = r + (r===1?" verification run":" verification runs");
+      rl.textContent = r;
+      cl.textContent = r;
+      qu.textContent = 1;
+    }
+    ctl.addEventListener("input", draw);
+    draw();
+  })();
+
+  /* ============ 3. SWAP TEST / UNENTANGLEMENT ============ */
+  (function swap(){
+    const svg=$("swSvg"), ctl=$("swCtl"), sub=$("swSub"),
+          ll=$("swL"), pu=$("swPur"), pa=$("swPass"), en=$("swEnt");
+    if(!svg) return;
+    const W=900, H=270;
+    function draw(){
+      const lam = clamp(+ctl.value/1000, 0.5, 1);
+      const mu = 1-lam;
+      const purity = lam*lam + mu*mu;
+      const pass = (1+purity)/2;
+      const h = (p)=> p<=0 ? 0 : -p*Math.log2(p);
+      const S = h(lam)+h(mu);
+      svg.innerHTML="";
+      svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+
+      // Schmidt coefficient bars
+      const bx=60, by=70, bw=120, bh=150;
+      svg.appendChild(txt("Schmidt coefficients",{x:bx,y:by-22,class:"axis",fill:C.dim}));
+      [[lam,"λ",0],[mu,"1−λ",1]].forEach(([v,lbl,i])=>{
+        const x = bx + i*(bw+26);
+        svg.appendChild(mk("rect",{x:x,y:by,width:bw,height:bh,rx:4,fill:"rgba(90,171,255,0.04)",stroke:C.faint}));
+        const fh = Math.max(1, v*bh);
+        svg.appendChild(mk("rect",{x:x,y:(by+bh-fh).toFixed(1),width:bw,height:fh.toFixed(1),rx:4,
+          fill: i===0?"rgba(90,171,255,0.55)":"rgba(156,124,255,0.55)"}));
+        svg.appendChild(txt(lbl,{x:x+bw/2,y:by+bh+20,"text-anchor":"middle",class:"axis",fill:C.dim}));
+        svg.appendChild(txt(v.toFixed(3),{x:x+bw/2,y:by+bh+38,"text-anchor":"middle",class:"axis",fill:C.ink}));
+      });
+
+      // the state, written out
+      svg.appendChild(txt("|ψ⟩ = " + Math.sqrt(lam).toFixed(3) + " |00⟩ + " + Math.sqrt(mu).toFixed(3) + " |11⟩",
+        {x:400,y:66,class:"axis",fill:C.ink,"font-size":15}));
+
+      // swap test gauge
+      const gx=400, gy=118, gw=440, gh=26;
+      svg.appendChild(txt("swap test pass probability",{x:gx,y:gy-12,class:"axis",fill:C.dim}));
+      svg.appendChild(mk("rect",{x:gx,y:gy,width:gw,height:gh,rx:5,fill:"rgba(90,171,255,0.05)",stroke:C.faint}));
+      // domain 0.5 .. 1.0
+      const frac = (pass-0.5)/0.5;
+      svg.appendChild(mk("rect",{x:gx,y:gy,width:(gw*frac).toFixed(1),height:gh,rx:5,
+        fill: pass>0.99 ? "rgba(69,212,189,0.5)" : "rgba(90,171,255,0.45)"}));
+      [[0.75,"Bell pair, 0.75",C.bad],[1.0,"product, 1.00",C.good]].forEach(([v,lbl,col])=>{
+        const x = gx + gw*((v-0.5)/0.5);
+        svg.appendChild(mk("line",{x1:x,y1:gy-6,x2:x,y2:gy+gh+6,stroke:col,"stroke-width":1,"stroke-dasharray":"3 3"}));
+        svg.appendChild(txt(lbl,{x:clamp(x,gx+4,gx+gw-4),y:gy+gh+22,"text-anchor":v===1?"end":"middle",
+          class:"axis",fill:col,"font-size":11}));
+      });
+      svg.appendChild(txt((pass*100).toFixed(1)+"%",{x:gx+gw,y:gy-12,"text-anchor":"end",class:"axis",
+        fill:C.ink,"font-size":14}));
+      // the gauge starts at 0.5, not 0; say so rather than let it be read as a percentage bar
+      svg.appendChild(txt("0.50",{x:gx,y:gy+gh+22,class:"axis axis-dim","font-size":11}));
+
+      // entanglement bar
+      const ey=212;
+      svg.appendChild(txt("entropy of entanglement",{x:gx,y:ey-12,class:"axis",fill:C.dim}));
+      svg.appendChild(mk("rect",{x:gx,y:ey,width:gw,height:12,rx:4,fill:"rgba(156,124,255,0.06)",stroke:C.faint}));
+      svg.appendChild(mk("rect",{x:gx,y:ey,width:(gw*S).toFixed(1),height:12,rx:4,fill:"rgba(156,124,255,0.6)"}));
+      svg.appendChild(txt("0",{x:gx,y:ey+30,class:"axis axis-dim"}));
+      svg.appendChild(txt("1 ebit",{x:gx+gw,y:ey+30,"text-anchor":"end",class:"axis axis-dim"}));
+
+      sub.textContent = S < 0.005 ? "product state" : S > 0.995 ? "maximally entangled" : "entangled";
+      ll.textContent = "λ = " + lam.toFixed(2);
+      pu.textContent = purity.toFixed(3);
+      pa.textContent = (pass*100).toFixed(1) + "%";
+      en.textContent = S.toFixed(3);
+    }
+    ctl.addEventListener("input", draw);
+    draw();
+  })();
+
+  /* ============ 4. THE SIGN PROBLEM ============ */
+  (function sign(){
+    const svg=$("sgSvg"), ctl=$("sgCtl"), sub=$("sgSub"),
+          nl=$("sgN"), el=$("sgE"), ng=$("sgNeg"), sg=$("sgSign");
+    if(!svg) return;
+    const N = 6;
+    svg.setAttribute("viewBox", "0 0 900 300");
+    // a 6-cycle with three chords: every site has degree 3
+    const EDGES = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,2],[1,4],[3,5]];
+
+    /* Jacobi rotation for a small real symmetric matrix. Six by six, so this is
+       instant and there is no reason to pull in a library. */
+    function eigh(Ain){
+      const n=Ain.length;
+      const A=Ain.map(r=>r.slice());
+      const V=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
+      for(let sweep=0; sweep<80; sweep++){
+        let off=0;
+        for(let p=0;p<n;p++) for(let q=p+1;q<n;q++) off+=A[p][q]*A[p][q];
+        if(off<1e-20) break;
+        for(let p=0;p<n;p++) for(let q=p+1;q<n;q++){
+          if(Math.abs(A[p][q])<1e-14) continue;
+          const theta=(A[q][q]-A[p][p])/(2*A[p][q]);
+          const sgn = theta>=0?1:-1;
+          const t = sgn/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+          const c = 1/Math.sqrt(t*t+1), s = t*c;
+          for(let k=0;k<n;k++){ const kp=A[k][p], kq=A[k][q]; A[k][p]=c*kp-s*kq; A[k][q]=s*kp+c*kq; }
+          for(let k=0;k<n;k++){ const pk=A[p][k], qk=A[q][k]; A[p][k]=c*pk-s*qk; A[q][k]=s*pk+c*qk; }
+          for(let k=0;k<n;k++){ const kp=V[k][p], kq=V[k][q]; V[k][p]=c*kp-s*kq; V[k][q]=s*kp+c*kq; }
+        }
+      }
+      const vals=A.map((r,i)=>r[i]);
+      let lo=0; for(let i=1;i<n;i++) if(vals[i]<vals[lo]) lo=i;
+      const vec=V.map(r=>r[lo]);
+      // fix the global phase so the largest component is positive
+      let big=0; for(let i=1;i<N;i++) if(Math.abs(vec[i])>Math.abs(vec[big])) big=i;
+      if(vec[big]<0) for(let i=0;i<N;i++) vec[i]=-vec[i];
+      return {energy:vals[lo], vec};
+    }
+
+    function draw(){
+      const flips = +ctl.value;
+      const H = Array.from({length:N},()=>new Array(N).fill(0));
+      for(let i=0;i<N;i++) H[i][i]=3;               // degree, so the stoquastic case is a Laplacian
+      EDGES.forEach(([a,b],k)=>{
+        const v = k < flips ? +1 : -1;               // -1 keeps it stoquastic
+        H[a][b]=v; H[b][a]=v;
+      });
+      const {energy, vec} = eigh(H);
+      svg.innerHTML="";
+
+      // the matrix, as a grid of signed cells
+      const cell=30, mx=40, my=66;
+      svg.appendChild(txt("the Hamiltonian",{x:mx,y:my-16,class:"axis",fill:C.dim}));
+      for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+        const v=H[i][j];
+        let fill="rgba(120,160,255,0.03)", stroke="rgba(120,160,255,0.08)", label="";
+        if(i===j){ fill="rgba(240,192,96,0.13)"; stroke="rgba(240,192,96,0.4)"; label="+3"; }
+        else if(v<0){ fill="rgba(90,171,255,0.24)"; stroke="rgba(90,171,255,0.6)"; label="−1"; }
+        else if(v>0){ fill="rgba(255,122,92,0.28)"; stroke="rgba(255,122,92,0.75)"; label="+1"; }
+        svg.appendChild(mk("rect",{x:mx+j*cell,y:my+i*cell,width:cell-3,height:cell-3,rx:3,fill:fill,stroke:stroke}));
+        if(label) svg.appendChild(txt(label,{x:mx+j*cell+(cell-3)/2,y:my+i*cell+(cell-3)/2+4,
+          "text-anchor":"middle",class:"axis","font-size":10,
+          fill: i===j?"rgba(240,192,96,0.9)":(v<0?"rgba(160,200,255,0.9)":"rgba(255,170,150,0.95)")}));
+      }
+      [["−1 off-diagonal","rgba(90,171,255,0.6)",0],["+1 off-diagonal","rgba(255,122,92,0.75)",108],
+       ["diagonal","rgba(240,192,96,0.55)",216]].forEach(([lbl,col,dx])=>{
+        svg.appendChild(mk("rect",{x:mx+dx,y:my+N*cell+12,width:9,height:9,rx:2,fill:col}));
+        svg.appendChild(txt(lbl,{x:mx+dx+14,y:my+N*cell+21,class:"axis axis-dim","font-size":10}));
+      });
+
+      // ground-state amplitudes
+      const ax=320, ay=66, aw=530, ah=N*cell-6, mid=ay+ah/2;
+      svg.appendChild(txt("ground state amplitudes",{x:ax,y:ay-16,class:"axis",fill:C.dim}));
+      svg.appendChild(mk("line",{x1:ax,y1:mid,x2:ax+aw,y2:mid,stroke:C.rule,"stroke-width":1}));
+      const peak = Math.max(...vec.map(Math.abs)) || 1;
+      const bw = aw/N - 16;
+      vec.forEach((v,i)=>{
+        const x = ax + i*(aw/N) + 8;
+        const hgt = Math.abs(v)/peak * (ah/2 - 6);
+        const y = v>=0 ? mid-hgt : mid;
+        svg.appendChild(mk("rect",{x:x.toFixed(1),y:y.toFixed(1),width:bw.toFixed(1),height:Math.max(1,hgt).toFixed(1),
+          rx:3, fill: v>=0 ? "rgba(90,171,255,0.65)" : "rgba(255,122,92,0.7)"}));
+        svg.appendChild(txt(v.toFixed(2),{x:(x+bw/2).toFixed(1),y: v>=0 ? (y-6).toFixed(1) : (mid+hgt+14).toFixed(1),
+          "text-anchor":"middle",class:"axis","font-size":10, fill: v>=0?"rgba(160,200,255,0.85)":"rgba(255,170,150,0.9)"}));
+        svg.appendChild(txt("site "+i,{x:(x+bw/2).toFixed(1),y:(ay+ah+40).toFixed(1),"text-anchor":"middle",
+          class:"axis axis-dim","font-size":10}));
+      });
+
+      const neg = vec.filter(v=>v<-1e-9).length;
+      const avgSign = vec.reduce((s,v)=>s+v,0) / vec.reduce((s,v)=>s+Math.abs(v),0);
+      nl.textContent = flips + " of " + EDGES.length;
+      el.textContent = energy.toFixed(3);
+      ng.textContent = neg;
+      sg.textContent = Math.abs(avgSign).toFixed(3);
+      sg.className = "v " + (Math.abs(avgSign) > 0.85 ? "good" : Math.abs(avgSign) > 0.4 ? "" : "bad");
+      sub.textContent = flips===0 ? "stoquastic · no sign problem"
+                      : neg===0   ? "not stoquastic · amplitudes still one sign"
+                                  : "sign problem · " + neg + " negative amplitudes";
+    }
+    ctl.addEventListener("input", draw);
+    draw();
+  })();
+})();
+</script>
+</body>
+</html>
