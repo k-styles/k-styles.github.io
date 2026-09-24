@@ -373,7 +373,6 @@ footer a:hover { border-color: var(--quantum); }
     <div class="band-in">
       <div class="fig-head">
         <h3>Where the weight sits</h3>
-        <span class="fig-sub" id="spSub">h/J = 1.00 · ground state</span>
       </div>
       <svg id="spSvg" viewBox="0 0 900 380" role="img" aria-label="A chain of ten spins cut in the middle, above a bar chart of the 32 Schmidt weights across that cut on a logarithmic scale. Bars inside the kept bond dimension are bright; discarded bars are faint."></svg>
       <div class="ctl-row three">
@@ -437,7 +436,6 @@ footer a:hover { border-color: var(--quantum); }
     <div class="band-in">
       <div class="fig-head">
         <h3>Make the chain longer</h3>
-        <span class="fig-sub" id="lenSub">4 to 14 spins, exact</span>
       </div>
       <svg id="lenSvg" viewBox="0 0 900 340" role="img" aria-label="Half-chain entanglement against chain length from 4 to 14 spins, for an ordered chain, a critical chain, a disordered chain, and a chain at the field you choose. The critical curve keeps rising; the others level off."></svg>
       <div class="ctl-row">
@@ -475,7 +473,6 @@ footer a:hover { border-color: var(--quantum); }
     <div class="band-in">
       <div class="fig-head">
         <h3>How many numbers</h3>
-        <span class="fig-sub" id="cntSub">N = 300</span>
       </div>
       <svg id="cntSvg" viewBox="0 0 900 300" role="img" aria-label="Number of parameters on a logarithmic axis against chain length up to 300 spins, for the exact state and for a matrix product state, with a line at the number of atoms in the visible universe."></svg>
       <div class="ctl-row three">
@@ -814,7 +811,6 @@ footer a:hover { border-color: var(--quantum); }
 
       $("hLbl").textContent = "h/J = " + h.toFixed(2);
       $("chiLbl").textContent = "χ = " + chi;
-      $("spSub").textContent = mode === "gs" ? "h/J = " + h.toFixed(2) + " · ground state" : "random state";
       $("roS").textContent = S.toFixed(S < 0.01 ? 4 : 2) + " bits";
       const keepEl = $("roKeep");
       keepEl.textContent = kept > 0.999999 ? (1 - kept < 1e-12 ? "1.000000" : "1 − " + (1 - kept).toExponential(1)) : kept.toFixed(4);
@@ -993,7 +989,6 @@ footer a:hover { border-color: var(--quantum); }
       svg.appendChild(txt("MPS, χ = " + chi, { x: X(230), y: Y(Math.log10(mpsCount(230, chi))) - 12, class: "axis", fill: C.good }));
 
       $("nLbl").textContent = "N = " + N;
-      $("cntSub").textContent = "N = " + N + " · χ = " + chi;
       const e = Math.floor(lE), mant = Math.pow(10, lE - e);
       if (N <= 40) $("roCntExact").textContent = fmtInt(Math.pow(2, N));
       else $("roCntExact").innerHTML = mant.toFixed(1) + " × 10<sup>" + e + "</sup>";

@@ -309,7 +309,7 @@ button.act {
   color: rgba(203,183,255,0.98); cursor: pointer; transition: background .2s, border-color .2s;
 }
 button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entangle); }
-.ro .v sup, .fig-sub sup, .scale sup { font-size: 0.62em; line-height: 0; }
+.ro .v sup, .ctl label sup, .scale sup { font-size: 0.62em; line-height: 0; }
 .handle { cursor: grab; outline: none; }
 .handle:active { cursor: grabbing; }
 .handle:focus-visible .knob, .handle:focus-visible .halo { stroke: #9fd0ff; stroke-width: 3; }
@@ -389,7 +389,6 @@ button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entan
     <div class="band-in">
       <div class="fig-head">
         <h3>Two regions, two candidate surfaces</h3>
-        <span class="fig-sub" id="rtSub">connected wedge</span>
       </div>
       <svg id="rtSvg" viewBox="0 0 900 470" role="img" aria-label="A disk representing a slice of anti-de Sitter space. Two boundary regions, A in blue and B in amber, have draggable endpoints. The shorter of two candidate sets of minimal surfaces is drawn solid, and the entanglement wedge it bounds is shaded. A draggable bulk point turns green when the boundary regions together can recover it."></svg>
       <div class="ctl-row">
@@ -474,7 +473,6 @@ button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entan
     <div class="band-in">
       <div class="fig-head">
         <h3>The Page curve</h3>
-        <span class="fig-sub" id="pgSub">no island</span>
       </div>
       <svg id="pgSvg" viewBox="0 0 900 340" role="img" aria-label="Entropy of Hawking radiation against time. Hawking's calculation rises forever. The black hole's own entropy falls. The Page curve follows the smaller of the two, turning over at the Page time. Beside the plot, a shrinking black hole emits radiation, and after the Page time an island appears just inside its horizon."></svg>
       <div class="ctl-row">
@@ -521,12 +519,11 @@ button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entan
     <div class="band-in">
       <div class="fig-head">
         <h3>Longer than the black hole lasts</h3>
-        <span class="fig-sub" id="dtLbl">S = 10<sup>77</sup></span>
       </div>
       <svg id="dtSvg" viewBox="0 0 900 250" role="img" aria-label="Two bars on a doubly logarithmic scale. One is the lifetime of a black hole of the chosen entropy, in Planck times. The other is 2 to the power of its entropy, the time a decoding would take if it needs exponentially many steps. The second is always vastly longer."></svg>
       <div class="ctl-row">
         <div class="ctl">
-          <label for="dtCtl">Black hole entropy, in units of Boltzmann's constant</label>
+          <label for="dtCtl">Black hole entropy, in units of Boltzmann's constant <b id="dtLbl">S = 10<sup>77</sup></b></label>
           <input type="range" id="dtCtl" min="20" max="780" value="770" step="1" aria-label="Log of the black hole entropy">
           <div class="scale" aria-hidden="true"><span>10<sup>2</sup></span><span>10<sup>78</sup></span></div>
         </div>
@@ -594,7 +591,6 @@ button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entan
     <div class="band-in">
       <div class="fig-head">
         <h3>Find the Uhlmann unitary</h3>
-        <span class="fig-sub" id="uhSub">searching</span>
       </div>
       <svg id="uhSvg" viewBox="0 0 900 300" role="img" aria-label="A dial for a rotation applied to qubit B, beside a plot of the overlap between the rotated state and a target state against the rotation angle. A dashed line marks Uhlmann's bound, the fidelity of the two states on qubit A. The overlap touches the bound at one hidden angle."></svg>
       <div class="ctl-row three">
@@ -930,7 +926,6 @@ button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entan
       $("rtRec").textContent = [inA && "A", inB && "B", inAB && "A∪B"].filter(Boolean).join(", ") || "nothing";
       $("rtRec").className = "v " + (inAB ? "good" : "");
       $("rtPhase").textContent = joined ? "joined" : "separate";
-      $("rtSub").textContent = joined ? "connected wedge" : "two separate wedges";
       $("rtMI").textContent = MI < 0.005 ? "0" : MI.toFixed(2) + " · c/3";
       $("rtMI").className = "v " + (MI > 0.005 ? "q" : "");
       let cap;
@@ -1050,7 +1045,6 @@ button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entan
       }
       svg.appendChild(txt(t > tPage ? "after the Page time" : "before the Page time", { x: bx, y: 320, "text-anchor": "middle", class: "axis axis-dim" }));
 
-      $("pgSub").textContent = t > tPage ? "island saddle dominates" : "no island";
       $("pgHaw").textContent = shaw(t).toFixed(2) + " S₀";
       $("pgPage").textContent = cur.toFixed(2) + " S₀";
       $("pgIsl").textContent = t > tPage ? "yes" : "no";
@@ -1153,7 +1147,6 @@ button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entan
       $("uhF").textContent = bound.toFixed(3);
       $("uhULbl").textContent = Math.round(+uCtl.value) + "°";
       $("uhDLbl").textContent = Math.round(+dCtl.value) + "°";
-      $("uhSub").textContent = hit ? "you found the Uhlmann unitary" : "searching";
     }
     uCtl.addEventListener("input", () => requestAnimationFrame(draw));
     dCtl.addEventListener("input", () => { trail = []; requestAnimationFrame(draw); });
