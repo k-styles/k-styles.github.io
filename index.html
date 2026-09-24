@@ -193,6 +193,57 @@ nav a:hover { color: var(--quantum); }
 nav a.nav-fun { color: rgba(186,163,255,0.86); }
 nav a.nav-fun:hover { color: var(--entangle); }
 
+/* Interesting stuff: a disclosure menu. Without script the label is a plain
+   link to the hub page and the panel stays hidden. */
+.nav-menu { position: relative; display: inline-flex; }
+.nav-menu button.nav-fun {
+  font: inherit; font-size: 0.76rem; font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase; background: none; border: 0; padding: 0; cursor: pointer;
+  color: rgba(186,163,255,0.86); transition: color 0.2s;
+  display: inline-flex; align-items: center; gap: 0.45rem;
+}
+.nav-menu button.nav-fun:hover,
+.nav-menu button.nav-fun[aria-expanded="true"] { color: var(--entangle); }
+.nav-menu .caret { width: 9px; height: 9px; transition: transform 0.3s var(--ease-out); }
+.nav-menu button[aria-expanded="true"] .caret { transform: rotate(180deg); }
+
+.menu-panel {
+  display: none;
+  position: absolute; top: calc(100% + 0.9rem); left: 0; z-index: 20;
+  width: 23rem; max-width: calc(100vw - 2.5rem);
+  padding: 0.5rem 0 0;
+  background: #070a14;
+  border: 1px solid rgba(156,124,255,0.28);
+  border-radius: 4px;
+  box-shadow: 0 14px 24px -14px rgba(0,0,0,0.9);
+}
+.menu-panel.open { display: block; animation: menu-in 0.26s var(--ease-out) both; }
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-6px); clip-path: inset(0 0 60% 0); }
+  to   { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+}
+.menu-panel ul { list-style: none; }
+nav .menu-panel a {
+  display: block; padding: 0.7rem 1.15rem 0.72rem;
+  text-transform: none; letter-spacing: 0; font-weight: 400;
+  color: var(--star); transition: background-color 0.2s, color 0.2s;
+}
+nav .menu-panel li a:hover,
+nav .menu-panel li a:focus-visible { background: rgba(156,124,255,0.08); }
+.mp-name {
+  display: block; font-family: var(--serif); font-size: 1.14rem; line-height: 1.25;
+  color: var(--star-bright);
+}
+.mp-q { display: block; font-size: 0.8rem; line-height: 1.45; color: rgba(178,201,244,0.78); margin-top: 0.1rem; }
+nav .menu-panel a.mp-all {
+  margin-top: 0.4rem; padding: 0.75rem 1.15rem 0.8rem;
+  border-top: 1px solid rgba(156,124,255,0.18);
+  font-size: 0.74rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(186,163,255,0.9);
+}
+nav .menu-panel a.mp-all:hover { color: var(--entangle); background: rgba(156,124,255,0.06); }
+nav .menu-panel :focus-visible { outline-offset: -2px; }
+
 /* Games and Contact share one pill geometry so they read as the same kind of
    control. Games keeps the warm accent; Contact keeps the blue. */
 nav a.nav-games,
@@ -463,8 +514,18 @@ header > .header-inner { animation: rise 0.9s var(--ease-out) both; }
           <a href="#about">About</a>
           <a href="#publications">Publications</a>
           <a href="blogs.html">Blog</a>
-          <a href="separations.html">Separations</a>
-          <a href="frustration.html" class="nav-fun">Playground&#8202;&#10022;</a>
+          <div class="nav-menu" id="navMenu">
+            <a href="interesting.html" class="nav-fun" id="navMenuBtn">Interesting stuff&#8202;&#10022;</a>
+            <div class="menu-panel" id="navMenuPanel">
+              <ul>
+                <li><a href="frustration.html"><span class="mp-name">Frustrated Hamiltonians</span><span class="mp-q">Why the lowest energy gets hard to find</span></a></li>
+                <li><a href="tensor-networks.html"><span class="mp-name">Tensor networks</span><span class="mp-q">How a quantum state fits in a computer</span></a></li>
+                <li><a href="separations.html"><span class="mp-name">Separations</span><span class="mp-q">Does it matter what a proof is made of?</span></a></li>
+                <li><a href="gravity.html"><span class="mp-name">Decoding spacetime</span><span class="mp-q">Gravity, black holes and the Uhlmann problem</span></a></li>
+              </ul>
+              <a class="mp-all" href="interesting.html">All four, in plain words <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
           <a href="saltmere/" class="nav-games">Games&#8202;&#10023;</a>
           <a href="mailto:Kartik.anand@tuhh.de" class="nav-contact">Contact</a>
         </nav>
@@ -882,6 +943,60 @@ header > .header-inner { animation: rise 0.9s var(--ease-out) both; }
 
   resize();
   start();
+})();
+
+/* Interesting stuff menu. The markup ships as a link to the hub page; with
+   script it becomes a disclosure button that opens the panel beneath it. */
+(function () {
+  const wrap = document.getElementById('navMenu');
+  const link = document.getElementById('navMenuBtn');
+  const panel = document.getElementById('navMenuPanel');
+  if (!wrap || !link || !panel) return;
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = link.className;
+  btn.id = link.id;
+  btn.setAttribute('aria-expanded', 'false');
+  btn.setAttribute('aria-controls', 'navMenuPanel');
+  btn.innerHTML = link.innerHTML +
+    '<svg class="caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 3.5 L5 7 L8.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  link.replaceWith(btn);
+
+  // Keep the panel on screen when the nav wraps on a narrow viewport.
+  function place() {
+    panel.style.left = '0px';
+    const r = panel.getBoundingClientRect();
+    const over = r.right - (window.innerWidth - 16);
+    if (over > 0) panel.style.left = (-over) + 'px';
+  }
+  function open() {
+    panel.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    place();
+  }
+  function close(refocus) {
+    if (!panel.classList.contains('open')) return;
+    panel.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    if (refocus) btn.focus();
+  }
+
+  btn.addEventListener('click', function () {
+    panel.classList.contains('open') ? close(false) : open();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close(wrap.contains(document.activeElement));
+  });
+  document.addEventListener('pointerdown', function (e) {
+    if (!wrap.contains(e.target)) close(false);
+  });
+  wrap.addEventListener('focusout', function (e) {
+    if (e.relatedTarget && !wrap.contains(e.relatedTarget)) close(false);
+  });
+  window.addEventListener('resize', function () {
+    if (panel.classList.contains('open')) place();
+  });
 })();
 </script>
 </body>

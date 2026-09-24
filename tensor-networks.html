@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Writing down a ground state · Kartik Anand</title>
+<meta name="description" content="Tensor networks and low-energy states, starting from plain language: why ground states are cheap to describe, the area law, matrix product states, where it gets hard, and what it has to do with quantum PCP. With a spin chain solved live in the browser.">
+<link rel="canonical" href="https://k-styles.github.io/tensor-networks.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Writing down a ground state">
+<meta property="og:description" content="Tensor networks, the area law, and low-energy states, with a spin chain solved live in your browser.">
+<meta property="og:url" content="https://k-styles.github.io/tensor-networks.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2303040a'/%3E%3Cpath d='M6 16 H26' stroke='%235aabff' stroke-width='2'/%3E%3Crect x='4' y='13' width='6' height='6' rx='1.5' fill='%2303040a' stroke='%235aabff' stroke-width='1.4'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%2303040a' stroke='%239c7cff' stroke-width='1.4'/%3E%3Crect x='22' y='13' width='6' height='6' rx='1.5' fill='%2303040a' stroke='%235aabff' stroke-width='1.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #020309;
+  --rule: rgba(120,160,255,0.11);
+  --rule-bright: rgba(120,160,255,0.2);
+  --rule-strong: rgba(120,160,255,0.38);
+
+  --star-bright: #eaf2ff;
+  --star: rgba(215,228,255,0.92);
+  --muted: rgba(172,197,242,0.62);
+
+  --quantum: #5aabff;
+  --entangle: #9c7cff;
+  --accent: #f0c060;
+  --good: #45d4bd;
+  --bad: #ff7a5c;
+
+  --serif: 'EB Garamond', Georgia, serif;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  --micro: 0.75rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --band-bg: rgba(6,9,17,0.94);
+}
+
+html {
+  scroll-behavior: smooth;
+  caret-color: var(--quantum);
+  scrollbar-color: rgba(90,171,255,0.28) var(--void);
+  scrollbar-width: thin;
+}
+
+body {
+  background-color: var(--void);
+  background-image: radial-gradient(1400px 800px at 50% -12%, rgba(90,171,255,0.07), transparent 62%);
+  background-repeat: no-repeat;
+  color: var(--star);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: rgba(90,171,255,0.32); color: #f2f8ff; }
+:focus-visible { outline: 2px solid var(--quantum); outline-offset: 3px; border-radius: 3px; }
+a { text-underline-offset: 0.18em; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: rgba(90,171,255,0.28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(90,171,255,0.45); }
+
+.skip-link {
+  position: absolute; left: 1rem; top: -3rem; z-index: 10;
+  padding: 0.5rem 0.9rem; font-size: var(--micro); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--quantum); background: #070b16;
+  border: 1px solid var(--rule-strong); border-radius: 3px; text-decoration: none;
+  transition: top 0.2s var(--ease-out);
+}
+.skip-link:focus { top: 1rem; }
+
+/* full-bleed grid: text narrow, figures the whole viewport */
+.wrapper {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(1.15rem, 1fr)
+    [wide-start] minmax(0, 6rem)
+    [txt-start] minmax(0, 660px) [txt-end]
+    minmax(0, 6rem) [wide-end]
+    minmax(1.15rem, 1fr) [full-end];
+  padding-bottom: 6rem;
+}
+/* <main> carries display:contents so its children become grid items, but CSS
+   selectors match the DOM, not the box tree, so they need naming at both depths. */
+.wrapper > *,
+.wrapper > main > *     { grid-column: txt; }
+.wrapper > .wide,
+.wrapper > main > .wide { grid-column: wide; }
+.wrapper > .band,
+.wrapper > main > .band { grid-column: full; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 1.5rem 0 1.1rem;
+}
+.topbar nav { display: flex; gap: 1.5rem; }
+.topbar a {
+  font-size: var(--micro); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
+}
+.topbar a:hover { color: var(--quantum); }
+.home-link span { color: var(--quantum); }
+
+.hero { padding: 4.5rem 0 2.5rem; animation: rise 1s var(--ease-out) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+.hero h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(3.2rem, 11.5vw, 7rem);
+  line-height: 0.9; letter-spacing: -0.035em; color: var(--star-bright);
+}
+.hero h1 em { font-style: italic; color: var(--entangle); }
+.hero .lede {
+  font-family: var(--serif); font-size: clamp(1.15rem, 1.9vw, 1.35rem);
+  line-height: 1.62; color: rgba(216,229,255,0.86); max-width: 50ch; margin-top: 2rem;
+}
+
+h2 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  line-height: 1.05; letter-spacing: -0.028em; color: var(--star-bright);
+  margin: 4.5rem 0 0.6rem; text-wrap: balance;
+}
+h2 em { font-style: italic; color: var(--entangle); }
+h2 + .cite { margin-bottom: 1.5rem; }
+
+.cite {
+  font-family: var(--mono); font-size: 0.82rem; line-height: 1.6;
+  color: rgba(163,193,243,0.78);
+}
+.cite a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); }
+.cite a:hover { border-color: var(--quantum); }
+
+p.body {
+  font-family: var(--serif); font-size: 1.12rem; line-height: 1.82;
+  color: rgba(216,230,255,0.88); margin-bottom: 1.1rem;
+}
+p.big {
+  font-family: var(--serif); font-size: 1.3rem; line-height: 1.62;
+  color: rgba(226,238,255,0.93); margin-bottom: 1.2rem;
+}
+p a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); transition: border-color .2s; }
+p a:hover { border-color: var(--quantum); }
+.term { color: var(--star-bright); font-weight: 500; }
+code {
+  font-family: var(--mono); font-size: 0.86em;
+  background: rgba(120,160,255,0.1); padding: 0.08em 0.34em; border-radius: 4px; color: #c3d9ff;
+}
+
+/* full-bleed figure bands */
+.band {
+  margin: 2.6rem 0 3.4rem;
+  padding: 1.2rem 0 1.4rem;
+  border-top: 1px solid var(--rule-bright);
+  border-bottom: 1px solid var(--rule-bright);
+  background: var(--band-bg);
+}
+.band-in { max-width: 1100px; margin: 0 auto; padding: 0.4rem 1.5rem 0.6rem; }
+.fig-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--rule);
+}
+.fig-head h3 {
+  font-family: var(--serif); font-style: italic; font-weight: 400;
+  font-size: clamp(1.35rem, 2.5vw, 1.8rem); line-height: 1.2; color: var(--star-bright); margin: 0;
+}
+.fig-sub {
+  font-family: var(--mono); font-size: 0.82rem; color: var(--entangle);
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.band svg { width: 100%; height: auto; display: block; }
+.axis { font-family: var(--sans); font-size: 11px; fill: rgba(178,201,244,0.78); letter-spacing: 0.03em; }
+.axis-dim { fill: rgba(150,180,235,0.55); }
+
+.ctl-row { display: grid; gap: 1.4rem 2rem; margin-top: 1.3rem; }
+.ctl-row.two { grid-template-columns: 1fr 1fr; }
+.ctl label {
+  display: block; font-size: 0.84rem; letter-spacing: 0.01em;
+  color: rgba(178,201,244,0.8); margin-bottom: 0.15rem;
+}
+.ctl label b { color: var(--star-bright); font-family: var(--mono); font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 20px; margin: 0.5rem 0 0; background: transparent; cursor: pointer; display: block;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 2px; border-radius: 2px; background: var(--rule-bright); }
+input[type=range]::-moz-range-track { height: 2px; border-radius: 2px; background: var(--rule-bright); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 15px; height: 15px; margin-top: -6.5px; border-radius: 50%;
+  background: #060a13; border: 1.5px solid var(--quantum);
+  box-shadow: 0 3px 8px -2px rgba(0,0,0,0.9);
+  transition: transform .18s var(--ease-out), border-color .18s, background .18s;
+}
+input[type=range]::-moz-range-thumb {
+  width: 15px; height: 15px; border-radius: 50%; background: #060a13;
+  border: 1.5px solid var(--quantum); box-shadow: 0 3px 8px -2px rgba(0,0,0,0.9);
+}
+input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.14); background: #0c1220; }
+input[type=range]:focus-visible { outline: none; }
+input[type=range]:focus-visible::-webkit-slider-thumb { border-color: #9fd0ff; box-shadow: 0 0 0 3px rgba(90,171,255,0.28); }
+/* These axis ends are phrases, not micro-labels. All caps turns
+   "Maximally entangled" into a wall, so they stay in sentence case. */
+.scale {
+  display: flex; justify-content: space-between;
+  font-size: 0.8rem; letter-spacing: 0.01em;
+  color: rgba(172,197,242,0.68); margin-top: 0.2rem;
+}
+
+.fig-cap {
+  font-family: var(--sans); font-size: 0.95rem; line-height: 1.72;
+  color: rgba(196,213,247,0.86); margin-top: 1.3rem; max-width: 64ch;
+}
+.fig-cap b { color: var(--star-bright); font-weight: 600; }
+
+.readouts { display: flex; flex-wrap: wrap; gap: 0.5rem 2.4rem; margin-top: 1.2rem; }
+.ro { display: flex; flex-direction: column; gap: 0.1rem; }
+.ro .k { font-size: 0.8rem; letter-spacing: 0.01em; color: rgba(178,201,244,0.8); }
+.ro .v { font-family: var(--mono); font-size: 1.15rem; font-variant-numeric: tabular-nums; color: var(--star-bright); }
+.ro .v.good { color: var(--good); }
+.ro .v.bad { color: var(--bad); }
+.ro .v.q { color: var(--quantum); }
+
+.note {
+  margin: 2.2rem 0 0; padding: 1.3rem 1.5rem;
+  border: 1px solid rgba(156,124,255,0.26); border-radius: 10px; background: rgba(156,124,255,0.05);
+}
+.note p {
+  font-family: var(--sans); font-size: 0.97rem; line-height: 1.72;
+  color: rgba(205,215,248,0.89); margin: 0; max-width: 66ch;
+}
+.note p + p { margin-top: 0.8rem; }
+.note strong { color: rgba(203,183,255,0.98); font-weight: 600; }
+.note a { color: rgba(190,168,255,0.96); text-decoration: none; border-bottom: 1px solid rgba(156,124,255,0.4); }
+.note a:hover { border-color: var(--entangle); }
+
+.refs { list-style: none; margin: 1.6rem 0 0; }
+.refs li {
+  padding: 0.85rem 0; border-top: 1px solid var(--rule);
+  font-size: 0.93rem; line-height: 1.65; color: rgba(196,213,247,0.86);
+}
+.refs li:last-child { border-bottom: 1px solid var(--rule); }
+.refs b { color: var(--star-bright); font-weight: 600; }
+.refs a {
+  font-family: var(--mono); font-size: 0.85em; color: var(--quantum);
+  text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); white-space: nowrap;
+}
+.refs a:hover { border-color: var(--quantum); }
+
+.closing {
+  margin-top: 3.5rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+  font-size: 0.95rem; color: rgba(178,201,244,0.78);
+}
+.closing a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); }
+.closing a:hover { border-color: var(--quantum); }
+
+footer {
+  margin-top: 3rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.6rem;
+  font-size: 0.78rem; color: rgba(172,197,242,0.62);
+}
+footer a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid transparent; }
+footer a:hover { border-color: var(--quantum); }
+
+@media (max-width: 760px) {
+  .ctl-row.two { grid-template-columns: 1fr; }
+  .band { margin: 2rem 0 2.6rem; }
+  .band-in { padding: 0.3rem 1.15rem 0.5rem; }
+  .hero { padding: 2.6rem 0 1.8rem; }
+  .hero .lede { margin-top: 1.3rem; }
+  h2 { margin-top: 3.2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+
+/* ── page additions ── */
+.seg { display: inline-flex; border: 1px solid var(--rule-bright); border-radius: 7px; overflow: hidden; margin-top: 0.55rem; }
+.seg button {
+  font-family: var(--sans); font-size: var(--micro); font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.55rem 0.95rem; border: 0; background: transparent;
+  color: rgba(178,201,244,0.8); cursor: pointer; transition: background .2s, color .2s;
+}
+.seg button + button { border-left: 1px solid var(--rule-bright); }
+.seg button:hover { background: rgba(90,171,255,0.08); color: var(--star-bright); }
+.seg button[aria-pressed="true"] { background: rgba(90,171,255,0.16); color: var(--quantum); }
+.seg button:focus-visible { outline-offset: -3px; }
+.ctl .seg-label { display: block; font-size: 0.84rem; color: rgba(178,201,244,0.8); }
+.ctl-row.three { grid-template-columns: 1fr 1fr auto; align-items: end; }
+.busy { color: var(--muted); font-style: italic; }
+.ro .v sup { font-size: 0.62em; line-height: 0; }
+.formula {
+  font-family: var(--serif); font-size: 1.22rem; text-align: center; color: var(--star-bright);
+  margin: 0.4rem 0 1.4rem; letter-spacing: 0.01em;
+}
+.formula i { color: rgba(203,183,255,0.98); }
+@media (max-width: 760px) {
+  .ctl-row.three { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="wrapper">
+
+  <div class="topbar wide">
+    <a class="home-link" href="index.html"><span>←</span> Kartik Anand</a>
+    <nav aria-label="Secondary">
+      <a href="interesting.html">Interesting stuff</a>
+      <a href="blogs.html">Writing</a>
+      <a href="mailto:Kartik.anand@tuhh.de">Contact</a>
+    </nav>
+  </div>
+
+  <header class="hero wide">
+    <h1>Writing down a <em>ground state</em></h1>
+    <p class="lede">
+      The list of numbers that describes a quantum system doubles every time you add a particle. The
+      states nature settles into when a material is cold use almost none of that list. Tensor networks
+      are how we write down only the part that is used, and the places where they stop working are
+      some of the most interesting open problems about low-energy states.
+    </p>
+  </header>
+
+  <main id="main" style="display:contents">
+
+  <p class="big">
+    One spin takes two numbers to describe. Two spins take four, three take eight, and every spin you add
+    doubles the list. Three hundred spins need about 10<sup>90</sup> numbers, more than there are atoms in
+    the visible universe. People still simulate chains of thousands of spins on a laptop, because the
+    states they care about live in a tiny and very particular corner of all possible states.
+  </p>
+
+  <h2>Cut it in half</h2>
+  <p class="cite">How much of the state crosses the middle?</p>
+
+  <p class="body">
+    Take a chain of spins and cut it between the fifth and the sixth. Any state of the whole chain can be
+    written as a sum of terms, each one a state of the left half times a state of the right half, with a
+    weight on each term. That is the <span class="term">Schmidt decomposition</span>. If one term carries
+    all the weight, the two halves are independent of each other. If the weight is spread over many
+    terms, the halves are entangled, and the number of terms you have to keep is what costs memory.
+  </p>
+
+  <p class="body">
+    Below is a real chain of ten spins, solved exactly in your browser. It is the
+    <span class="term">transverse-field Ising model</span>: neighbouring spins want to line up along
+    <code>Z</code>, and a sideways field of strength <code>h</code> tries to turn every spin toward
+    <code>X</code>. The bars are the weights of the Schmidt terms across the middle cut, on a log scale.
+    For comparison, switch to a random state of the same ten spins.
+  </p>
+
+  <p class="formula">H = −J <i>Σ</i> Z<sub>i</sub>Z<sub>i+1</sub> − h <i>Σ</i> X<sub>i</sub></p>
+
+  <section class="band" aria-label="Schmidt spectrum of a spin chain">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>Where the weight sits</h3>
+        <span class="fig-sub" id="spSub">h/J = 1.00 · ground state</span>
+      </div>
+      <svg id="spSvg" viewBox="0 0 900 380" role="img" aria-label="A chain of ten spins cut in the middle, above a bar chart of the 32 Schmidt weights across that cut on a logarithmic scale. Bars inside the kept bond dimension are bright; discarded bars are faint."></svg>
+      <div class="ctl-row three">
+        <div class="ctl">
+          <label for="hCtl">Sideways field <b id="hLbl">h/J = 1.00</b></label>
+          <input type="range" id="hCtl" min="0" max="100" value="50" step="1" aria-label="Transverse field strength h over J">
+          <div class="scale" aria-hidden="true"><span>Spins lined up</span><span>Critical</span><span>Spins along X</span></div>
+        </div>
+        <div class="ctl">
+          <label for="chiCtl">Terms kept <b id="chiLbl">χ = 4</b></label>
+          <input type="range" id="chiCtl" min="1" max="32" value="4" step="1" aria-label="Bond dimension: number of Schmidt terms kept">
+          <div class="scale" aria-hidden="true"><span>1</span><span>32 (exact)</span></div>
+        </div>
+        <div class="ctl">
+          <span class="seg-label" id="stateLbl">State</span>
+          <div class="seg" role="group" aria-labelledby="stateLbl">
+            <button type="button" id="gsBtn" aria-pressed="true">Ground</button>
+            <button type="button" id="rndBtn" aria-pressed="false">Random</button>
+          </div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Entanglement across the cut</span><span class="v q" id="roS">0.55 bits</span></div>
+        <div class="ro"><span class="k">Weight kept with χ terms</span><span class="v good" id="roKeep">0.99999</span></div>
+        <div class="ro"><span class="k">Numbers stored, exact</span><span class="v" id="roExact">1,024</span></div>
+        <div class="ro"><span class="k">Numbers stored as an MPS</span><span class="v" id="roMps">…</span></div>
+      </div>
+      <p class="fig-cap" id="spCap"></p>
+    </div>
+  </section>
+
+  <p class="body">
+    The number of terms you keep at a cut is the <span class="term">bond dimension</span>, written χ.
+    Keeping the χ largest terms is the best any χ-term approximation can do, and the error has a clean
+    form: the squared distance between the true state and the truncated one is exactly the total weight
+    you threw away. The weight-kept readout is the overlap of the truncated, renormalised state with the
+    original.
+  </p>
+
+  <h2>The area law</h2>
+  <p class="cite">Why ground states sit in the corner</p>
+
+  <p class="body">
+    For a random state the entanglement across a cut grows with the size of the smaller side, so it
+    scales like the volume of the region. That is why a random state cannot be compressed. Ground states
+    of local Hamiltonians with a spectral gap behave differently. Hastings proved in 2007 that in one
+    dimension their entanglement across any cut is bounded by a constant that depends on the gap and the
+    local dimension, and not on the length of the chain. In higher dimensions the expectation is that
+    entanglement scales with the boundary of the region, which is where the name
+    <span class="term">area law</span> comes from.
+  </p>
+
+  <p class="body">
+    At a critical point the gap closes and Hastings's bound no longer applies. For a critical chain the
+    entanglement of a block grows like the logarithm of its length, with a prefactor set by the central
+    charge <code>c</code> of the conformal field theory that describes the critical point. For half of an
+    open chain of length <code>L</code> it goes as <code>(c/6)·log L</code>. The Ising chain at
+    <code>h = J</code> has <code>c = 1/2</code>, so the growth is slow, but it does not stop.
+  </p>
+
+  <section class="band" aria-label="Entanglement against chain length">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>Make the chain longer</h3>
+        <span class="fig-sub" id="lenSub">4 to 14 spins, exact</span>
+      </div>
+      <svg id="lenSvg" viewBox="0 0 900 340" role="img" aria-label="Half-chain entanglement against chain length from 4 to 14 spins, for an ordered chain, a critical chain, a disordered chain, and a chain at the field you choose. The critical curve keeps rising; the others level off."></svg>
+      <div class="ctl-row">
+        <div class="ctl">
+          <label for="h2Ctl">Your chain <b id="h2Lbl">h/J = 1.41</b></label>
+          <input type="range" id="h2Ctl" min="0" max="100" value="62" step="1" aria-label="Transverse field for your own curve">
+          <div class="scale" aria-hidden="true"><span>Ordered</span><span>Critical</span><span>Disordered</span></div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Your chain at 14 spins</span><span class="v q" id="roS14">…</span></div>
+        <div class="ro"><span class="k">Growth from 4 to 14 spins</span><span class="v" id="roGrow">…</span></div>
+      </div>
+      <p class="fig-cap">
+        The ordered and disordered curves flatten within a few sites. That is the area law, visible at
+        sizes you can compute on a phone. The critical curve keeps climbing. <b>The ordered chain sits at
+        one bit for a different reason</b>: its ground state is a cat, all spins up plus all spins down, and
+        that one bit of entanglement is shared by the whole chain at once, so it does not grow with length
+        either.
+      </p>
+    </div>
+  </section>
+
+  <h2>Matrix product states</h2>
+  <p class="cite">One small tensor per spin</p>
+
+  <p class="body">
+    If every cut in the chain needs only χ terms, the whole state can be written as a product of small
+    matrices, one per site. Each spin gets a tensor with one physical index of size 2 and two bond
+    indices of size at most χ, and multiplying the matrices along the chain gives back any amplitude you
+    ask for. That is a <span class="term">matrix product state</span>. It takes about 2Nχ² numbers, which
+    grows linearly with the length of the chain instead of exponentially.
+  </p>
+
+  <section class="band" aria-label="How many numbers">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>How many numbers</h3>
+        <span class="fig-sub" id="cntSub">N = 300</span>
+      </div>
+      <svg id="cntSvg" viewBox="0 0 900 300" role="img" aria-label="Number of parameters on a logarithmic axis against chain length up to 300 spins, for the exact state and for a matrix product state, with a line at the number of atoms in the visible universe."></svg>
+      <div class="ctl-row three">
+        <div class="ctl">
+          <label for="nCtl">Spins <b id="nLbl">N = 300</b></label>
+          <input type="range" id="nCtl" min="10" max="300" value="300" step="1" aria-label="Number of spins">
+          <div class="scale" aria-hidden="true"><span>10</span><span>300</span></div>
+        </div>
+        <div class="ctl">
+          <span class="seg-label" id="chiSegLbl">Bond dimension</span>
+          <div class="seg" role="group" aria-labelledby="chiSegLbl" id="chiSeg">
+            <button type="button" data-chi="8" aria-pressed="false">χ = 8</button>
+            <button type="button" data-chi="64" aria-pressed="true">χ = 64</button>
+            <button type="button" data-chi="512" aria-pressed="false">χ = 512</button>
+          </div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Exact state</span><span class="v bad" id="roCntExact">…</span></div>
+        <div class="ro"><span class="k">Matrix product state</span><span class="v good" id="roCntMps">…</span></div>
+      </div>
+      <p class="fig-cap">
+        The exact count is 2<sup>N</sup>. The MPS count adds up one tensor per site, with the bond
+        dimension capped by χ and by the dimension of whichever side of the bond is smaller. At χ = 512 a
+        300-spin state is about 150 million numbers, a little over a gigabyte in double precision. Large
+        DMRG calculations run at bond dimensions like that and beyond.
+      </p>
+    </div>
+  </section>
+
+  <p class="body">
+    Hastings's area-law paper already contains the payoff: ground states of gapped chains can be
+    approximated by matrix product states whose bond dimension grows only polynomially with the length of
+    the chain. White's density matrix renormalization group, DMRG, published in 1992, is in hindsight a
+    variational search over exactly this family, and it remains the best general tool for
+    one-dimensional quantum systems. For twenty years its success was an empirical fact. Landau, Vazirani
+    and Vidick made it a theorem with the first provably polynomial-time algorithm for ground states of
+    gapped one-dimensional Hamiltonians.
+  </p>
+
+  <h2>Where it stops being easy</h2>
+  <p class="cite">The gap, the dimension, and the contraction</p>
+
+  <p class="body">
+    The gap is doing real work in all of this. Without it, one dimension is already as hard as anything:
+    Aharonov, Gottesman, Irani and Kempe showed that estimating the ground energy of a local Hamiltonian
+    on a line is QMA-complete. And even when a good MPS is known to exist, finding it can be hard in the
+    worst case.
+  </p>
+
+  <p class="body">
+    Two dimensions is harder at every step. The natural generalization is a
+    <span class="term">projected entangled pair state</span>, or PEPS, with one tensor on each site of a
+    lattice and bonds along the edges. Writing a PEPS down is still cheap. Reading anything out of it
+    means contracting the network, and exact contraction is #P-complete in the worst case and remains hard
+    on average for random tensors. The area law itself has not been proven for general gapped
+    two-dimensional systems, although it is now known for frustration-free ones.
+  </p>
+
+  <h2>Low-energy states and quantum PCP</h2>
+  <p class="cite">The part I think about</p>
+
+  <p class="body">
+    Everything so far is about ground states. The quantum PCP conjecture is about states that are merely
+    close to the ground energy, within a constant fraction of the number of terms in the Hamiltonian.
+    Suppose every such low-energy state had a short classical description from which a verifier could
+    compute its energy. Then estimating the ground energy to that precision would be in NP, and quantum
+    PCP would imply NP = QMA. So any proof of quantum PCP, if one exists and NP ≠ QMA, has to come with
+    Hamiltonians whose low-energy states have no short classical description of that kind.
+  </p>
+
+  <p class="body">
+    The first real evidence that such Hamiltonians exist is the NLTS theorem of Anshu, Breuckmann and
+    Nirkhe, which answered a conjecture of Freedman and Hastings. It gives local Hamiltonians for which
+    every state below some constant energy density needs a circuit of more than constant depth to
+    prepare. That rules out the simplest classical descriptions, the shallow circuits. It says nothing
+    about tensor networks or other efficient descriptions, and that gap is where the open problem sits.
+  </p>
+
+  <p class="body">
+    That is why tensor networks keep showing up in what I think about. They are the best general answer
+    we have to the question of which quantum states have short classical descriptions, and the quantum
+    PCP conjecture says that for some Hamiltonians, at low energy, no answer of that kind exists. The same
+    objects turn up in quantum gravity too, where a network of perfect tensors becomes a toy model of
+    spacetime. That thread continues in <a href="gravity.html">Decoding spacetime</a>.
+  </p>
+
+  <div class="note">
+    <p><strong>Everything here is computed live.</strong> The ground state comes from Lanczos iteration on
+    the full 2<sup>N</sup>-dimensional space, restricted to states that are unchanged when every spin is
+    flipped, and the Schmidt weights come from diagonalizing the reduced state of the left half. At
+    N = 14 that is a vector of 16,384 numbers, which a browser handles in a fraction of a second. At
+    N = 40 the same vector would take about 8.8 terabytes.</p>
+  </div>
+
+  <h2>Sources</h2>
+  <ol class="refs" id="refs">
+    <li><b>Hastings.</b> An area law for one-dimensional quantum systems (2007). Also gives the MPS approximation. <a href="https://arxiv.org/abs/0705.2024" target="_blank" rel="noopener">arXiv:0705.2024</a></li>
+    <li><b>Arad, Kitaev, Landau, Vazirani.</b> An area law and sub-exponential algorithm for 1D systems (2013). <a href="https://arxiv.org/abs/1301.1162" target="_blank" rel="noopener">arXiv:1301.1162</a></li>
+    <li><b>Calabrese, Cardy.</b> Entanglement entropy and quantum field theory (2004). The (c/3) log L law. <a href="https://arxiv.org/abs/hep-th/0405152" target="_blank" rel="noopener">hep-th/0405152</a></li>
+    <li><b>Verstraete, Cirac.</b> Matrix product states represent ground states faithfully (2006). <a href="https://arxiv.org/abs/cond-mat/0505140" target="_blank" rel="noopener">cond-mat/0505140</a></li>
+    <li><b>White.</b> Density matrix formulation for quantum renormalization groups, PRL 69, 2863 (1992). DMRG. <a href="https://doi.org/10.1103/PhysRevLett.69.2863" target="_blank" rel="noopener">doi</a></li>
+    <li><b>Schollwöck.</b> The density-matrix renormalization group in the age of matrix product states (2011). <a href="https://arxiv.org/abs/1008.3477" target="_blank" rel="noopener">arXiv:1008.3477</a></li>
+    <li><b>Landau, Vazirani, Vidick.</b> A polynomial time algorithm for the ground state of one-dimensional gapped local Hamiltonians (2015). <a href="https://arxiv.org/abs/1307.5143" target="_blank" rel="noopener">arXiv:1307.5143</a></li>
+    <li><b>Aharonov, Gottesman, Irani, Kempe.</b> The power of quantum systems on a line (2009). QMA-complete in 1D. <a href="https://arxiv.org/abs/0705.4077" target="_blank" rel="noopener">arXiv:0705.4077</a></li>
+    <li><b>Schuch, Cirac, Verstraete.</b> Computational difficulty of finding matrix product ground states (2008). <a href="https://arxiv.org/abs/0802.3351" target="_blank" rel="noopener">arXiv:0802.3351</a></li>
+    <li><b>Verstraete, Cirac.</b> Renormalization algorithms for quantum many-body systems in two and higher dimensions (2004). PEPS. <a href="https://arxiv.org/abs/cond-mat/0407066" target="_blank" rel="noopener">cond-mat/0407066</a></li>
+    <li><b>Schuch, Wolf, Verstraete, Cirac.</b> Computational complexity of projected entangled pair states (2007). <a href="https://arxiv.org/abs/quant-ph/0611050" target="_blank" rel="noopener">quant-ph/0611050</a></li>
+    <li><b>Haferkamp, Hangleiter, Eisert, Gluza.</b> Contracting projected entangled pair states is average-case hard (2020). <a href="https://arxiv.org/abs/1810.00738" target="_blank" rel="noopener">arXiv:1810.00738</a></li>
+    <li><b>Anshu, Arad, Gosset.</b> An area law for 2D frustration-free spin systems (2022). <a href="https://arxiv.org/abs/2103.02492" target="_blank" rel="noopener">arXiv:2103.02492</a></li>
+    <li><b>Freedman, Hastings.</b> Quantum systems on non-k-hyperfinite complexes (2014). The NLTS conjecture. <a href="https://arxiv.org/abs/1301.1363" target="_blank" rel="noopener">arXiv:1301.1363</a></li>
+    <li><b>Anshu, Breuckmann, Nirkhe.</b> NLTS Hamiltonians from good quantum codes (2023). <a href="https://arxiv.org/abs/2206.13228" target="_blank" rel="noopener">arXiv:2206.13228</a></li>
+    <li><b>Cirac, Pérez-García, Schuch, Verstraete.</b> Matrix product states and projected entangled pair states: concepts, symmetries, theorems (2021). Review. <a href="https://arxiv.org/abs/2011.12127" target="_blank" rel="noopener">arXiv:2011.12127</a></li>
+  </ol>
+
+  <div class="closing">
+    The other questions are on <a href="interesting.html">Interesting stuff</a>. If I have got something
+    wrong here, I would rather know: <a href="mailto:Kartik.anand@tuhh.de">Kartik.anand@tuhh.de</a>.
+  </div>
+
+  </main>
+
+  <footer class="wide">
+    <span>Kartik Anand · Quantum Complexity Theory</span>
+    <span><a href="index.html">← back home</a></span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (id) => document.getElementById(id);
+  const mk = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const txt = (s, a) => { const e = mk("text", a); e.textContent = s; return e; };
+  const C = { q:"#5aabff", e:"#9c7cff", good:"#45d4bd", bad:"#ff7a5c", amber:"#f0c060",
+              rule:"rgba(120,160,255,0.2)", faint:"rgba(120,160,255,0.09)", ink:"#eaf2ff",
+              dim:"rgba(178,201,244,0.72)" };
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const fmtInt = (n) => Math.round(n).toLocaleString("en-US");
+  // Slider position 0…100 ↦ h/J on a log scale, 0.25 … 4, with h = J at the middle.
+  const hOf = (v) => Math.pow(10, (v - 50) / 50 * Math.log10(4));
+
+  /* ───────── numerics ───────── */
+
+  // Ground state of H = -Σ Z_i Z_{i+1} - h Σ X_i (J = 1, open ends) by Lanczos in the
+  // sector that is even under flipping every spin. That sector holds the ground state
+  // for every h > 0, and staying inside it keeps the near-degenerate cat states apart.
+  function groundState(N, h) {
+    const D = 1 << N, full = D - 1;
+    const diag = new Float64Array(D);
+    for (let s = 0; s < D; s++) {
+      let e = 0;
+      for (let i = 0; i < N - 1; i++) e += (((s >> i) ^ (s >> (i + 1))) & 1) ? 1 : -1;
+      diag[s] = e;
+    }
+    const apply = (v, out) => {
+      for (let s = 0; s < D; s++) {
+        let acc = diag[s] * v[s];
+        for (let i = 0; i < N; i++) acc -= h * v[s ^ (1 << i)];
+        out[s] = acc;
+      }
+    };
+    const sym = (x) => {
+      for (let s = 0; s < D; s++) { const t = s ^ full; if (t > s) { const q = 0.5 * (x[s] + x[t]); x[s] = q; x[t] = q; } }
+    };
+    const m = Math.min(D, 90);
+    const V = [], a = [], b = [];
+    let v = new Float64Array(D);
+    for (let s = 0; s < D; s++) v[s] = 1 + 0.01 * Math.sin(1.7 * s);
+    sym(v);
+    let nv = 0; for (let s = 0; s < D; s++) nv += v[s] * v[s]; nv = Math.sqrt(nv);
+    for (let s = 0; s < D; s++) v[s] /= nv;
+    const w = new Float64Array(D);
+    for (let j = 0; j < m; j++) {
+      V.push(v);
+      apply(v, w);
+      let al = 0; for (let s = 0; s < D; s++) al += w[s] * v[s];
+      a.push(al);
+      for (const u of V) {
+        let d = 0; for (let s = 0; s < D; s++) d += w[s] * u[s];
+        for (let s = 0; s < D; s++) w[s] -= d * u[s];
+      }
+      sym(w);
+      let be = 0; for (let s = 0; s < D; s++) be += w[s] * w[s]; be = Math.sqrt(be);
+      if (be < 1e-12 || j === m - 1) break;
+      b.push(be);
+      v = new Float64Array(D); for (let s = 0; s < D; s++) v[s] = w[s] / be;
+    }
+    const k = a.length;
+    const { vals, vecs } = tridiagEig(a.slice(), b.slice(0, k - 1));
+    let best = 0; for (let i = 1; i < k; i++) if (vals[i] < vals[best]) best = i;
+    const psi = new Float64Array(D);
+    for (let j = 0; j < k; j++) { const c = vecs[j][best], u = V[j]; for (let s = 0; s < D; s++) psi[s] += c * u[s]; }
+    let n = 0; for (let s = 0; s < D; s++) n += psi[s] * psi[s]; n = Math.sqrt(n);
+    for (let s = 0; s < D; s++) psi[s] /= n;
+    return psi;
+  }
+
+  // Symmetric tridiagonal eigenproblem, implicit QL with shifts.
+  function tridiagEig(d, e) {
+    const n = d.length; e = e.concat([0]);
+    const z = Array.from({ length: n }, (_, i) => { const r = new Float64Array(n); r[i] = 1; return r; });
+    for (let l = 0; l < n; l++) {
+      let iter = 0, m;
+      do {
+        for (m = l; m < n - 1; m++) { const dd = Math.abs(d[m]) + Math.abs(d[m + 1]); if (Math.abs(e[m]) <= 1e-15 * dd) break; }
+        if (m !== l) {
+          if (iter++ > 60) break;
+          let g = (d[l + 1] - d[l]) / (2 * e[l]); let r = Math.hypot(g, 1);
+          g = d[m] - d[l] + e[l] / (g + (g >= 0 ? r : -r));
+          let s = 1, c = 1, p = 0, i;
+          for (i = m - 1; i >= l; i--) {
+            let f = s * e[i]; const bb = c * e[i];
+            e[i + 1] = (r = Math.hypot(f, g));
+            if (r === 0) { d[i + 1] -= p; e[m] = 0; break; }
+            s = f / r; c = g / r; g = d[i + 1] - p; r = (d[i] - g) * s + 2 * c * bb; d[i + 1] = g + (p = s * r); g = c * r - bb;
+            for (let q = 0; q < n; q++) { f = z[q][i + 1]; z[q][i + 1] = s * z[q][i] + c * f; z[q][i] = c * z[q][i] - s * f; }
+          }
+          if (r === 0 && i >= l) continue;
+          d[l] -= p; e[l] = g; e[m] = 0;
+        }
+      } while (m !== l);
+    }
+    return { vals: d, vecs: z };
+  }
+
+  // Schmidt weights across the middle: eigenvalues of ρ_left = M Mᵀ, by Jacobi rotations.
+  function schmidt(psi, N) {
+    const nA = N >> 1, dA = 1 << nA, dB = 1 << (N - nA);
+    const A = Array.from({ length: dA }, () => new Float64Array(dA));
+    for (let i = 0; i < dA; i++) for (let j = i; j < dA; j++) {
+      let s = 0; for (let k = 0; k < dB; k++) s += psi[i + (k << nA)] * psi[j + (k << nA)];
+      A[i][j] = A[j][i] = s;
+    }
+    for (let sweep = 0; sweep < 60; sweep++) {
+      let off = 0; for (let i = 0; i < dA; i++) for (let j = i + 1; j < dA; j++) off += A[i][j] * A[i][j];
+      if (off < 1e-30) break;
+      for (let p = 0; p < dA; p++) for (let q = p + 1; q < dA; q++) {
+        if (Math.abs(A[p][q]) < 1e-300) continue;
+        const th = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+        const t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+        const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+        for (let k = 0; k < dA; k++) { const x = A[k][p], y = A[k][q]; A[k][p] = c * x - s * y; A[k][q] = s * x + c * y; }
+        for (let k = 0; k < dA; k++) { const x = A[p][k], y = A[q][k]; A[p][k] = c * x - s * y; A[q][k] = s * x + c * y; }
+      }
+    }
+    const lam = []; for (let i = 0; i < dA; i++) lam.push(Math.max(0, A[i][i]));
+    return lam.sort((x, y) => y - x);
+  }
+
+  const entropy = (lam) => -lam.reduce((p, q) => p + (q > 1e-300 ? q * Math.log2(q) : 0), 0);
+
+  function randomState(N) {
+    const D = 1 << N, psi = new Float64Array(D);
+    let n = 0;
+    for (let s = 0; s < D; s += 2) {
+      const u = Math.random() || 1e-12, v = Math.random();
+      const r = Math.sqrt(-2 * Math.log(u));
+      psi[s] = r * Math.cos(2 * Math.PI * v); psi[s + 1] = r * Math.sin(2 * Math.PI * v);
+    }
+    for (let s = 0; s < D; s++) n += psi[s] * psi[s];
+    n = Math.sqrt(n); for (let s = 0; s < D; s++) psi[s] /= n;
+    return psi;
+  }
+
+  // Parameters in an open-boundary MPS: Σ_i d · D_{i-1} · D_i with D_i = min(χ, 2^i, 2^{N-i}).
+  function mpsCount(N, chi) {
+    const Db = (i) => Math.min(chi, Math.pow(2, Math.min(i, N - i)));
+    let tot = 0;
+    for (let i = 1; i <= N; i++) tot += 2 * Db(i - 1) * Db(i);
+    return tot;
+  }
+
+  /* ───────── 1. Schmidt spectrum ───────── */
+  (function spectrum() {
+    const svg = $("spSvg"), hCtl = $("hCtl"), chiCtl = $("chiCtl");
+    const N = 10, K = 32;
+    let mode = "gs", rnd = null, lam = [];
+    const bx0 = 88, bx1 = 862, by0 = 118, by1 = 332, LOGMIN = -16;
+
+    function compute() {
+      const psi = mode === "gs" ? groundState(N, hOf(+hCtl.value)) : (rnd || (rnd = randomState(N)));
+      lam = schmidt(psi, N);
+    }
+
+    function draw() {
+      const h = hOf(+hCtl.value), chi = +chiCtl.value;
+      const S = entropy(lam);
+      let kept = 0; for (let k = 0; k < chi; k++) kept += lam[k];
+      svg.innerHTML = "";
+
+      // the chain
+      const cy = 52, nx0 = 130, ndx = 71;
+      const cutX = nx0 + 4.5 * ndx;
+      for (let i = 0; i < N - 1; i++) {
+        const x1 = nx0 + i * ndx, x2 = x1 + ndx;
+        const atCut = i === 4;
+        svg.appendChild(mk("line", { x1, y1: cy, x2, y2: cy,
+          stroke: atCut ? C.e : "rgba(120,160,255,0.42)",
+          "stroke-width": atCut ? (1.4 + 3.2 * clamp(S / 5, 0, 1) * 2.2).toFixed(2) : 1.4 }));
+      }
+      for (let i = 0; i < N; i++) {
+        const x = nx0 + i * ndx;
+        svg.appendChild(mk("line", { x1: x, y1: cy, x2: x, y2: cy + 22, stroke: "rgba(120,160,255,0.42)", "stroke-width": 1.2 }));
+        svg.appendChild(mk("circle", { cx: x, cy: cy + 24, r: 2.2, fill: "rgba(120,160,255,0.6)" }));
+        svg.appendChild(mk("rect", { x: x - 9, y: cy - 9, width: 18, height: 18, rx: 3, fill: "#070b16", stroke: C.q, "stroke-width": 1.5 }));
+      }
+      svg.appendChild(mk("line", { x1: cutX, y1: cy - 26, x2: cutX, y2: cy + 34, stroke: C.amber, "stroke-width": 1.2, "stroke-dasharray": "3 4" }));
+      svg.appendChild(txt("left half", { x: nx0 - 22, y: cy + 4, "text-anchor": "end", class: "axis axis-dim" }));
+      svg.appendChild(txt("right half", { x: nx0 + 9 * ndx + 22, y: cy + 4, class: "axis axis-dim" }));
+
+      // axes
+      const yOf = (p) => by0 + (by1 - by0) * (Math.log10(Math.max(p, 1e-16)) / LOGMIN);
+      [0, -4, -8, -12, -16].forEach((e) => {
+        const y = by0 + (by1 - by0) * (e / LOGMIN);
+        svg.appendChild(mk("line", { x1: bx0, y1: y, x2: bx1, y2: y, stroke: C.faint, "stroke-width": 1 }));
+        const lab = txt(e === 0 ? "1" : "10", { x: bx0 - 12, y: y + 4, "text-anchor": "end", class: "axis" });
+        if (e !== 0) { const sp = mk("tspan", { dy: -6, "font-size": 8.5 }); sp.textContent = "−" + (-e); lab.appendChild(sp); }
+        svg.appendChild(lab);
+      });
+      svg.appendChild(txt("Schmidt weight", { x: bx0 - 60, y: by0 - 16, class: "axis axis-dim" }));
+
+      const slot = (bx1 - bx0) / K, bw = slot - 7;
+      for (let k = 0; k < K; k++) {
+        const x = bx0 + k * slot + 3.5, y = yOf(lam[k]);
+        const on = k < chi;
+        svg.appendChild(mk("rect", { x: x.toFixed(1), y: y.toFixed(1), width: bw.toFixed(1), height: Math.max(1.5, by1 - y).toFixed(1), rx: 2,
+          fill: on ? "rgba(90,171,255,0.55)" : "rgba(120,160,255,0.1)",
+          stroke: on ? C.q : "rgba(120,160,255,0.22)", "stroke-width": 1 }));
+      }
+      const mx = bx0 + chi * slot;
+      svg.appendChild(mk("line", { x1: mx, y1: by0 - 8, x2: mx, y2: by1 + 6, stroke: C.e, "stroke-width": 1.4 }));
+      svg.appendChild(txt("χ = " + chi, { x: clamp(mx + 7, bx0 + 8, bx1 - 50), y: by0 - 12, class: "axis", fill: "rgba(203,183,255,0.98)", "font-size": 12 }));
+      [1, 8, 16, 24, 32].forEach((k) => svg.appendChild(txt(String(k), { x: bx0 + (k - 0.5) * slot, y: by1 + 22, "text-anchor": "middle", class: "axis axis-dim" })));
+      svg.appendChild(txt("Schmidt term, largest first", { x: bx1, y: by1 + 42, "text-anchor": "end", class: "axis axis-dim" }));
+
+      $("hLbl").textContent = "h/J = " + h.toFixed(2);
+      $("chiLbl").textContent = "χ = " + chi;
+      $("spSub").textContent = mode === "gs" ? "h/J = " + h.toFixed(2) + " · ground state" : "random state";
+      $("roS").textContent = S.toFixed(S < 0.01 ? 4 : 2) + " bits";
+      const keepEl = $("roKeep");
+      keepEl.textContent = kept > 0.999999 ? (1 - kept < 1e-12 ? "1.000000" : "1 − " + (1 - kept).toExponential(1)) : kept.toFixed(4);
+      keepEl.className = "v " + (kept > 0.99 ? "good" : "bad");
+      $("roMps").textContent = fmtInt(mpsCount(N, chi));
+      hCtl.disabled = mode !== "gs";
+
+      let cap;
+      if (mode === "rnd") {
+        cap = "A random state of ten spins spreads its weight over all 32 terms, and its entanglement comes out close to the maximum of 5 bits. Throw terms away and you lose most of the state. <b>Almost every state looks like this, and almost no ground state does.</b>";
+      } else if (h < 0.6) {
+        cap = "With a weak field the ground state is close to a cat state: all spins up plus all spins down. That is two Schmidt terms of weight one half, which is exactly one bit, and everything else is tiny. <b>Two terms per cut already capture almost all of it.</b>";
+      } else if (h <= 1.6) {
+        cap = "Around h/J = 1 the chain is at its critical point, where the gap closes. At ten spins the spectrum still falls off fast, and a handful of terms carries almost all the weight. <b>The difference at criticality shows up when you make the chain longer</b>, which is the next figure.";
+      } else {
+        cap = "With a strong field every spin points along X and the ground state is close to a product state. One Schmidt term carries nearly all the weight, and the rest fall off by orders of magnitude. <b>An MPS with χ = 1 or 2 is almost exact.</b>";
+      }
+      $("spCap").innerHTML = cap;
+    }
+
+    let pending = false;
+    const refresh = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; compute(); draw(); }); };
+    hCtl.addEventListener("input", refresh);
+    chiCtl.addEventListener("input", () => requestAnimationFrame(draw));
+    const setMode = (m) => {
+      mode = m; if (m === "rnd") rnd = randomState(N);
+      $("gsBtn").setAttribute("aria-pressed", String(m === "gs"));
+      $("rndBtn").setAttribute("aria-pressed", String(m === "rnd"));
+      $("rndBtn").textContent = m === "rnd" ? "New random" : "Random";
+      refresh();
+    };
+    $("gsBtn").addEventListener("click", () => setMode("gs"));
+    $("rndBtn").addEventListener("click", () => setMode("rnd"));
+    compute(); draw();
+  })();
+
+  /* ───────── 2. entanglement against length ───────── */
+  (function lengthScan() {
+    const svg = $("lenSvg"), ctl = $("h2Ctl");
+    const Ns = [4, 6, 8, 10, 12, 14];
+    const refs = [
+      { h: 0.5, name: "ordered, h/J = 0.5", col: "rgba(240,192,96,0.85)" },
+      { h: 1.0, name: "critical, h/J = 1", col: C.e },
+      { h: 2.0, name: "disordered, h/J = 2", col: C.good },
+    ];
+    const data = refs.map(() => []);
+    let mine = [], token = 0;
+    const x0 = 96, x1 = 700, y0 = 296, y1 = 34, SMAX = 1.1;
+    const X = (N) => x0 + (x1 - x0) * (N - 4) / 10;
+    const Y = (S) => y0 - (y0 - y1) * (S / SMAX);
+
+    function draw() {
+      svg.innerHTML = "";
+      [0, 0.25, 0.5, 0.75, 1].forEach((s) => {
+        svg.appendChild(mk("line", { x1: x0, y1: Y(s), x2: x1, y2: Y(s), stroke: C.faint, "stroke-width": 1 }));
+        svg.appendChild(txt(s.toFixed(2), { x: x0 - 12, y: Y(s) + 4, "text-anchor": "end", class: "axis" }));
+      });
+      Ns.forEach((N) => svg.appendChild(txt(String(N), { x: X(N), y: y0 + 22, "text-anchor": "middle", class: "axis" })));
+      svg.appendChild(txt("spins in the chain", { x: x1, y: y0 + 42, "text-anchor": "end", class: "axis axis-dim" }));
+      svg.appendChild(txt("bits across the middle", { x: x0 - 56, y: y1 - 14, class: "axis axis-dim" }));
+
+      const line = (pts, col, wdt, dash) => {
+        if (pts.length < 1) return;
+        const d = pts.map((S, i) => (i ? "L" : "M") + X(Ns[i]).toFixed(1) + " " + Y(S).toFixed(1)).join(" ");
+        svg.appendChild(mk("path", { d, fill: "none", stroke: col, "stroke-width": wdt, "stroke-dasharray": dash || "none", "stroke-linejoin": "round" }));
+        pts.forEach((S, i) => svg.appendChild(mk("circle", { cx: X(Ns[i]), cy: Y(S), r: wdt > 2 ? 4 : 3, fill: "#060a13", stroke: col, "stroke-width": 1.6 })));
+      };
+      refs.forEach((r, i) => line(data[i], r.col, 1.6, "5 5"));
+      line(mine, C.q, 2.6);
+
+      // legend on the right
+      const lx = 730;
+      const items = refs.map((r) => ({ name: r.name, col: r.col, dash: "5 5" })).concat([{ name: "your chain, h/J = " + hOf(+ctl.value).toFixed(2), col: C.q }]);
+      items.forEach((it, i) => {
+        const y = 70 + i * 30;
+        svg.appendChild(mk("line", { x1: lx, y1: y, x2: lx + 26, y2: y, stroke: it.col, "stroke-width": it.dash ? 1.6 : 2.6, "stroke-dasharray": it.dash || "none" }));
+        const words = it.name.split(", ");
+        svg.appendChild(txt(words[0], { x: lx + 34, y: y - 2, class: "axis", fill: it.dash ? C.dim : C.ink }));
+        svg.appendChild(txt(words[1], { x: lx + 34, y: y + 12, class: "axis axis-dim", "font-size": 10.5 }));
+      });
+
+      $("h2Lbl").textContent = "h/J = " + hOf(+ctl.value).toFixed(2);
+      if (mine.length === Ns.length) {
+        $("roS14").textContent = mine[mine.length - 1].toFixed(3) + " bits";
+        const g = mine[mine.length - 1] - mine[0];
+        $("roGrow").textContent = (g >= 0 ? "+" : "−") + Math.abs(g).toFixed(3) + " bits";
+      } else {
+        $("roS14").innerHTML = '<span class="busy">computing</span>';
+        $("roGrow").innerHTML = '<span class="busy">computing</span>';
+      }
+    }
+
+    // One (h, N) point per tick so the page never stalls.
+    function runQueue(jobs, done) {
+      const my = ++token;
+      const step = () => {
+        if (my !== token || !jobs.length) { if (my === token && done) done(); return; }
+        const job = jobs.shift();
+        job();
+        draw();
+        setTimeout(step, 0);
+      };
+      setTimeout(step, 0);
+    }
+    const S = (N, h) => entropy(schmidt(groundState(N, h), N));
+
+    // Fill whatever reference points are still missing, then recompute our curve
+    // from scratch. Restarting cancels the previous queue, never its finished points.
+    function schedule() {
+      const jobs = [];
+      refs.forEach((r, i) => {
+        for (let j = data[i].length; j < Ns.length; j++) jobs.push(() => data[i].push(S(Ns[data[i].length], r.h)));
+      });
+      const h = hOf(+ctl.value);
+      mine = [];
+      Ns.forEach(() => jobs.push(() => mine.push(S(Ns[mine.length], h))));
+      runQueue(jobs);
+    }
+    let t = 0, started = false;
+    ctl.addEventListener("input", () => {
+      $("h2Lbl").textContent = "h/J = " + hOf(+ctl.value).toFixed(2);
+      clearTimeout(t);
+      t = setTimeout(() => { if (started) schedule(); }, 140);
+    });
+
+    // Start the scan when the figure is near the viewport.
+    draw();
+    const io = new IntersectionObserver((es) => {
+      if (es.some((e) => e.isIntersecting)) { io.disconnect(); started = true; schedule(); }
+    }, { rootMargin: "300px" });
+    io.observe(svg);
+  })();
+
+  /* ───────── 3. how many numbers ───────── */
+  (function counts() {
+    const svg = $("cntSvg"), ctl = $("nCtl");
+    let chi = 64;
+    const x0 = 96, x1 = 860, y0 = 250, y1 = 28, LMAX = 100;
+    const X = (N) => x0 + (x1 - x0) * (N - 10) / 290;
+    const Y = (l) => y0 - (y0 - y1) * (l / LMAX);
+    // "10" with a raised exponent, drawn as a tspan so it matches the other axes.
+    const pow10 = (k, a) => {
+      const t = txt("10", a);
+      const s = mk("tspan", { dy: -6, "font-size": 8.5 }); s.textContent = String(k);
+      t.appendChild(s); return t;
+    };
+
+    function draw() {
+      const N = +ctl.value;
+      svg.innerHTML = "";
+      [0, 20, 40, 60, 80, 100].forEach((l) => {
+        svg.appendChild(mk("line", { x1: x0, y1: Y(l), x2: x1, y2: Y(l), stroke: C.faint, "stroke-width": 1 }));
+        svg.appendChild(pow10(l, { x: x0 - 12, y: Y(l) + 4, "text-anchor": "end", class: "axis" }));
+      });
+      [10, 100, 200, 300].forEach((n) => svg.appendChild(txt(String(n), { x: X(n), y: y0 + 22, "text-anchor": "middle", class: "axis" })));
+      svg.appendChild(txt("spins", { x: x1, y: y0 + 40, "text-anchor": "end", class: "axis axis-dim" }));
+
+      svg.appendChild(mk("line", { x1: x0, y1: Y(80), x2: x1, y2: Y(80), stroke: C.amber, "stroke-width": 1.2, "stroke-dasharray": "4 5" }));
+      const atoms = txt("atoms in the visible universe, about 10", { x: x0 + 8, y: Y(80) - 9, class: "axis", fill: "rgba(240,192,96,0.9)" });
+      const a80 = mk("tspan", { dy: -6, "font-size": 8.5 }); a80.textContent = "80"; atoms.appendChild(a80);
+      svg.appendChild(atoms);
+
+      let dE = "", dM = "";
+      for (let n = 10; n <= 300; n += 2) {
+        dE += (n === 10 ? "M" : "L") + X(n).toFixed(1) + " " + Y(n * Math.LOG10E * Math.LN2).toFixed(1) + " ";
+        dM += (n === 10 ? "M" : "L") + X(n).toFixed(1) + " " + Y(Math.log10(mpsCount(n, chi))).toFixed(1) + " ";
+      }
+      svg.appendChild(mk("path", { d: dE, fill: "none", stroke: C.bad, "stroke-width": 2.2 }));
+      svg.appendChild(mk("path", { d: dM, fill: "none", stroke: C.good, "stroke-width": 2.2 }));
+
+      const lE = N * Math.log10(2), lM = Math.log10(mpsCount(N, chi));
+      svg.appendChild(mk("line", { x1: X(N), y1: y0, x2: X(N), y2: y1, stroke: C.rule, "stroke-width": 1 }));
+      svg.appendChild(mk("circle", { cx: X(N), cy: Y(lE), r: 4.5, fill: "#060a13", stroke: C.bad, "stroke-width": 1.8 }));
+      svg.appendChild(mk("circle", { cx: X(N), cy: Y(lM), r: 4.5, fill: "#060a13", stroke: C.good, "stroke-width": 1.8 }));
+      svg.appendChild(txt("exact", { x: X(40), y: Y(40 * 0.301) - 12, class: "axis", fill: C.bad }));
+      svg.appendChild(txt("MPS, χ = " + chi, { x: X(230), y: Y(Math.log10(mpsCount(230, chi))) - 12, class: "axis", fill: C.good }));
+
+      $("nLbl").textContent = "N = " + N;
+      $("cntSub").textContent = "N = " + N + " · χ = " + chi;
+      const e = Math.floor(lE), mant = Math.pow(10, lE - e);
+      if (N <= 40) $("roCntExact").textContent = fmtInt(Math.pow(2, N));
+      else $("roCntExact").innerHTML = mant.toFixed(1) + " × 10<sup>" + e + "</sup>";
+      $("roCntMps").textContent = fmtInt(mpsCount(N, chi));
+    }
+    ctl.addEventListener("input", () => requestAnimationFrame(draw));
+    document.querySelectorAll("#chiSeg button").forEach((b) => b.addEventListener("click", () => {
+      chi = +b.dataset.chi;
+      document.querySelectorAll("#chiSeg button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+      draw();
+    }));
+    draw();
+  })();
+})();
+</script>
+</body>
+</html>

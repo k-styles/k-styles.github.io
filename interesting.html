@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interesting stuff · Kartik Anand</title>
+<meta name="description" content="The questions Kartik Anand keeps thinking about, explained in plain words first: frustrated Hamiltonians, tensor networks, complexity separations, and what quantum gravity asks of complexity theory.">
+<link rel="canonical" href="https://k-styles.github.io/interesting.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Interesting stuff">
+<meta property="og:description" content="Four questions from quantum complexity and physics, each starting in plain words, each with something to push on.">
+<meta property="og:url" content="https://k-styles.github.io/interesting.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2303040a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%235aabff' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='3.2' fill='%239c7cff'/%3E%3Ccircle cx='16' cy='7' r='2' fill='%235aabff'/%3E%3Ccircle cx='24' cy='20.5' r='2' fill='%235aabff'/%3E%3Ccircle cx='8' cy='20.5' r='2' fill='%2345d4bd'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #020309;
+  --rule: rgba(120,160,255,0.11);
+  --rule-bright: rgba(120,160,255,0.2);
+  --rule-strong: rgba(120,160,255,0.38);
+
+  --star-bright: #eaf2ff;
+  --star: rgba(215,228,255,0.92);
+  --muted: rgba(172,197,242,0.62);
+
+  --quantum: #5aabff;
+  --entangle: #9c7cff;
+  --accent: #f0c060;
+  --good: #45d4bd;
+  --bad: #ff7a5c;
+
+  --serif: 'EB Garamond', Georgia, serif;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  --micro: 0.75rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  caret-color: var(--quantum);
+  scrollbar-color: rgba(90,171,255,0.28) var(--void);
+  scrollbar-width: thin;
+}
+
+body {
+  background-color: var(--void);
+  background-image: radial-gradient(1400px 800px at 50% -12%, rgba(156,124,255,0.07), transparent 62%);
+  background-repeat: no-repeat;
+  color: var(--star);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: rgba(90,171,255,0.32); color: #f2f8ff; }
+:focus-visible { outline: 2px solid var(--quantum); outline-offset: 3px; border-radius: 3px; }
+a { text-underline-offset: 0.18em; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: rgba(90,171,255,0.28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(90,171,255,0.45); }
+
+.skip-link {
+  position: absolute; left: 1rem; top: -3rem; z-index: 10;
+  padding: 0.5rem 0.9rem; font-size: var(--micro); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--quantum); background: #070b16;
+  border: 1px solid var(--rule-strong); border-radius: 3px; text-decoration: none;
+  transition: top 0.2s var(--ease-out);
+}
+.skip-link:focus { top: 1rem; }
+
+.wrapper {
+  max-width: 960px; margin: 0 auto; padding: 0 1.5rem 6rem;
+}
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 1.5rem 0 1.1rem;
+}
+.topbar nav { display: flex; gap: 1.5rem; }
+.topbar a {
+  font-size: var(--micro); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
+}
+.topbar a:hover { color: var(--quantum); }
+.home-link span { color: var(--quantum); }
+
+.hero { padding: 4.5rem 0 3.2rem; animation: rise 1s var(--ease-out) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+.hero h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(3.2rem, 11.5vw, 6rem);
+  line-height: 0.92; letter-spacing: -0.035em; color: var(--star-bright);
+}
+.hero h1 em { font-style: italic; color: var(--entangle); }
+.hero .lede {
+  font-family: var(--serif); font-size: clamp(1.15rem, 1.9vw, 1.35rem);
+  line-height: 1.62; color: rgba(216,229,255,0.86); max-width: 52ch; margin-top: 1.8rem;
+}
+
+/* The page is a list of questions, easiest first. Each row is one link: the
+   question carries the weight, the topic name sits under it, and the drawing on
+   the right is a small live version of the page's own mechanism. */
+.topics { list-style: none; border-top: 1px solid var(--rule-bright); }
+.topics li { border-bottom: 1px solid var(--rule-bright); }
+
+.topic {
+  display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 2.6rem;
+  align-items: center;
+  padding: 2.4rem 1.2rem 2.5rem;
+  margin: 0 -1.2rem;
+  color: inherit; text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.35s var(--ease-out);
+}
+.topic:hover, .topic:focus-visible { background-color: rgba(90,171,255,0.035); }
+.topic:focus-visible { outline-offset: -2px; }
+
+.t-q {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(1.75rem, 3.6vw, 2.45rem);
+  line-height: 1.08; letter-spacing: -0.022em; color: var(--star);
+  text-wrap: balance;
+  transition: color 0.3s;
+}
+.topic:hover .t-q, .topic:focus-visible .t-q { color: var(--star-bright); }
+
+.t-name {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.9rem;
+  margin-top: 0.75rem;
+  font-size: 0.84rem; letter-spacing: 0.01em; color: rgba(178,201,244,0.8);
+}
+.t-name b { font-weight: 600; color: var(--quantum); letter-spacing: 0.02em; }
+.t-name .go {
+  color: var(--quantum); display: inline-block;
+  transition: transform 0.35s var(--ease-out);
+}
+.topic:hover .go, .topic:focus-visible .go { transform: translateX(5px); }
+
+.t-plain {
+  font-family: var(--serif); font-size: 1.14rem; line-height: 1.72;
+  color: rgba(214,228,255,0.86); margin-top: 1rem; max-width: 60ch;
+}
+
+.t-motif { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* motif ink */
+.m-rim   { fill: none; stroke: var(--rule-strong); stroke-width: 1.2; }
+.m-line  { stroke: rgba(120,160,255,0.42); stroke-width: 1.4; fill: none; }
+.m-ok    { stroke: var(--quantum); stroke-width: 2; }
+.m-bad   { stroke: var(--bad); stroke-width: 2; stroke-dasharray: 4 4; }
+.m-node  { fill: #070b16; stroke: var(--quantum); stroke-width: 1.5; }
+.m-arrow { stroke: var(--star-bright); stroke-width: 1.6; stroke-linecap: round; fill: none; }
+.m-wedge { fill: rgba(156,124,255,0.16); }
+.m-geo   { fill: none; stroke: var(--entangle); stroke-width: 1.8; }
+.m-arc   { fill: none; stroke: var(--quantum); stroke-width: 3.5; stroke-linecap: round; }
+.m-lbl   { font-family: var(--serif); font-style: italic; font-size: 17px; fill: rgba(215,228,255,0.9); }
+.m-tile  { fill: rgba(90,171,255,0.1); stroke: rgba(90,171,255,0.55); stroke-width: 1; }
+.m-bit   { font-family: var(--mono); font-size: 12px; fill: var(--star-bright); text-anchor: middle; }
+.m-psi   { fill: rgba(156,124,255,0.22); stroke: var(--entangle); stroke-width: 1.5; }
+.m-check { fill: none; stroke: var(--good); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.m-cut   { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 3 4; }
+
+.aside {
+  margin-top: 3.2rem; max-width: 64ch;
+  font-size: 0.95rem; line-height: 1.72; color: rgba(190,208,245,0.84);
+}
+.aside a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); }
+.aside a:hover { border-color: var(--quantum); }
+
+footer {
+  margin-top: 3rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.6rem;
+  font-size: 0.78rem; color: rgba(172,197,242,0.62);
+}
+footer a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid transparent; }
+footer a:hover { border-color: var(--quantum); }
+
+@media (max-width: 760px) {
+  .wrapper { padding: 0 1.15rem 4rem; }
+  .hero { padding: 2.6rem 0 2.2rem; }
+  .topic {
+    grid-template-columns: 1fr; gap: 1.2rem;
+    padding: 1.9rem 1rem 2rem; margin: 0 -1rem;
+  }
+  .t-motif { grid-row: 1; width: 150px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="wrapper">
+
+  <div class="topbar">
+    <a class="home-link" href="index.html"><span>←</span> Kartik Anand</a>
+    <nav aria-label="Secondary">
+      <a href="blogs.html">Writing</a>
+      <a href="mailto:Kartik.anand@tuhh.de">Contact</a>
+    </nav>
+  </div>
+
+  <header class="hero">
+    <h1>Interesting <em>stuff</em></h1>
+    <p class="lede">
+      The questions I keep coming back to, written so that anyone can start reading. Every page opens in
+      plain words and gets more technical the further down you go, and every page has something on it
+      you can push around. They run roughly from easiest to hardest.
+    </p>
+  </header>
+
+  <main id="main">
+    <ol class="topics">
+
+      <li>
+        <a class="topic" href="frustration.html" data-motif="frustration">
+          <div>
+            <h2 class="t-q">Why is the lowest energy so hard to find?</h2>
+            <p class="t-name"><b>Frustrated Hamiltonians</b><span>A puzzle game, then the glass phase</span><span class="go" aria-hidden="true">→</span></p>
+            <p class="t-plain">
+              Give a handful of tiny magnets some rules: these two should point the same way, those two
+              should point opposite ways. Sometimes the rules contradict each other and one of them has to
+              lose. Finding the least bad arrangement is easy for five magnets. For quantum magnets in
+              general it is believed to be too hard even for a quantum computer.
+            </p>
+          </div>
+          <svg class="t-motif" viewBox="0 0 220 170" aria-hidden="true">
+            <line class="m-ok"  data-b="0" x1="110" y1="30"  x2="44"  y2="140"/>
+            <line class="m-ok"  data-b="1" x1="44"  y1="140" x2="176" y2="140"/>
+            <line class="m-bad" data-b="2" x1="176" y1="140" x2="110" y2="30"/>
+            <g data-s="0" transform="translate(110 30)"><circle class="m-node" r="15"/><path class="m-arrow" d="M0 7 V-7 M-4.5 -2.5 L0 -7 L4.5 -2.5"/></g>
+            <g data-s="1" transform="translate(44 140)"><circle class="m-node" r="15"/><path class="m-arrow" d="M0 7 V-7 M-4.5 -2.5 L0 -7 L4.5 -2.5" transform="rotate(180)"/></g>
+            <g data-s="2" transform="translate(176 140)"><circle class="m-node" r="15"/><path class="m-arrow" d="M0 7 V-7 M-4.5 -2.5 L0 -7 L4.5 -2.5"/></g>
+          </svg>
+        </a>
+      </li>
+
+      <li>
+        <a class="topic" href="tensor-networks.html" data-motif="tensor">
+          <div>
+            <h2 class="t-q">How does a quantum state fit in a computer at all?</h2>
+            <p class="t-name"><b>Tensor networks</b><span>A live spin chain, cut in half</span><span class="go" aria-hidden="true">→</span></p>
+            <p class="t-plain">
+              Writing down the exact state of 300 quantum spins takes more numbers than there are atoms in
+              the visible universe. The states nature settles into when things are cold are far less
+              tangled than that. Tensor networks write those states down using only the entanglement they
+              actually have, which is why simulations of real materials work at all.
+            </p>
+          </div>
+          <svg class="t-motif" viewBox="0 0 220 170" aria-hidden="true">
+            <g class="tn-legs"></g>
+            <g class="tn-bonds"></g>
+            <line class="m-cut" x1="110" y1="42" x2="110" y2="128"/>
+            <g class="tn-nodes"></g>
+          </svg>
+        </a>
+      </li>
+
+      <li>
+        <a class="topic" href="separations.html" data-motif="witness">
+          <div>
+            <h2 class="t-q">Does it matter what a proof is made of?</h2>
+            <p class="t-name"><b>Separations</b><span>QMA, QCMA, QMA(2) and StoqMA</span><span class="go" aria-hidden="true">→</span></p>
+            <p class="t-plain">
+              A proof is normally something you write down and someone else checks. In quantum computing
+              the proof can itself be a quantum state, which cannot be copied and falls apart the moment
+              you look at it. Nobody knows whether that makes quantum proofs more powerful than ordinary
+              ones. These are the cleanest versions of the question, and the partial answers so far.
+            </p>
+          </div>
+          <svg class="t-motif" viewBox="0 0 220 170" aria-hidden="true">
+            <g class="w-tiles"></g>
+            <path class="m-line" d="M104 48 H130"/>
+            <g class="w-checks"></g>
+            <circle class="m-psi w-psi" cx="62" cy="122" r="17"/>
+            <text class="m-lbl" x="62" y="127" text-anchor="middle">ψ</text>
+            <path class="m-line w-psi-line" d="M86 122 H130"/>
+            <g class="w-qchecks"></g>
+          </svg>
+        </a>
+      </li>
+
+      <li>
+        <a class="topic" href="gravity.html" data-motif="gravity">
+          <div>
+            <h2 class="t-q">Is spacetime a quantum error-correcting code?</h2>
+            <p class="t-name"><b>Decoding spacetime</b><span>Holography, black holes, the Uhlmann problem</span><span class="go" aria-hidden="true">→</span></p>
+            <p class="t-plain">
+              Some physicists think space is stitched together out of entanglement, the way a hologram
+              stores a 3D picture on a flat sheet. If that is right, getting information back out of a
+              black hole is a decoding problem, and decoding may take far longer than the black hole
+              lasts. Asking how long it takes needs a new kind of complexity theory, one where the input
+              is a quantum state instead of a string of bits.
+            </p>
+          </div>
+          <svg class="t-motif" viewBox="0 0 220 170" aria-hidden="true">
+            <path class="m-wedge g-wedge"/>
+            <circle class="m-rim" cx="110" cy="85" r="68"/>
+            <path class="m-arc g-arc"/>
+            <path class="m-geo g-geo"/>
+          </svg>
+        </a>
+      </li>
+
+    </ol>
+
+    <p class="aside">
+      If I have got something wrong on any of these, I would like to hear about it:
+      <a href="mailto:Kartik.anand@tuhh.de">Kartik.anand@tuhh.de</a>. The longer, older write-ups live in
+      the <a href="blogs.html">writing</a>.
+    </p>
+  </main>
+
+  <footer>
+    <span>Kartik Anand · Quantum Complexity Theory</span>
+    <span><a href="index.html">← back home</a></span>
+  </footer>
+
+</div>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Each motif exposes step(t) for a time t in seconds. It is drawn once at
+  // t = 0, and only runs while its row is hovered or focused.
+  const motifs = {};
+
+  /* Frustration: three spins on a triangle, every bond wanting its ends to
+     disagree. Flip one spin at a time and the unhappy bond walks round. */
+  motifs.frustration = (svg) => {
+    const spins = [1, -1, 1];
+    const bonds = [[0, 1], [1, 2], [2, 0]];
+    const lines = [...svg.querySelectorAll('[data-b]')];
+    const arrows = [...svg.querySelectorAll('[data-s] .m-arrow')];
+    const draw = () => {
+      bonds.forEach(([a, b], i) => {
+        lines[i].setAttribute('class', spins[a] !== spins[b] ? 'm-ok' : 'm-bad');
+      });
+      arrows.forEach((p, i) => p.setAttribute('transform', spins[i] > 0 ? '' : 'rotate(180)'));
+    };
+    let last = -1;
+    draw();
+    return (t) => {
+      const k = Math.floor(t / 0.9);
+      if (k !== last) { last = k; spins[k % 3] *= -1; draw(); }
+    };
+  };
+
+  /* Tensor network: six tensors in a chain. Bond thickness stands for how much
+     entanglement crosses that bond, swelling toward the middle as the chain
+     is tuned toward its critical point and relaxing again. */
+  motifs.tensor = (svg) => {
+    const n = 6, x0 = 30, dx = 32, y = 85;
+    const legs = svg.querySelector('.tn-legs');
+    const bondsG = svg.querySelector('.tn-bonds');
+    const nodes = svg.querySelector('.tn-nodes');
+    const bonds = [];
+    for (let i = 0; i < n; i++) {
+      const x = x0 + i * dx;
+      el('line', { class: 'm-line', x1: x, y1: y, x2: x, y2: y + 36 }, legs);
+      el('circle', { cx: x, cy: y + 38, r: 2.2, fill: 'rgba(120,160,255,0.55)' }, legs);
+      if (i < n - 1) bonds.push(el('line', { x1: x, y1: y, x2: x + dx, y2: y, stroke: '#5aabff', 'stroke-linecap': 'round' }, bondsG));
+      el('rect', { class: 'm-node', x: x - 9, y: y - 9, width: 18, height: 18, rx: 3 }, nodes);
+    }
+    return (t) => {
+      const g = 0.5 + 0.5 * Math.sin(t * 1.3 - Math.PI / 2);      // 0 … 1 … 0
+      bonds.forEach((b, i) => {
+        const mid = 1 - Math.abs(i - (n - 2) / 2) / ((n - 2) / 2 + 1);
+        b.setAttribute('stroke-width', (1.2 + 5.2 * g * mid).toFixed(2));
+        b.setAttribute('stroke-opacity', (0.55 + 0.45 * g * mid).toFixed(2));
+      });
+    };
+  };
+
+  /* Witnesses: a bit string feeds any number of checks. The quantum state
+     feeds one and is gone. */
+  motifs.witness = (svg) => {
+    const tiles = svg.querySelector('.w-tiles');
+    '0110'.split('').forEach((b, i) => {
+      el('rect', { class: 'm-tile', x: 22 + i * 20, y: 38, width: 17, height: 20, rx: 2 }, tiles);
+      const tx = el('text', { class: 'm-bit', x: 30.5 + i * 20, y: 52.5 }, tiles);
+      tx.textContent = b;
+    });
+    const checks = svg.querySelector('.w-checks');
+    const cs = [0, 1, 2].map((i) => {
+      const g = el('g', { transform: `translate(${148 + i * 24} 48)` }, checks);
+      el('circle', { r: 9, fill: 'none', stroke: 'rgba(69,212,189,0.5)', 'stroke-width': 1.2 }, g);
+      el('path', { class: 'm-check', d: 'M-4 0.5 L-1 3.5 L4.5 -3' }, g);
+      return g;
+    });
+    const qg = el('g', { transform: 'translate(148 122)' }, svg.querySelector('.w-qchecks'));
+    el('circle', { r: 9, fill: 'none', stroke: 'rgba(69,212,189,0.5)', 'stroke-width': 1.2 }, qg);
+    el('path', { class: 'm-check', d: 'M-4 0.5 L-1 3.5 L4.5 -3' }, qg);
+    const psi = svg.querySelector('.w-psi');
+    const psiLine = svg.querySelector('.w-psi-line');
+    return (t) => {
+      const ph = (t % 3.2) / 3.2;                                   // one cycle
+      cs.forEach((g, i) => g.setAttribute('opacity', ph > 0.12 + i * 0.16 ? 1 : 0.18));
+      qg.setAttribute('opacity', ph > 0.12 ? 1 : 0.18);
+      const gone = ph > 0.2 ? Math.min(1, (ph - 0.2) / 0.12) : 0;
+      psi.setAttribute('r', (17 - 14 * gone).toFixed(2));
+      psi.setAttribute('opacity', (1 - 0.7 * gone).toFixed(2));
+      psiLine.setAttribute('opacity', (1 - 0.8 * gone).toFixed(2));
+    };
+  };
+
+  /* Holography: a boundary region A (blue arc), its minimal surface (violet
+     geodesic, a circle meeting the rim at right angles) and the entanglement
+     wedge between them. The region breathes; the geodesic follows exactly. */
+  motifs.gravity = (svg) => {
+    const cx = 110, cy = 85, R = 68;
+    const wedge = svg.querySelector('.g-wedge');
+    const arc = svg.querySelector('.g-arc');
+    const geo = svg.querySelector('.g-geo');
+    const pt = (a) => [cx + R * Math.cos(a), cy - R * Math.sin(a)];
+    const draw = (half) => {
+      const a = Math.PI / 2 + half, b = Math.PI / 2 - half;   // symmetric about the top
+      const [ax, ay] = pt(a), [bx, by] = pt(b);
+      const big = 2 * half > Math.PI ? 1 : 0;
+      const rimD = `M${ax.toFixed(2)} ${ay.toFixed(2)} A${R} ${R} 0 ${big} 1 ${bx.toFixed(2)} ${by.toFixed(2)}`;
+      // Geodesic in the Poincaré disk: radius R·tan(Δ/2), bending inward.
+      const r = R * Math.tan(Math.min(half, Math.PI / 2 - 1e-3));
+      const geoD = `M${bx.toFixed(2)} ${by.toFixed(2)} A${r.toFixed(2)} ${r.toFixed(2)} 0 0 1 ${ax.toFixed(2)} ${ay.toFixed(2)}`;
+      arc.setAttribute('d', rimD);
+      geo.setAttribute('d', geoD);
+      wedge.setAttribute('d', rimD + ` A${r.toFixed(2)} ${r.toFixed(2)} 0 0 1 ${ax.toFixed(2)} ${ay.toFixed(2)} Z`);
+    };
+    draw(0.62);
+    return (t) => draw(0.62 + 0.5 * Math.sin(t * 1.1));
+  };
+
+  document.querySelectorAll('.topic').forEach((row) => {
+    const svg = row.querySelector('.t-motif');
+    const step = motifs[row.dataset.motif](svg);
+    step(0);
+    if (still) return;
+    let raf = 0, t0 = 0, t = 0;
+    const loop = (now) => { t = (now - t0) / 1000; step(t); raf = requestAnimationFrame(loop); };
+    const start = () => { if (!raf) { t0 = performance.now() - t * 1000; raf = requestAnimationFrame(loop); } };
+    const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+    row.addEventListener('pointerenter', start);
+    row.addEventListener('pointerleave', stop);
+    row.addEventListener('focus', start);
+    row.addEventListener('blur', stop);
+  });
+})();
+</script>
+</body>
+</html>

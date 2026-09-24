@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decoding spacetime · Kartik Anand</title>
+<meta name="description" content="From holography and black holes to the Uhlmann transformation problem, and why complexity theory needs inputs that are quantum states. Interactive: Ryu–Takayanagi surfaces, the Page curve, decoding time, and Uhlmann's theorem.">
+<link rel="canonical" href="https://k-styles.github.io/gravity.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Decoding spacetime">
+<meta property="og:description" content="Holography, black holes, the Uhlmann transformation problem, and quantum-input complexity, with the mechanisms you can push on.">
+<meta property="og:url" content="https://k-styles.github.io/gravity.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2303040a'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%235aabff' stroke-width='1.3'/%3E%3Cpath d='M8.2 8.2 A11 11 0 0 1 23.8 8.2' fill='none' stroke='%235aabff' stroke-width='2.6'/%3E%3Cpath d='M8.2 8.2 A11 11 0 0 0 23.8 8.2' fill='rgba(156,124,255,0.3)' stroke='%239c7cff' stroke-width='1.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #020309;
+  --rule: rgba(120,160,255,0.11);
+  --rule-bright: rgba(120,160,255,0.2);
+  --rule-strong: rgba(120,160,255,0.38);
+
+  --star-bright: #eaf2ff;
+  --star: rgba(215,228,255,0.92);
+  --muted: rgba(172,197,242,0.62);
+
+  --quantum: #5aabff;
+  --entangle: #9c7cff;
+  --accent: #f0c060;
+  --good: #45d4bd;
+  --bad: #ff7a5c;
+
+  --serif: 'EB Garamond', Georgia, serif;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  --micro: 0.75rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --band-bg: rgba(6,9,17,0.94);
+}
+
+html {
+  scroll-behavior: smooth;
+  caret-color: var(--quantum);
+  scrollbar-color: rgba(90,171,255,0.28) var(--void);
+  scrollbar-width: thin;
+}
+
+body {
+  background-color: var(--void);
+  background-image: radial-gradient(1400px 800px at 50% -12%, rgba(90,171,255,0.07), transparent 62%);
+  background-repeat: no-repeat;
+  color: var(--star);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: rgba(90,171,255,0.32); color: #f2f8ff; }
+:focus-visible { outline: 2px solid var(--quantum); outline-offset: 3px; border-radius: 3px; }
+a { text-underline-offset: 0.18em; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: rgba(90,171,255,0.28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(90,171,255,0.45); }
+
+.skip-link {
+  position: absolute; left: 1rem; top: -3rem; z-index: 10;
+  padding: 0.5rem 0.9rem; font-size: var(--micro); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--quantum); background: #070b16;
+  border: 1px solid var(--rule-strong); border-radius: 3px; text-decoration: none;
+  transition: top 0.2s var(--ease-out);
+}
+.skip-link:focus { top: 1rem; }
+
+/* full-bleed grid: text narrow, figures the whole viewport */
+.wrapper {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(1.15rem, 1fr)
+    [wide-start] minmax(0, 6rem)
+    [txt-start] minmax(0, 660px) [txt-end]
+    minmax(0, 6rem) [wide-end]
+    minmax(1.15rem, 1fr) [full-end];
+  padding-bottom: 6rem;
+}
+/* <main> carries display:contents so its children become grid items, but CSS
+   selectors match the DOM, not the box tree, so they need naming at both depths. */
+.wrapper > *,
+.wrapper > main > *     { grid-column: txt; }
+.wrapper > .wide,
+.wrapper > main > .wide { grid-column: wide; }
+.wrapper > .band,
+.wrapper > main > .band { grid-column: full; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 1.5rem 0 1.1rem;
+}
+.topbar nav { display: flex; gap: 1.5rem; }
+.topbar a {
+  font-size: var(--micro); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
+}
+.topbar a:hover { color: var(--quantum); }
+.home-link span { color: var(--quantum); }
+
+.hero { padding: 4.5rem 0 2.5rem; animation: rise 1s var(--ease-out) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+.hero h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(3.2rem, 11.5vw, 7rem);
+  line-height: 0.9; letter-spacing: -0.035em; color: var(--star-bright);
+}
+.hero h1 em { font-style: italic; color: var(--entangle); }
+.hero .lede {
+  font-family: var(--serif); font-size: clamp(1.15rem, 1.9vw, 1.35rem);
+  line-height: 1.62; color: rgba(216,229,255,0.86); max-width: 50ch; margin-top: 2rem;
+}
+
+h2 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  line-height: 1.05; letter-spacing: -0.028em; color: var(--star-bright);
+  margin: 4.5rem 0 0.6rem; text-wrap: balance;
+}
+h2 em { font-style: italic; color: var(--entangle); }
+h2 + .cite { margin-bottom: 1.5rem; }
+
+.cite {
+  font-family: var(--mono); font-size: 0.82rem; line-height: 1.6;
+  color: rgba(163,193,243,0.78);
+}
+.cite a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); }
+.cite a:hover { border-color: var(--quantum); }
+
+p.body {
+  font-family: var(--serif); font-size: 1.12rem; line-height: 1.82;
+  color: rgba(216,230,255,0.88); margin-bottom: 1.1rem;
+}
+p.big {
+  font-family: var(--serif); font-size: 1.3rem; line-height: 1.62;
+  color: rgba(226,238,255,0.93); margin-bottom: 1.2rem;
+}
+p a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); transition: border-color .2s; }
+p a:hover { border-color: var(--quantum); }
+.term { color: var(--star-bright); font-weight: 500; }
+code {
+  font-family: var(--mono); font-size: 0.86em;
+  background: rgba(120,160,255,0.1); padding: 0.08em 0.34em; border-radius: 4px; color: #c3d9ff;
+}
+
+/* full-bleed figure bands */
+.band {
+  margin: 2.6rem 0 3.4rem;
+  padding: 1.2rem 0 1.4rem;
+  border-top: 1px solid var(--rule-bright);
+  border-bottom: 1px solid var(--rule-bright);
+  background: var(--band-bg);
+}
+.band-in { max-width: 1100px; margin: 0 auto; padding: 0.4rem 1.5rem 0.6rem; }
+.fig-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--rule);
+}
+.fig-head h3 {
+  font-family: var(--serif); font-style: italic; font-weight: 400;
+  font-size: clamp(1.35rem, 2.5vw, 1.8rem); line-height: 1.2; color: var(--star-bright); margin: 0;
+}
+.fig-sub {
+  font-family: var(--mono); font-size: 0.82rem; color: var(--entangle);
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.band svg { width: 100%; height: auto; display: block; }
+.axis { font-family: var(--sans); font-size: 11px; fill: rgba(178,201,244,0.78); letter-spacing: 0.03em; }
+.axis-dim { fill: rgba(150,180,235,0.55); }
+
+.ctl-row { display: grid; gap: 1.4rem 2rem; margin-top: 1.3rem; }
+.ctl-row.two { grid-template-columns: 1fr 1fr; }
+.ctl label {
+  display: block; font-size: 0.84rem; letter-spacing: 0.01em;
+  color: rgba(178,201,244,0.8); margin-bottom: 0.15rem;
+}
+.ctl label b { color: var(--star-bright); font-family: var(--mono); font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 20px; margin: 0.5rem 0 0; background: transparent; cursor: pointer; display: block;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 2px; border-radius: 2px; background: var(--rule-bright); }
+input[type=range]::-moz-range-track { height: 2px; border-radius: 2px; background: var(--rule-bright); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 15px; height: 15px; margin-top: -6.5px; border-radius: 50%;
+  background: #060a13; border: 1.5px solid var(--quantum);
+  box-shadow: 0 3px 8px -2px rgba(0,0,0,0.9);
+  transition: transform .18s var(--ease-out), border-color .18s, background .18s;
+}
+input[type=range]::-moz-range-thumb {
+  width: 15px; height: 15px; border-radius: 50%; background: #060a13;
+  border: 1.5px solid var(--quantum); box-shadow: 0 3px 8px -2px rgba(0,0,0,0.9);
+}
+input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.14); background: #0c1220; }
+input[type=range]:focus-visible { outline: none; }
+input[type=range]:focus-visible::-webkit-slider-thumb { border-color: #9fd0ff; box-shadow: 0 0 0 3px rgba(90,171,255,0.28); }
+/* These axis ends are phrases, not micro-labels. All caps turns
+   "Maximally entangled" into a wall, so they stay in sentence case. */
+.scale {
+  display: flex; justify-content: space-between;
+  font-size: 0.8rem; letter-spacing: 0.01em;
+  color: rgba(172,197,242,0.68); margin-top: 0.2rem;
+}
+
+.fig-cap {
+  font-family: var(--sans); font-size: 0.95rem; line-height: 1.72;
+  color: rgba(196,213,247,0.86); margin-top: 1.3rem; max-width: 64ch;
+}
+.fig-cap b { color: var(--star-bright); font-weight: 600; }
+
+.readouts { display: flex; flex-wrap: wrap; gap: 0.5rem 2.4rem; margin-top: 1.2rem; }
+.ro { display: flex; flex-direction: column; gap: 0.1rem; }
+.ro .k { font-size: 0.8rem; letter-spacing: 0.01em; color: rgba(178,201,244,0.8); }
+.ro .v { font-family: var(--mono); font-size: 1.15rem; font-variant-numeric: tabular-nums; color: var(--star-bright); }
+.ro .v.good { color: var(--good); }
+.ro .v.bad { color: var(--bad); }
+.ro .v.q { color: var(--quantum); }
+
+.note {
+  margin: 2.2rem 0 0; padding: 1.3rem 1.5rem;
+  border: 1px solid rgba(156,124,255,0.26); border-radius: 10px; background: rgba(156,124,255,0.05);
+}
+.note p {
+  font-family: var(--sans); font-size: 0.97rem; line-height: 1.72;
+  color: rgba(205,215,248,0.89); margin: 0; max-width: 66ch;
+}
+.note p + p { margin-top: 0.8rem; }
+.note strong { color: rgba(203,183,255,0.98); font-weight: 600; }
+.note a { color: rgba(190,168,255,0.96); text-decoration: none; border-bottom: 1px solid rgba(156,124,255,0.4); }
+.note a:hover { border-color: var(--entangle); }
+
+.refs { list-style: none; margin: 1.6rem 0 0; }
+.refs li {
+  padding: 0.85rem 0; border-top: 1px solid var(--rule);
+  font-size: 0.93rem; line-height: 1.65; color: rgba(196,213,247,0.86);
+}
+.refs li:last-child { border-bottom: 1px solid var(--rule); }
+.refs b { color: var(--star-bright); font-weight: 600; }
+.refs a {
+  font-family: var(--mono); font-size: 0.85em; color: var(--quantum);
+  text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); white-space: nowrap;
+}
+.refs a:hover { border-color: var(--quantum); }
+
+.closing {
+  margin-top: 3.5rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+  font-size: 0.95rem; color: rgba(178,201,244,0.78);
+}
+.closing a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid rgba(90,171,255,0.3); }
+.closing a:hover { border-color: var(--quantum); }
+
+footer {
+  margin-top: 3rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.6rem;
+  font-size: 0.78rem; color: rgba(172,197,242,0.62);
+}
+footer a { color: var(--quantum); text-decoration: none; border-bottom: 1px solid transparent; }
+footer a:hover { border-color: var(--quantum); }
+
+@media (max-width: 760px) {
+  .ctl-row.two { grid-template-columns: 1fr; }
+  .band { margin: 2rem 0 2.6rem; }
+  .band-in { padding: 0.3rem 1.15rem 0.5rem; }
+  .hero { padding: 2.6rem 0 1.8rem; }
+  .hero .lede { margin-top: 1.3rem; }
+  h2 { margin-top: 3.2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+
+/* ── page additions ── */
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule-bright); border-radius: 7px; overflow: hidden; margin-top: 0.55rem; }
+.seg button {
+  font-family: var(--sans); font-size: var(--micro); font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.55rem 0.95rem; border: 0; background: transparent;
+  color: rgba(178,201,244,0.8); cursor: pointer; transition: background .2s, color .2s;
+}
+.seg button + button { border-left: 1px solid var(--rule-bright); }
+.seg button:hover { background: rgba(90,171,255,0.08); color: var(--star-bright); }
+.seg button:focus-visible { outline-offset: -3px; }
+.ctl .seg-label { display: block; font-size: 0.84rem; color: rgba(178,201,244,0.8); }
+.ctl-row.three { grid-template-columns: 1fr 1fr auto; align-items: end; }
+button.act {
+  font-family: var(--sans); font-size: var(--micro); font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.6rem 0.9rem; border-radius: 7px;
+  border: 1px solid rgba(156,124,255,0.42); background: rgba(156,124,255,0.12);
+  color: rgba(203,183,255,0.98); cursor: pointer; transition: background .2s, border-color .2s;
+}
+button.act:hover { background: rgba(156,124,255,0.22); border-color: var(--entangle); }
+.ro .v sup, .fig-sub sup, .scale sup { font-size: 0.62em; line-height: 0; }
+.handle { cursor: grab; outline: none; }
+.handle:active { cursor: grabbing; }
+.handle:focus-visible .knob, .handle:focus-visible .halo { stroke: #9fd0ff; stroke-width: 3; }
+.rt-name { font-family: var(--serif); font-style: italic; font-size: 20px; }
+#rtSvg { touch-action: none; }
+.formula {
+  font-family: var(--serif); font-size: 1.22rem; text-align: center; color: var(--star-bright);
+  margin: 0.4rem 0 1.4rem; letter-spacing: 0.01em;
+}
+.formula i { color: rgba(203,183,255,0.98); }
+@media (max-width: 760px) { .ctl-row.three { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="wrapper">
+
+  <div class="topbar wide">
+    <a class="home-link" href="index.html"><span>←</span> Kartik Anand</a>
+    <nav aria-label="Secondary">
+      <a href="interesting.html">Interesting stuff</a>
+      <a href="blogs.html">Writing</a>
+      <a href="mailto:Kartik.anand@tuhh.de">Contact</a>
+    </nav>
+  </div>
+
+  <header class="hero wide">
+    <h1>Decoding <em>spacetime</em></h1>
+    <p class="lede">
+      Over the last twenty years, questions about quantum gravity have turned into questions about quantum
+      information, and lately into questions about computational complexity. This page follows that
+      thread from holography through black holes to one well-defined computational problem, and ends
+      with why I think complexity theory needs inputs that are quantum states.
+    </p>
+  </header>
+
+  <main id="main" style="display:contents">
+
+  <p class="big">
+    The idea in plain words first. In certain universes, everything that happens inside a region of space
+    is completely described by a quantum system living on its boundary, the way a hologram stores a 3D
+    picture on a flat film. The translation between the two is strange. A point deep inside is not
+    stored in any one place on the boundary. It is spread out redundantly, like a message protected by an
+    error-correcting code, so you can lose part of the boundary and still recover it. Take that
+    seriously, and the question of what happens to information that falls into a black hole becomes a
+    question about decoding. Decoding can be very hard.
+  </p>
+
+  <h2>Area is <em>entanglement</em></h2>
+  <p class="cite">Ryu–Takayanagi, and what it measures</p>
+
+  <p class="body">
+    AdS/CFT says that quantum gravity in anti-de Sitter space is the same theory as a conformal field
+    theory on its boundary, written in different variables. In 2006 Ryu and Takayanagi proposed that
+    the entanglement entropy of a boundary region <code>A</code> equals the area of the minimal bulk
+    surface anchored on the edge of <code>A</code>, divided by <code>4G<sub>N</sub></code>. For a
+    two-dimensional CFT this reproduces the Calabrese–Cardy formula exactly, with the central charge
+    set by Newton's constant through <code>c = 3R/2G<sub>N</sub></code>. The formula has since been
+    derived from the gravitational path integral, made covariant, and corrected at one loop by the
+    entanglement of bulk fields. Its modern form, due to Engelhardt and Wall, extremizes a
+    <span class="term">generalized entropy</span>:
+  </p>
+
+  <p class="formula">S(A) = min<sub>X</sub> ext<sub>X</sub> [ Area(X) / 4G<sub>N</sub> + S<sub>bulk</sub>(Σ<sub>X</sub>) ]</p>
+
+  <p class="body">
+    The figure is a constant-time slice of AdS<sub>3</sub>, drawn as the Poincaré disk, where minimal
+    surfaces are geodesics: arcs of circles that meet the rim at right angles. Pick two boundary regions.
+    There are two ways to join their four endpoints with geodesics, and the entropy of
+    <code>A∪B</code> is set by whichever pair is shorter. The choice flips abruptly, and when it does,
+    so does which part of the bulk the boundary regions own.
+  </p>
+
+  <section class="band" aria-label="Two boundary regions and their minimal surfaces">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>Two regions, two candidate surfaces</h3>
+        <span class="fig-sub" id="rtSub">connected wedge</span>
+      </div>
+      <svg id="rtSvg" viewBox="0 0 900 470" role="img" aria-label="A disk representing a slice of anti-de Sitter space. Two boundary regions, A in blue and B in amber, have draggable endpoints. The shorter of two candidate sets of minimal surfaces is drawn solid, and the entanglement wedge it bounds is shaded. A draggable bulk point turns green when the boundary regions together can recover it."></svg>
+      <div class="ctl-row">
+        <div class="ctl">
+          <span class="seg-label">Drag the four endpoints on the rim and the point inside. Or start from</span>
+          <div class="seg" role="group" aria-label="Presets">
+            <button type="button" data-rt="big">Two large regions</button>
+            <button type="button" data-rt="small">Two small regions</button>
+          </div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Shorter surfaces</span><span class="v" id="rtPhase">joined</span></div>
+        <div class="ro"><span class="k">Mutual information I(A:B)</span><span class="v q" id="rtMI">0</span></div>
+        <div class="ro"><span class="k">Lengths, separate / joined</span><span class="v" id="rtLen">…</span></div>
+        <div class="ro"><span class="k">Bulk point recoverable from</span><span class="v" id="rtRec">…</span></div>
+      </div>
+      <p class="fig-cap" id="rtCap"></p>
+    </div>
+  </section>
+
+  <p class="body">
+    The shaded region is the <span class="term">entanglement wedge</span>: the bulk region between a
+    boundary region and its minimal surface. Dong, Harlow and Wall showed that any bulk operator in the
+    entanglement wedge of <code>A</code> can be rebuilt from operators on <code>A</code> alone, and
+    Cotler and collaborators gave an explicit recovery map. With the surfaces joined, <code>A</code>
+    and <code>B</code> together own a region deep in the bulk that neither owns by itself.
+  </p>
+
+  <h2>Space as a <em>code</em></h2>
+  <p class="cite">Almheiri, Dong and Harlow; then HaPPY</p>
+
+  <p class="body">
+    Almheiri, Dong and Harlow noticed that this is exactly how a quantum error-correcting code behaves.
+    Split the boundary into thirds <code>A</code>, <code>B</code>, <code>C</code>. The point at the
+    centre of the disk lies outside what any single third can see, yet it can be reconstructed from
+    <code>A∪B</code>, from <code>B∪C</code>, or from <code>A∪C</code>. The simplest code with that
+    property is the three-qutrit secret-sharing code: any two qutrits recover the message, and any one
+    of them alone is maximally mixed. In this language the bulk is the logical space, the boundary is
+    the physical space, and depth into the bulk measures how much of the boundary you need to hold to
+    recover a piece of information.
+  </p>
+
+  <p class="body">
+    Pastawski, Yoshida, Harlow and Preskill then built explicit codes of this kind out of
+    <span class="term">perfect tensors</span>, tensors that are maximally entangled across every way of
+    splitting their legs, tiled over the hyperbolic disk. The Ryu–Takayanagi formula holds exactly in
+    many of them. They are tensor networks, the same objects that describe low-energy states of spin
+    chains, which is the subject of <a href="tensor-networks.html">Writing down a ground state</a>.
+  </p>
+
+  <h2>Black holes, <em>2019 edition</em></h2>
+  <p class="cite">The Page curve and islands</p>
+
+  <p class="body">
+    Hawking's calculation says a black hole radiates thermally, and that each emitted quantum is
+    entangled with a partner that stays behind the horizon. The entropy of the radiation then grows for
+    as long as the black hole shines. When it has evaporated completely, a pure state has turned into a
+    mixed one, and information is lost. Page pointed out in 1993 that if evaporation is unitary, the
+    entropy of the radiation has to turn over once the black hole has given up about half its entropy.
+    That turnover is the <span class="term">Page curve</span>, and the moment it happens is the Page time.
+  </p>
+
+  <p class="body">
+    Two further results made the problem sharp. Hayden and Preskill showed that after the Page time,
+    anything thrown into the black hole comes back out in the radiation very quickly, assuming fast
+    scrambling dynamics and an observer who controls the radiation. Almheiri, Marolf, Polchinski and
+    Sully argued that three things cannot all be true: the radiation is pure, ordinary field theory holds
+    near the horizon, and an infalling observer sees nothing unusual. Their most conservative way out
+    was a <span class="term">firewall</span> at the horizon.
+  </p>
+
+  <p class="body">
+    In 2019 Penington, and separately Almheiri, Engelhardt, Marolf and Maxfield, applied the quantum
+    extremal surface formula to an evaporating black hole. At the Page time the surface jumps to just
+    inside the horizon, and the entropy follows the Page curve. The region behind that surface, now
+    counted as part of the radiation, is an <span class="term">island</span>. Two groups then derived
+    the island rule from the gravitational path integral, where it comes from replica wormholes.
+  </p>
+
+  <p class="formula">S(Rad) = min<sub>X</sub> ext<sub>X</sub> [ Area(X) / 4G<sub>N</sub> + S(Σ<sub>Rad</sub> ∪ Σ<sub>Island</sub>) ]</p>
+
+  <section class="band" aria-label="The Page curve">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>The Page curve</h3>
+        <span class="fig-sub" id="pgSub">no island</span>
+      </div>
+      <svg id="pgSvg" viewBox="0 0 900 340" role="img" aria-label="Entropy of Hawking radiation against time. Hawking's calculation rises forever. The black hole's own entropy falls. The Page curve follows the smaller of the two, turning over at the Page time. Beside the plot, a shrinking black hole emits radiation, and after the Page time an island appears just inside its horizon."></svg>
+      <div class="ctl-row">
+        <div class="ctl">
+          <label for="pgCtl">Time since the black hole formed</label>
+          <input type="range" id="pgCtl" min="0" max="1000" value="320" step="1" aria-label="Time, from formation to complete evaporation">
+          <div class="scale" aria-hidden="true"><span>Formation</span><span>Evaporated</span></div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Hawking's calculation</span><span class="v bad" id="pgHaw">…</span></div>
+        <div class="ro"><span class="k">Page curve</span><span class="v q" id="pgPage">…</span></div>
+        <div class="ro"><span class="k">Island</span><span class="v" id="pgIsl">no</span></div>
+      </div>
+      <p class="fig-cap">
+        Schematic, for a four-dimensional black hole evaporating into empty space: its mass falls as
+        (1 − t/t<sub>evap</sub>)<sup>1/3</sup>, so its entropy falls as the 2/3 power. <b>Hawking's curve
+        keeps rising</b> because each emitted quantum is entangled with a partner behind the horizon. The
+        radiation cannot be more entangled with the black hole than the black hole has room for, so a
+        unitary evaporation has to turn over. The island formula produces exactly that turn.
+      </p>
+    </div>
+  </section>
+
+  <p class="body">
+    The island formula gets the entropy of the radiation right. It says nothing about how anyone would
+    actually get the information out, and that turns out to be the more interesting question.
+  </p>
+
+  <h2>Getting it <em>out</em></h2>
+  <p class="cite">Harlow and Hayden, then complexity everywhere</p>
+
+  <p class="body">
+    To test the firewall argument, an observer has to collect the radiation, decode it far enough to
+    extract the qubit entangled with a mode near the horizon, and then jump in. Harlow and Hayden asked
+    in 2013 how long the decoding takes. They conjectured, without being able to prove it, that it is in
+    general exponential in the entropy of the remaining black hole, while in four dimensions the black
+    hole evaporates in a time that scales only as that entropy to the 3/2 power. Their evidence was
+    complexity-theoretic: a polynomial-time decoder for every correctable form of noise would imply
+    QSZK = BQP. Aaronson later sharpened this. An efficient decoder would put SZK inside BQP, and if
+    injective one-way functions exist that quantum computers cannot invert, decoding is hard.
+  </p>
+
+  <section class="band" aria-label="Decoding time against lifetime">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>Longer than the black hole lasts</h3>
+        <span class="fig-sub" id="dtLbl">S = 10<sup>77</sup></span>
+      </div>
+      <svg id="dtSvg" viewBox="0 0 900 250" role="img" aria-label="Two bars on a doubly logarithmic scale. One is the lifetime of a black hole of the chosen entropy, in Planck times. The other is 2 to the power of its entropy, the time a decoding would take if it needs exponentially many steps. The second is always vastly longer."></svg>
+      <div class="ctl-row">
+        <div class="ctl">
+          <label for="dtCtl">Black hole entropy, in units of Boltzmann's constant</label>
+          <input type="range" id="dtCtl" min="20" max="780" value="770" step="1" aria-label="Log of the black hole entropy">
+          <div class="scale" aria-hidden="true"><span>10<sup>2</sup></span><span>10<sup>78</sup></span></div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Mass</span><span class="v" id="dtM">…</span></div>
+        <div class="ro"><span class="k">Lifetime</span><span class="v good" id="dtLife">…</span></div>
+        <div class="ro"><span class="k">Decoding at 2<sup>S</sup> steps of one Planck time</span><span class="v bad" id="dtDec">…</span></div>
+      </div>
+      <p class="fig-cap">
+        The lifetime is the standard estimate t<sub>evap</sub> ≈ 5120π (M/m<sub>P</sub>)<sup>3</sup>
+        t<sub>P</sub> for emission into massless fields, which gives about 10<sup>67</sup> years for a
+        solar mass. The decoding bar assumes a computer that performs one operation per Planck time and
+        needs 2<sup>S</sup> of them. <b>The lifetime has about a hundred digits. The decoding time has
+        about 10<sup>76</sup>.</b>
+      </p>
+    </div>
+  </section>
+
+  <p class="body">
+    Complexity has kept showing up since. Susskind proposed that the growing volume of the wormhole
+    behind a black hole's horizon measures the complexity of the boundary state, and Brown and
+    collaborators made a version of that proposal with the gravitational action instead. The
+    <span class="term">Python's lunch</span> of Brown, Gharibyan, Penington and Susskind estimates the
+    cost of reconstructing the interior as exponential in the difference between the largest and
+    smallest areas along the way. Bouland, Fefferman and Vazirani argued that if the CFT's dynamics is
+    pseudorandom, which they conjecture and support with a query lower bound, then either the AdS/CFT
+    dictionary is exponentially complex or the quantum extended Church–Turing thesis fails in quantum
+    gravity. Akers, Engelhardt, Harlow, Penington and Vardhan described the late-time interior with
+    non-isometric codes whose consistency is protected by computational complexity.
+  </p>
+
+  <p class="body">
+    The newest work treats gravity and cryptography as two views of one thing. Brakerski showed that
+    hardness of decoding black-hole radiation is existentially equivalent to quantum cryptography such
+    as bit commitment. Engelhardt and collaborators proved a form of
+    <span class="term">cryptographic censorship</span>: if the boundary time evolution is approximately
+    pseudorandom on a code subspace, the bulk must have an event horizon. Akers and collaborators found
+    states that obey the Ryu–Takayanagi formula for different geometries yet are computationally
+    indistinguishable, so reconstructing the geometry can be hard even when reconstructing operators is
+    easy. Underneath several of these results sits one computational problem.
+  </p>
+
+  <h2>The Uhlmann <em>transformation</em> problem</h2>
+  <p class="cite">One problem underneath several of these</p>
+
+  <p class="body">
+    Take two pure states <code>|C⟩</code> and <code>|D⟩</code> on systems <code>A</code> and
+    <code>B</code>, with reduced states <code>ρ</code> and <code>σ</code> on <code>A</code>.
+    Uhlmann's theorem says that the best overlap you can reach by acting on <code>B</code> alone equals
+    the fidelity of the <code>A</code> sides:
+  </p>
+
+  <p class="formula">F(ρ, σ) = max<sub>U</sub> |⟨D| (id ⊗ U) |C⟩|²</p>
+
+  <p class="body">
+    The theorem promises that the unitary <code>U</code> exists. Bostanci, Efron, Metger, Poremba, Qian
+    and Yuen asked how hard it is to apply. In the <span class="term">Uhlmann transformation
+    problem</span> you are given the circuits that prepare <code>|C⟩</code> and <code>|D⟩</code> on 2n
+    qubits, and a register <code>B</code> that may be entangled with something you cannot touch. The
+    task is to apply the Uhlmann unitary to <code>B</code> coherently, so that <code>|C⟩</code> becomes
+    <code>|D⟩</code> and the entanglement with the outside survives.
+  </p>
+
+  <section class="band" aria-label="Uhlmann's theorem on two qubits">
+    <div class="band-in">
+      <div class="fig-head">
+        <h3>Find the Uhlmann unitary</h3>
+        <span class="fig-sub" id="uhSub">searching</span>
+      </div>
+      <svg id="uhSvg" viewBox="0 0 900 300" role="img" aria-label="A dial for a rotation applied to qubit B, beside a plot of the overlap between the rotated state and a target state against the rotation angle. A dashed line marks Uhlmann's bound, the fidelity of the two states on qubit A. The overlap touches the bound at one hidden angle."></svg>
+      <div class="ctl-row three">
+        <div class="ctl">
+          <label for="uhU">Your rotation on B <b id="uhULbl">0°</b></label>
+          <input type="range" id="uhU" min="-90" max="90" value="0" step="0.5" aria-label="Rotation angle applied to qubit B">
+          <div class="scale" aria-hidden="true"><span>−90°</span><span>90°</span></div>
+        </div>
+        <div class="ctl">
+          <label for="uhD">How different the two A sides are <b id="uhDLbl">25°</b></label>
+          <input type="range" id="uhD" min="0" max="80" value="25" step="1" aria-label="Difference between the reduced states on A">
+          <div class="scale" aria-hidden="true"><span>Identical</span><span>Far apart</span></div>
+        </div>
+        <div class="ctl">
+          <button type="button" class="act" id="uhNew">New hidden target</button>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><span class="k">Overlap you reach</span><span class="v q" id="uhOv">…</span></div>
+        <div class="ro"><span class="k">Uhlmann's bound, √F(ρ<sub>A</sub>, σ<sub>A</sub>)</span><span class="v" id="uhF">…</span></div>
+      </div>
+      <p class="fig-cap">
+        Two entangled states of qubits A and B:
+        <code>|ψ⟩ = cos θ|00⟩ + sin θ|11⟩</code>, and a target <code>|φ⟩</code> of the same form whose B
+        side has been turned by a hidden angle. You may only act on B. Uhlmann's theorem says the best
+        overlap you can reach equals the fidelity of the two A sides, and here it reduces to
+        <code>|cos(θ − θ′)|</code>. <b>With one qubit on B, one dial finds the optimum.</b> With n qubits on B
+        the optimal unitary is a 2<sup>n</sup> × 2<sup>n</sup> matrix, and whether it can be applied
+        efficiently is the Uhlmann transformation problem.
+      </p>
+    </div>
+  </section>
+
+  <p class="body">
+    To study this they built a complexity theory of unitary synthesis, with classes such as
+    unitaryBQP and unitaryPSPACE, average-case versions like avgUnitaryBQP, and zero-knowledge classes
+    avgUnitaryHVPZK and avgUnitaryHVSZK. Uhlmann with fidelity exactly one is complete for
+    avgUnitaryHVPZK. Completeness for the statistical zero-knowledge class is conjectured, and would
+    follow from a unitary version of the polarization lemma that nobody has proved. A succinct version,
+    where the circuits can have exponential size, is complete for avgUnitaryPSPACE and for
+    avgUnitaryQIP, so those two classes are equal.
+  </p>
+
+  <p class="body">
+    The applications are what make it more than a definition. Uhlmann is hard on average exactly when
+    secure quantum commitments exist. Decoding a decodable noisy channel is efficient exactly when
+    Uhlmann is. Breaking any falsifiable quantum cryptographic assumption reduces to succinct Uhlmann,
+    unless the assumption is secure against unbounded adversaries. And the Harlow–Hayden decoding task
+    is efficient exactly when a distributional version of Uhlmann is. The firewall question, quantum
+    cryptography and quantum Shannon theory all route through the same transformation.
+  </p>
+
+  <h2>Why complexity needs <em>quantum inputs</em></h2>
+  <p class="cite">And why I care</p>
+
+  <p class="body">
+    A decision problem takes a string of bits and returns one bit. The Uhlmann problem takes a quantum
+    register, possibly entangled with a system outside your control, and has to transform it in place.
+    Its input is quantum and so is its output, and there is no way to write "apply
+    <code>U<sub>x</sub></code> to this register without disturbing its entanglement with the outside" as
+    a language. Bostanci and coauthors say it directly: these tasks cannot easily be characterized using
+    traditional complexity theory, which focuses on tasks with classical inputs and outputs.
+  </p>
+
+  <p class="body">
+    The gap is real, and there is evidence for it. Kretschmer gave a quantum oracle relative to which
+    BQP = QMA and yet pseudorandom states and unitaries exist. Kretschmer, Qian, Sinha and Tal gave a
+    classical oracle relative to which P = NP and pseudorandom states still exist. Quantum cryptography,
+    and the hardness of problems like Uhlmann, can survive collapses of classical complexity classes
+    that would destroy classical cryptography. Aaronson points out that we do not even know whether
+    P = PSPACE would make Harlow–Hayden decoding easy.
+  </p>
+
+  <p class="body">
+    States and unitaries also behave differently from each other. Aaronson and Kuperberg asked in 2007
+    whether every n-qubit unitary can be implemented with polynomially many queries to some classical
+    oracle. Rosenthal showed that every state can be prepared in polynomial time with a single query to
+    a classical oracle. Lombardi, Ma and Wright showed that one query is not enough for unitaries, even
+    approximately, although one-query algorithms can decide any language and prepare any state. For
+    states, Metger and Yuen proved statePSPACE = stateQIP, a quantum-output analogue of
+    QIP = PSPACE.
+  </p>
+
+  <p class="body">
+    These are the questions I find most interesting. Is Uhlmann complete for avgUnitaryHVSZK, and is
+    there a unitary polarization lemma? What is the right notion of reduction when the input is a state
+    that cannot be copied? Which classical theorems carry over to quantum inputs, and which fail? The
+    worst-case version of avgUnitaryQIP = avgUnitaryPSPACE is still open. And on the physics side, if
+    decoding Hawking radiation is Uhlmann-hard, what exactly is that hardness protecting?
+  </p>
+
+  <div class="note">
+    <p><strong>About the figures.</strong> The disk is a constant-time slice of pure AdS<sub>3</sub>, and
+    geodesic lengths use the vacuum formula <code>(c/3) log[(L/πε) sin(πℓ/L)]</code> with a cut-off
+    <code>ε = L/1000</code>. The cut-off cancels in the comparison, so where the surfaces jump does not
+    depend on it. The Page curve is schematic. The decoding bar assumes exactly 2<sup>S</sup> steps,
+    which is a conjecture about the typical case and not a theorem. The Uhlmann toy uses real rotations,
+    which are enough for these states.</p>
+  </div>
+
+  <h2>Sources</h2>
+  <ol class="refs">
+    <li><b>Ryu, Takayanagi.</b> Holographic derivation of entanglement entropy from AdS/CFT (2006). <a href="https://arxiv.org/abs/hep-th/0603001" target="_blank" rel="noopener">hep-th/0603001</a></li>
+    <li><b>Hubeny, Rangamani, Takayanagi.</b> A covariant holographic entanglement entropy proposal (2007). <a href="https://arxiv.org/abs/0705.0016" target="_blank" rel="noopener">arXiv:0705.0016</a></li>
+    <li><b>Lewkowycz, Maldacena.</b> Generalized gravitational entropy (2013). <a href="https://arxiv.org/abs/1304.4926" target="_blank" rel="noopener">arXiv:1304.4926</a></li>
+    <li><b>Faulkner, Lewkowycz, Maldacena.</b> Quantum corrections to holographic entanglement entropy (2013). <a href="https://arxiv.org/abs/1307.2892" target="_blank" rel="noopener">arXiv:1307.2892</a></li>
+    <li><b>Engelhardt, Wall.</b> Quantum extremal surfaces (2014). <a href="https://arxiv.org/abs/1408.3203" target="_blank" rel="noopener">arXiv:1408.3203</a></li>
+    <li><b>Calabrese, Cardy.</b> Entanglement entropy and quantum field theory (2004). <a href="https://arxiv.org/abs/hep-th/0405152" target="_blank" rel="noopener">hep-th/0405152</a></li>
+    <li><b>Almheiri, Dong, Harlow.</b> Bulk locality and quantum error correction in AdS/CFT (2014). <a href="https://arxiv.org/abs/1411.7041" target="_blank" rel="noopener">arXiv:1411.7041</a></li>
+    <li><b>Pastawski, Yoshida, Harlow, Preskill.</b> Holographic quantum error-correcting codes (2015). HaPPY. <a href="https://arxiv.org/abs/1503.06237" target="_blank" rel="noopener">arXiv:1503.06237</a></li>
+    <li><b>Dong, Harlow, Wall.</b> Reconstruction of bulk operators within the entanglement wedge (2016). <a href="https://arxiv.org/abs/1601.05416" target="_blank" rel="noopener">arXiv:1601.05416</a></li>
+    <li><b>Cotler, Hayden, Penington, Salton, Swingle, Walter.</b> Entanglement wedge reconstruction via universal recovery channels (2017). <a href="https://arxiv.org/abs/1704.05839" target="_blank" rel="noopener">arXiv:1704.05839</a></li>
+    <li><b>Page.</b> Information in black hole radiation (1993). <a href="https://arxiv.org/abs/hep-th/9306083" target="_blank" rel="noopener">hep-th/9306083</a></li>
+    <li><b>Hayden, Preskill.</b> Black holes as mirrors (2007). <a href="https://arxiv.org/abs/0708.4025" target="_blank" rel="noopener">arXiv:0708.4025</a></li>
+    <li><b>Almheiri, Marolf, Polchinski, Sully.</b> Black holes: complementarity or firewalls? (2012). <a href="https://arxiv.org/abs/1207.3123" target="_blank" rel="noopener">arXiv:1207.3123</a></li>
+    <li><b>Penington.</b> Entanglement wedge reconstruction and the information paradox (2019). <a href="https://arxiv.org/abs/1905.08255" target="_blank" rel="noopener">arXiv:1905.08255</a></li>
+    <li><b>Almheiri, Engelhardt, Marolf, Maxfield.</b> The entropy of bulk quantum fields and the entanglement wedge of an evaporating black hole (2019). <a href="https://arxiv.org/abs/1905.08762" target="_blank" rel="noopener">arXiv:1905.08762</a></li>
+    <li><b>Almheiri, Mahajan, Maldacena, Zhao.</b> The Page curve of Hawking radiation from semiclassical geometry (2019). Islands. <a href="https://arxiv.org/abs/1908.10996" target="_blank" rel="noopener">arXiv:1908.10996</a></li>
+    <li><b>Penington, Shenker, Stanford, Yang.</b> Replica wormholes and the black hole interior (2019). <a href="https://arxiv.org/abs/1911.11977" target="_blank" rel="noopener">arXiv:1911.11977</a></li>
+    <li><b>Almheiri, Hartman, Maldacena, Shaghoulian, Tajdini.</b> Replica wormholes and the entropy of Hawking radiation (2019). <a href="https://arxiv.org/abs/1911.12333" target="_blank" rel="noopener">arXiv:1911.12333</a></li>
+    <li><b>Almheiri, Hartman, Maldacena, Shaghoulian, Tajdini.</b> The entropy of Hawking radiation (2020). Review. <a href="https://arxiv.org/abs/2006.06872" target="_blank" rel="noopener">arXiv:2006.06872</a></li>
+    <li><b>Harlow, Hayden.</b> Quantum computation vs. firewalls (2013). <a href="https://arxiv.org/abs/1301.4504" target="_blank" rel="noopener">arXiv:1301.4504</a></li>
+    <li><b>Aaronson.</b> The complexity of quantum states and transformations: from quantum money to black holes (2016). Lecture notes; Lecture 6. <a href="https://arxiv.org/abs/1607.05256" target="_blank" rel="noopener">arXiv:1607.05256</a></li>
+    <li><b>Susskind.</b> Computational complexity and black hole horizons (2014). <a href="https://arxiv.org/abs/1402.5674" target="_blank" rel="noopener">arXiv:1402.5674</a></li>
+    <li><b>Stanford, Susskind.</b> Complexity and shock wave geometries (2014). <a href="https://arxiv.org/abs/1406.2678" target="_blank" rel="noopener">arXiv:1406.2678</a></li>
+    <li><b>Brown, Roberts, Susskind, Swingle, Zhao.</b> Holographic complexity equals bulk action? (2015). <a href="https://arxiv.org/abs/1509.07876" target="_blank" rel="noopener">arXiv:1509.07876</a></li>
+    <li><b>Brown, Gharibyan, Penington, Susskind.</b> The Python's lunch: geometric obstructions to decoding Hawking radiation (2019). <a href="https://arxiv.org/abs/1912.00228" target="_blank" rel="noopener">arXiv:1912.00228</a></li>
+    <li><b>Bouland, Fefferman, Vazirani.</b> Computational pseudorandomness, the wormhole growth paradox, and constraints on the AdS/CFT duality (2019). <a href="https://arxiv.org/abs/1910.14646" target="_blank" rel="noopener">arXiv:1910.14646</a></li>
+    <li><b>Akers, Engelhardt, Harlow, Penington, Vardhan.</b> The black hole interior from non-isometric codes and complexity (2022). <a href="https://arxiv.org/abs/2207.06536" target="_blank" rel="noopener">arXiv:2207.06536</a></li>
+    <li><b>Brakerski.</b> Black-hole radiation decoding is quantum cryptography (2022). <a href="https://arxiv.org/abs/2211.05491" target="_blank" rel="noopener">arXiv:2211.05491</a></li>
+    <li><b>Engelhardt, Folkestad, Levine, Verheijden, Yang.</b> Cryptographic censorship (2024). <a href="https://arxiv.org/abs/2402.03425" target="_blank" rel="noopener">arXiv:2402.03425</a></li>
+    <li><b>Akers, Bouland, Chen, Kohler, Metger, Vazirani.</b> Holographic pseudoentanglement and the complexity of the AdS/CFT dictionary (2024). <a href="https://arxiv.org/abs/2411.04978" target="_blank" rel="noopener">arXiv:2411.04978</a></li>
+    <li><b>Bostanci, Efron, Metger, Poremba, Qian, Yuen.</b> Unitary complexity and the Uhlmann transformation problem (2023; v3 2025). <a href="https://arxiv.org/abs/2306.13073" target="_blank" rel="noopener">arXiv:2306.13073</a></li>
+    <li><b>Kretschmer.</b> Quantum pseudorandomness and classical complexity (2021). <a href="https://arxiv.org/abs/2103.09320" target="_blank" rel="noopener">arXiv:2103.09320</a></li>
+    <li><b>Kretschmer, Qian, Sinha, Tal.</b> Quantum cryptography in Algorithmica (2022). <a href="https://arxiv.org/abs/2212.00879" target="_blank" rel="noopener">arXiv:2212.00879</a></li>
+    <li><b>Aaronson, Kuperberg.</b> Quantum versus classical proofs and advice (2007). The unitary synthesis problem. <a href="https://arxiv.org/abs/quant-ph/0604056" target="_blank" rel="noopener">quant-ph/0604056</a></li>
+    <li><b>Rosenthal.</b> Efficient quantum state synthesis with one query (2023). <a href="https://arxiv.org/abs/2306.01723" target="_blank" rel="noopener">arXiv:2306.01723</a></li>
+    <li><b>Lombardi, Ma, Wright.</b> A one-query lower bound for unitary synthesis and breaking quantum cryptography (2023). <a href="https://arxiv.org/abs/2310.08870" target="_blank" rel="noopener">arXiv:2310.08870</a></li>
+    <li><b>Metger, Yuen.</b> stateQIP = statePSPACE (2023). <a href="https://arxiv.org/abs/2301.07730" target="_blank" rel="noopener">arXiv:2301.07730</a></li>
+  </ol>
+
+  <div class="closing">
+    The other questions are on <a href="interesting.html">Interesting stuff</a>. I am still learning this
+    area, so if something here is wrong, I would like to know:
+    <a href="mailto:Kartik.anand@tuhh.de">Kartik.anand@tuhh.de</a>.
+  </div>
+
+  </main>
+
+  <footer class="wide">
+    <span>Kartik Anand · Quantum Complexity Theory</span>
+    <span><a href="index.html">← back home</a></span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (id) => document.getElementById(id);
+  const mk = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const txt = (s, a) => { const e = mk("text", a); e.textContent = s; return e; };
+  const C = { q:"#5aabff", e:"#9c7cff", good:"#45d4bd", bad:"#ff7a5c", amber:"#f0c060",
+              rule:"rgba(120,160,255,0.2)", faint:"rgba(120,160,255,0.09)", ink:"#eaf2ff",
+              dim:"rgba(178,201,244,0.72)" };
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const TAU = 2 * Math.PI;
+  const mod1 = (x) => ((x % 1) + 1) % 1;
+  const f2 = (v) => v.toFixed(2);
+  // 0.0061 → "6.1 × 10<sup>−3</sup>", 42 → "42"
+  const sci = (x, p = 2) => {
+    if (x >= 0.01 && x < 1e4) return String(Number(x.toPrecision(p)));
+    const e = Math.floor(Math.log10(x)), m = x / Math.pow(10, e);
+    return m.toFixed(p - 1) + " × 10<sup>" + (e < 0 ? "−" + (-e) : e) + "</sup>";
+  };
+  const sup = (base, exp, a) => {
+    const t = txt(base, a);
+    const s = mk("tspan", { dy: -6, "font-size": 8.5 }); s.textContent = exp;
+    t.appendChild(s); return t;
+  };
+
+  /* ───────── Poincaré-disk geometry, shared ───────── */
+  // Boundary positions are fractions t of the circle, counter-clockwise from the right.
+  function Disk(cx, cy, R) {
+    const P = (t) => [cx + R * Math.cos(TAU * t), cy - R * Math.sin(TAU * t)];
+    // Orthogonal circle through the endpoints of the arc [t, t + len], len < 1/2.
+    const circ = (t, len) => {
+      const mid = TAU * (t + len / 2), half = Math.PI * len;
+      const d = R / Math.cos(half);
+      return { x: cx + d * Math.cos(mid), y: cy - d * Math.sin(mid), r: R * Math.tan(half) };
+    };
+    // SVG path segment for the geodesic from boundary point t1 to t2.
+    const geo = (t1, t2) => {
+      const [bx, by] = P(t2);
+      let len = mod1(t2 - t1), start = t1;
+      if (len > 0.5) { len = 1 - len; start = t2; }
+      if (Math.abs(len - 0.5) < 1e-4) return `L${f2(bx)} ${f2(by)}`;
+      const c = circ(start, len);
+      const [ax, ay] = P(t1);
+      const cross = (ax - c.x) * (by - c.y) - (ay - c.y) * (bx - c.x);
+      return `A${f2(c.r)} ${f2(c.r)} 0 0 ${cross > 0 ? 1 : 0} ${f2(bx)} ${f2(by)}`;
+    };
+    // Rim arc from t1 counter-clockwise to t2.
+    const rim = (t1, t2) => {
+      const [bx, by] = P(t2), len = mod1(t2 - t1);
+      return `A${R} ${R} 0 ${len > 0.5 ? 1 : 0} 0 ${f2(bx)} ${f2(by)}`;
+    };
+    // Is (x, y) between the arc [t, t + len] and its geodesic?
+    const inside = (x, y, t, len) => {
+      if (len > 0.5) return !inside(x, y, mod1(t + len), 1 - len);
+      if (Math.abs(len - 0.5) < 1e-4) {
+        const [ax, ay] = P(t), [bx, by] = P(t + len), [mx, my] = P(t + len / 2);
+        const s = (px, py) => (bx - ax) * (py - ay) - (by - ay) * (px - ax);
+        return s(x, y) * s(mx, my) > 0;
+      }
+      const c = circ(t, len);
+      return Math.hypot(x - c.x, y - c.y) < c.r;
+    };
+    return { P, geo, rim, inside, cx, cy, R };
+  }
+
+  /* ───────── 1. two regions, two candidate surfaces ───────── */
+  (function holography() {
+    const svg = $("rtSvg");
+    if (!svg) return;
+    const D = Disk(250, 232, 196);
+    // t0 < t1 < t2 < t3 (mod 1): A = [t0, t1], gap1, B = [t2, t3], gap2.
+    let T = [0.05, 0.35, 0.55, 0.85];
+    let bulk = [D.cx, D.cy];
+    const MIN = 0.025;
+    // Length of the minimal geodesic for an arc of fraction x, in units of c/3,
+    // with a cut-off at ε = L/1000:  log((L/πε)·sin πx).
+    const Lg = (x) => Math.log((1000 / Math.PI) * Math.sin(Math.PI * clamp(x, 1e-4, 1 - 1e-4)));
+
+    const layer = mk("g", {}); svg.appendChild(layer);
+    const handles = [0, 1, 2, 3].map((i) => {
+      const g = mk("g", { tabindex: 0, role: "slider", class: "handle",
+        "aria-label": ["Start of region A", "End of region A", "Start of region B", "End of region B"][i],
+        "aria-valuemin": 0, "aria-valuemax": 360 });
+      g.appendChild(mk("circle", { r: 16, fill: "transparent" }));
+      g.appendChild(mk("circle", { r: 7, fill: "#060a13", "stroke-width": 2, class: "knob" }));
+      svg.appendChild(g);
+      return g;
+    });
+    const bulkG = mk("g", { tabindex: 0, role: "button", class: "handle",
+      "aria-label": "Bulk point. Drag it, or use the arrow keys to move it." });
+    bulkG.appendChild(mk("circle", { r: 18, fill: "transparent" }));
+    bulkG.appendChild(mk("circle", { r: 11, fill: "none", "stroke-width": 1.4, class: "halo" }));
+    bulkG.appendChild(mk("circle", { r: 5, class: "core" }));
+    svg.appendChild(bulkG);
+
+    function mini(x, y, r, joined, win, label, val) {
+      const d = Disk(x, y, r);
+      const g = mk("g", {});
+      g.appendChild(mk("circle", { cx: x, cy: y, r, fill: "none", stroke: win ? C.e : C.rule, "stroke-width": win ? 1.6 : 1 }));
+      const pth = (s, e) => `M${f2(d.P(s)[0])} ${f2(d.P(s)[1])} ${d.geo(s, e)}`;
+      const segs = joined ? [[T[1], T[2]], [T[3], T[0]]] : [[T[0], T[1]], [T[2], T[3]]];
+      segs.forEach(([s, e]) => g.appendChild(mk("path", { d: pth(s, e), fill: "none", stroke: win ? C.e : "rgba(156,124,255,0.4)", "stroke-width": win ? 2 : 1.4 })));
+      [[T[0], T[1], C.q], [T[2], T[3], C.amber]].forEach(([s, e, col]) => {
+        g.appendChild(mk("path", { d: `M${f2(d.P(s)[0])} ${f2(d.P(s)[1])} ${d.rim(s, e)}`, fill: "none", stroke: col, "stroke-width": 3, "stroke-linecap": "round" }));
+      });
+      g.appendChild(txt(label, { x, y: y + r + 24, "text-anchor": "middle", class: "axis", fill: win ? C.ink : C.dim }));
+      g.appendChild(txt(val.toFixed(2), { x, y: y + r + 42, "text-anchor": "middle", class: "axis", "font-family": "IBM Plex Mono, monospace", "font-size": 13, fill: win ? "rgba(203,183,255,0.98)" : C.dim }));
+      return g;
+    }
+
+    function draw() {
+      const a = mod1(T[1] - T[0]), g1 = mod1(T[2] - T[1]), b = mod1(T[3] - T[2]), g2 = mod1(T[0] - T[3]);
+      const sep = Lg(a) + Lg(b), join = Lg(g1) + Lg(g2);
+      const joined = join < sep;
+      const MI = Math.max(0, sep - join);
+      layer.innerHTML = "";
+
+      // wedge
+      const M = (t) => `M${f2(D.P(t)[0])} ${f2(D.P(t)[1])}`;
+      if (joined) {
+        layer.appendChild(mk("path", { d: `${M(T[0])} ${D.rim(T[0], T[1])} ${D.geo(T[1], T[2])} ${D.rim(T[2], T[3])} ${D.geo(T[3], T[0])} Z`, fill: "rgba(156,124,255,0.17)" }));
+      } else {
+        [[T[0], T[1]], [T[2], T[3]]].forEach(([s, e]) =>
+          layer.appendChild(mk("path", { d: `${M(s)} ${D.rim(s, e)} ${D.geo(e, s)} Z`, fill: "rgba(156,124,255,0.17)" })));
+      }
+      layer.appendChild(mk("circle", { cx: D.cx, cy: D.cy, r: D.R, fill: "none", stroke: C.rule, "stroke-width": 1.2 }));
+      // the losing candidate, faint
+      const lose = joined ? [[T[0], T[1]], [T[2], T[3]]] : [[T[1], T[2]], [T[3], T[0]]];
+      const winS = joined ? [[T[1], T[2]], [T[3], T[0]]] : [[T[0], T[1]], [T[2], T[3]]];
+      lose.forEach(([s, e]) => layer.appendChild(mk("path", { d: `${M(s)} ${D.geo(s, e)}`, fill: "none", stroke: "rgba(156,124,255,0.3)", "stroke-width": 1.2, "stroke-dasharray": "4 5" })));
+      winS.forEach(([s, e]) => layer.appendChild(mk("path", { d: `${M(s)} ${D.geo(s, e)}`, fill: "none", stroke: C.e, "stroke-width": 2.2 })));
+      // boundary regions
+      [[T[0], T[1], C.q, "A"], [T[2], T[3], C.amber, "B"]].forEach(([s, e, col, name]) => {
+        layer.appendChild(mk("path", { d: `${M(s)} ${D.rim(s, e)}`, fill: "none", stroke: col, "stroke-width": 5, "stroke-linecap": "round" }));
+        const mid = s + mod1(e - s) / 2;
+        const lx = D.cx + (D.R + 22) * Math.cos(TAU * mid), ly = D.cy - (D.R + 22) * Math.sin(TAU * mid);
+        layer.appendChild(txt(name, { x: f2(lx), y: f2(ly + 6), "text-anchor": "middle", class: "rt-name", fill: col }));
+      });
+
+      handles.forEach((h, i) => {
+        const [x, y] = D.P(T[i]);
+        h.setAttribute("transform", `translate(${f2(x)} ${f2(y)})`);
+        h.querySelector(".knob").setAttribute("stroke", i < 2 ? C.q : C.amber);
+        h.setAttribute("aria-valuenow", Math.round(T[i] * 360));
+        h.setAttribute("aria-valuetext", Math.round(T[i] * 360) + " degrees");
+      });
+
+      // bulk point
+      const [px, py] = bulk;
+      const inA = D.inside(px, py, T[0], a), inB = D.inside(px, py, T[2], b);
+      const inAB = joined ? !(D.inside(px, py, T[1], g1) || D.inside(px, py, T[3], g2)) : (inA || inB);
+      bulkG.setAttribute("transform", `translate(${f2(px)} ${f2(py)})`);
+      const special = inAB && !inA && !inB;
+      bulkG.querySelector(".core").setAttribute("fill", inAB ? C.good : C.ink);
+      bulkG.querySelector(".halo").setAttribute("stroke", special ? C.good : "rgba(234,242,255,0.35)");
+
+      // candidates, side by side
+      layer.appendChild(txt("the two candidate surfaces", { x: 700, y: 58, "text-anchor": "middle", class: "axis axis-dim" }));
+      layer.appendChild(mini(612, 150, 64, false, !joined, "separate", sep));
+      layer.appendChild(mini(790, 150, 64, true, joined, "joined", join));
+      layer.appendChild(txt("lengths in units of c/3, cut-off ε = L/1000", { x: 700, y: 278, "text-anchor": "middle", class: "axis axis-dim", "font-size": 10.5 }));
+
+      // who can recover the bulk point
+      const rows = [["A alone", inA], ["B alone", inB], ["A and B together", inAB]];
+      layer.appendChild(txt("can this boundary region recover the bulk point?", { x: 540, y: 330, class: "axis axis-dim" }));
+      rows.forEach(([name, ok], i) => {
+        const y = 362 + i * 30;
+        const g = mk("g", { transform: `translate(552 ${y - 4})` });
+        g.appendChild(mk("circle", { r: 9, fill: "none", stroke: ok ? "rgba(69,212,189,0.6)" : "rgba(255,122,92,0.5)", "stroke-width": 1.2 }));
+        g.appendChild(mk("path", ok ? { d: "M-4 0.5 L-1 3.5 L4.5 -3", fill: "none", stroke: C.good, "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }
+                                     : { d: "M-3.2 -3.2 L3.2 3.2 M3.2 -3.2 L-3.2 3.2", stroke: C.bad, "stroke-width": 1.6, "stroke-linecap": "round" }));
+        layer.appendChild(g);
+        layer.appendChild(txt(name, { x: 572, y: y + 1, class: "axis", fill: ok ? C.ink : C.dim, "font-size": 12.5 }));
+      });
+
+      $("rtLen").textContent = sep.toFixed(2) + " / " + join.toFixed(2);
+      $("rtRec").textContent = [inA && "A", inB && "B", inAB && "A∪B"].filter(Boolean).join(", ") || "nothing";
+      $("rtRec").className = "v " + (inAB ? "good" : "");
+      $("rtPhase").textContent = joined ? "joined" : "separate";
+      $("rtSub").textContent = joined ? "connected wedge" : "two separate wedges";
+      $("rtMI").textContent = MI < 0.005 ? "0" : MI.toFixed(2) + " · c/3";
+      $("rtMI").className = "v " + (MI > 0.005 ? "q" : "");
+      let cap;
+      if (special) cap = "The bulk point sits in the wedge of <b>A and B together</b> but in neither wedge alone. Any operator there can be rebuilt from the two regions jointly, and neither region by itself holds any information about it. That is how a quantum error-correcting code behaves, and it is the observation of Almheiri, Dong and Harlow.";
+      else if (joined) cap = "The joined surfaces are shorter, so the wedge of A and B is one connected region that reaches deep into the bulk. The mutual information between A and B is of order <b>c</b>, which in gravity means of order 1/G<sub>N</sub>.";
+      else cap = "The separate surfaces are shorter, so the wedge of A and B is just the two small wedges side by side. At leading order in 1/G<sub>N</sub>, A and B share <b>no</b> mutual information. Grow the regions or shrink the gaps and watch the surfaces jump.";
+      $("rtCap").innerHTML = cap;
+    }
+
+    // dragging
+    const toSvg = (e) => {
+      const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+      return p.matrixTransform(svg.getScreenCTM().inverse());
+    };
+    const setT = (i, t) => {
+      const lo = T[(i + 3) % 4] + MIN, hi = T[(i + 1) % 4] - MIN;
+      // keep t inside the cyclic interval (lo, hi)
+      const span = mod1(hi - lo), off = mod1(t - lo);
+      T[i] = mod1(lo + (off <= span ? off : (off - span < (1 - span) / 2 ? span : 0)));
+    };
+    handles.forEach((h, i) => {
+      h.addEventListener("pointerdown", (e) => { h.setPointerCapture(e.pointerId); h.dataset.drag = "1"; e.preventDefault(); });
+      h.addEventListener("pointermove", (e) => {
+        if (!h.dataset.drag) return;
+        const p = toSvg(e);
+        setT(i, mod1(Math.atan2(-(p.y - D.cy), p.x - D.cx) / TAU));
+        draw();
+      });
+      h.addEventListener("pointerup", () => { delete h.dataset.drag; });
+      h.addEventListener("keydown", (e) => {
+        const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+        if (!d) return;
+        e.preventDefault(); setT(i, T[i] + d / 360 * (e.shiftKey ? 10 : 2)); draw();
+      });
+    });
+    const setBulk = (x, y) => {
+      const dx = x - D.cx, dy = y - D.cy, r = Math.hypot(dx, dy), m = D.R - 10;
+      bulk = r > m ? [D.cx + dx / r * m, D.cy + dy / r * m] : [x, y];
+    };
+    bulkG.addEventListener("pointerdown", (e) => { bulkG.setPointerCapture(e.pointerId); bulkG.dataset.drag = "1"; e.preventDefault(); });
+    bulkG.addEventListener("pointermove", (e) => { if (!bulkG.dataset.drag) return; const p = toSvg(e); setBulk(p.x, p.y); draw(); });
+    bulkG.addEventListener("pointerup", () => { delete bulkG.dataset.drag; });
+    bulkG.addEventListener("keydown", (e) => {
+      const k = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key];
+      if (!k) return;
+      e.preventDefault(); const s = e.shiftKey ? 16 : 5; setBulk(bulk[0] + k[0] * s, bulk[1] + k[1] * s); draw();
+    });
+    // presets
+    const presets = { big: [0.05, 0.35, 0.55, 0.85], small: [0.08, 0.2, 0.55, 0.67] };
+    document.querySelectorAll("[data-rt]").forEach((btn) => btn.addEventListener("click", () => {
+      T = presets[btn.dataset.rt].slice();
+      bulk = [D.cx, D.cy];
+      draw();
+    }));
+    draw();
+  })();
+
+  /* ───────── 2. the Page curve ───────── */
+  (function pageCurve() {
+    const svg = $("pgSvg"), ctl = $("pgCtl");
+    if (!svg) return;
+    const x0 = 80, x1 = 560, y0 = 290, y1 = 40;
+    const X = (t) => x0 + (x1 - x0) * t, Y = (s) => y0 - (y0 - y1) * s;
+    // Schematic 4D Schwarzschild evaporation: M ∝ (1 - t)^{1/3}, so S_BH ∝ (1 - t)^{2/3}.
+    // Hawking's radiation entropy is drawn as S0 - S_BH (one unit of radiation entropy per
+    // unit of black-hole entropy lost); the real ratio is somewhat larger, which moves the
+    // Page time earlier without changing the shape.
+    const sbh = (t) => Math.pow(Math.max(0, 1 - t), 2 / 3);
+    const shaw = (t) => 1 - sbh(t);
+    const tPage = 1 - Math.pow(0.5, 1.5);
+    const dots = Array.from({ length: 70 }, (_, i) => ({ a: (i * 137.508) % 360, r: (i * 0.61803) % 1, k: i / 70 }));
+
+    function draw() {
+      const t = +ctl.value / 1000;
+      svg.innerHTML = "";
+      [0, 0.5, 1].forEach((s) => {
+        svg.appendChild(mk("line", { x1: x0, y1: Y(s), x2: x1, y2: Y(s), stroke: C.faint, "stroke-width": 1 }));
+      });
+      svg.appendChild(txt("S₀", { x: x0 - 12, y: Y(1) + 4, "text-anchor": "end", class: "axis" }));
+      svg.appendChild(txt("0", { x: x0 - 12, y: Y(0) + 4, "text-anchor": "end", class: "axis" }));
+      svg.appendChild(txt("entropy of the radiation", { x: x0 - 40, y: y1 - 16, class: "axis axis-dim" }));
+      svg.appendChild(txt("formation", { x: x0, y: y0 + 22, class: "axis" }));
+      svg.appendChild(txt("evaporated", { x: x1, y: y0 + 22, "text-anchor": "end", class: "axis" }));
+      svg.appendChild(txt("Page time", { x: X(tPage), y: y0 + 22, "text-anchor": "middle", class: "axis", fill: "rgba(203,183,255,0.9)" }));
+      svg.appendChild(mk("line", { x1: X(tPage), y1: y0, x2: X(tPage), y2: y1, stroke: "rgba(156,124,255,0.25)", "stroke-width": 1, "stroke-dasharray": "3 4" }));
+
+      const path = (f, upto) => {
+        let d = ""; for (let i = 0; i <= 200; i++) { const s = i / 200 * upto; d += (i ? "L" : "M") + f2(X(s)) + " " + f2(Y(f(s))) + " "; } return d;
+      };
+      svg.appendChild(mk("path", { d: path(sbh, 1), fill: "none", stroke: "rgba(240,192,96,0.7)", "stroke-width": 1.4, "stroke-dasharray": "5 5" }));
+      svg.appendChild(mk("path", { d: path(shaw, 1), fill: "none", stroke: "rgba(255,122,92,0.55)", "stroke-width": 1.4, "stroke-dasharray": "5 5" }));
+      svg.appendChild(mk("path", { d: path((s) => Math.min(sbh(s), shaw(s)), t), fill: "none", stroke: C.e, "stroke-width": 3, "stroke-linejoin": "round" }));
+      svg.appendChild(txt("Hawking's answer", { x: X(0.9), y: Y(shaw(0.9)) - 12, "text-anchor": "end", class: "axis", fill: "rgba(255,150,125,0.95)" }));
+      svg.appendChild(txt("black hole's own entropy", { x: X(0.1), y: Y(sbh(0.1)) - 12, class: "axis", fill: "rgba(240,192,96,0.9)" }));
+      const cur = Math.min(sbh(t), shaw(t));
+      svg.appendChild(mk("line", { x1: X(t), y1: y0, x2: X(t), y2: Y(cur), stroke: C.rule, "stroke-width": 1 }));
+      svg.appendChild(mk("circle", { cx: X(t), cy: Y(cur), r: 5, fill: "#060a13", stroke: C.e, "stroke-width": 2 }));
+
+      // the black hole, its radiation and, after the Page time, its island
+      const bx = 735, by = 165, R0 = 70, r = R0 * Math.pow(Math.max(1e-6, 1 - t), 1 / 3);
+      const emitted = shaw(t);
+      dots.forEach((d) => {
+        if (d.k > emitted) return;
+        const age = emitted - d.k;
+        const rr = r + 10 + age * 190 + d.r * 12;
+        const a = d.a * Math.PI / 180;
+        const x = bx + rr * Math.cos(a), y = by + rr * Math.sin(a) * 0.82;
+        if (x < 590 || x > 895 || y < 10 || y > 330) return;
+        svg.appendChild(mk("circle", { cx: f2(x), cy: f2(y), r: 1.8, fill: "rgba(255,150,125,0.8)" }));
+      });
+      if (r > 0.6) {
+        svg.appendChild(mk("circle", { cx: bx, cy: by, r: f2(r), fill: "#000", stroke: "rgba(240,192,96,0.55)", "stroke-width": 1.2 }));
+        if (t > tPage) {
+          svg.appendChild(mk("circle", { cx: bx, cy: by, r: f2(r * 0.9), fill: "rgba(156,124,255,0.22)", stroke: C.e, "stroke-width": 1.4, "stroke-dasharray": "3 3" }));
+          svg.appendChild(txt("island", { x: bx, y: by + 4, "text-anchor": "middle", class: "axis", fill: "rgba(210,195,255,0.95)" }));
+        }
+      }
+      svg.appendChild(txt(t > tPage ? "after the Page time" : "before the Page time", { x: bx, y: 320, "text-anchor": "middle", class: "axis axis-dim" }));
+
+      $("pgSub").textContent = t > tPage ? "island saddle dominates" : "no island";
+      $("pgHaw").textContent = shaw(t).toFixed(2) + " S₀";
+      $("pgPage").textContent = cur.toFixed(2) + " S₀";
+      $("pgIsl").textContent = t > tPage ? "yes" : "no";
+      $("pgIsl").className = "v " + (t > tPage ? "q" : "");
+    }
+    ctl.addEventListener("input", () => requestAnimationFrame(draw));
+    draw();
+  })();
+
+  /* ───────── 3. how long decoding takes ───────── */
+  (function decodeTime() {
+    const svg = $("dtSvg"), ctl = $("dtCtl");
+    if (!svg) return;
+    const LOG2 = Math.log10(2);
+    const tP = 5.391e-44, yr = 3.156e7;
+    // S in units of k_B; M/m_P = sqrt(S/4π);  t_evap ≈ 5120 π (M/m_P)^3 t_P  (massless emission).
+    const lifetime = (S) => Math.log10(5120 * Math.PI) + 1.5 * Math.log10(S / (4 * Math.PI));
+    const x0 = 60, x1 = 860;
+    const X = (l) => x0 + (x1 - x0) * clamp(l, 0, 80) / 80;       // l = log10(number of digits)
+
+    function draw() {
+      const lS = +ctl.value / 10, S = Math.pow(10, lS);
+      const lt = lifetime(S);                     // log10(lifetime / t_P)
+      const ld = S * LOG2;                        // log10(2^S)
+      const digLife = Math.max(1, lt), digDec = Math.max(1, ld);
+      svg.innerHTML = "";
+      [0, 20, 40, 60, 80].forEach((l) => {
+        svg.appendChild(mk("line", { x1: X(l), y1: 40, x2: X(l), y2: 190, stroke: C.faint, "stroke-width": 1 }));
+        svg.appendChild(sup("10", String(l), { x: X(l), y: 212, "text-anchor": "middle", class: "axis" }));
+      });
+      svg.appendChild(txt("how many digits the time has, written in Planck times", { x: x1, y: 236, "text-anchor": "end", class: "axis axis-dim" }));
+      const bar = (y, l, col, label) => {
+        const w = Math.max(3, X(Math.log10(l)) - x0);
+        svg.appendChild(mk("rect", { x: x0, y, width: f2(w), height: 34, rx: 3, fill: col.replace("1)", "0.18)"), stroke: col, "stroke-width": 1.2 }));
+        const t = txt(label[0], { x: x0 + 2, y: y - 10, class: "axis", fill: C.ink, "font-size": 12.5 });
+        if (label[1]) { const s = mk("tspan", { dy: -6, "font-size": 9 }); s.textContent = label[1]; t.appendChild(s);
+                        const s2 = mk("tspan", { dy: 6 }); s2.textContent = label[2]; t.appendChild(s2); }
+        svg.appendChild(t);
+      };
+      bar(66, digLife, "rgba(240,192,96,1)", ["the black hole's whole lifetime"]);
+      bar(146, digDec, "rgba(255,122,92,1)", ["decoding, if it takes 2", "S", " steps"]);
+
+      const M = Math.sqrt(S / (4 * Math.PI)) * 2.176e-8;          // kg
+      const Msun = M / 1.989e30;
+      $("dtM").innerHTML = Msun >= 0.01 ? sci(Msun) + " solar masses" : sci(M) + " kg";
+      const sec = Math.pow(10, lt) * tP, years = sec / yr;
+      $("dtLife").innerHTML = years >= 1 ? sci(years) + " years" : sci(sec) + " seconds";
+      $("dtDec").innerHTML = "a number with " + (ld < 1e6 ? Math.ceil(ld).toLocaleString("en-US") : sci(ld, 1)) + " digits";
+      $("dtLbl").innerHTML = "S = 10<sup>" + lS.toFixed(1) + "</sup>";
+    }
+    ctl.addEventListener("input", () => requestAnimationFrame(draw));
+    draw();
+  })();
+
+  /* ───────── 4. Uhlmann's theorem, two qubits ───────── */
+  (function uhlmann() {
+    const svg = $("uhSvg"), uCtl = $("uhU"), dCtl = $("uhD");
+    if (!svg) return;
+    let hidden = 0, trail = [];
+    const newHidden = () => { hidden = (Math.random() * 150 - 75) * Math.PI / 180; trail = []; };
+    newHidden();
+    const px0 = 380, px1 = 860, py0 = 250, py1 = 40;
+    const PX = (u) => px0 + (px1 - px0) * (u + Math.PI / 2) / Math.PI;
+    const PY = (v) => py0 - (py0 - py1) * v;
+
+    function draw() {
+      const u = +uCtl.value * Math.PI / 180, dlt = +dCtl.value * Math.PI / 180;
+      const bound = Math.abs(Math.cos(dlt));
+      const ov = Math.abs(Math.cos(dlt) * Math.cos(u - hidden));
+      trail.push([u, ov]); if (trail.length > 400) trail.shift();
+      svg.innerHTML = "";
+
+      // dial for the unitary on B
+      const cx = 170, cy = 150, r = 92;
+      svg.appendChild(mk("circle", { cx, cy, r, fill: "rgba(90,171,255,0.04)", stroke: C.rule, "stroke-width": 1.2 }));
+      for (let k = -90; k <= 90; k += 15) {
+        const a = k * Math.PI / 180, big = k % 45 === 0;
+        svg.appendChild(mk("line", { x1: cx + (r - (big ? 12 : 7)) * Math.sin(a), y1: cy - (r - (big ? 12 : 7)) * Math.cos(a), x2: cx + r * Math.sin(a), y2: cy - r * Math.cos(a), stroke: C.rule, "stroke-width": 1 }));
+      }
+      const nx = cx + (r - 18) * Math.sin(u), ny = cy - (r - 18) * Math.cos(u);
+      svg.appendChild(mk("line", { x1: cx, y1: cy, x2: f2(nx), y2: f2(ny), stroke: C.q, "stroke-width": 2.4, "stroke-linecap": "round" }));
+      svg.appendChild(mk("circle", { cx, cy, r: 5, fill: C.q }));
+      svg.appendChild(txt("your unitary on B", { x: cx, y: cy + r + 30, "text-anchor": "middle", class: "axis axis-dim" }));
+
+      // overlap against rotation angle
+      [0, 0.5, 1].forEach((v) => {
+        svg.appendChild(mk("line", { x1: px0, y1: PY(v), x2: px1, y2: PY(v), stroke: C.faint, "stroke-width": 1 }));
+        svg.appendChild(txt(v.toFixed(1), { x: px0 - 10, y: PY(v) + 4, "text-anchor": "end", class: "axis" }));
+      });
+      [-90, 0, 90].forEach((d) => svg.appendChild(txt(d + "°", { x: PX(d * Math.PI / 180), y: py0 + 20, "text-anchor": "middle", class: "axis" })));
+      svg.appendChild(txt("overlap with the target", { x: px0 - 30, y: py1 - 16, class: "axis axis-dim" }));
+      svg.appendChild(mk("line", { x1: px0, y1: PY(bound), x2: px1, y2: PY(bound), stroke: C.e, "stroke-width": 1.4, "stroke-dasharray": "5 5" }));
+      svg.appendChild(txt("Uhlmann's bound: fidelity of the A sides", { x: px1, y: PY(bound) - 8, "text-anchor": "end", class: "axis", fill: "rgba(203,183,255,0.95)" }));
+      trail.forEach(([tu, tv], i) => svg.appendChild(mk("circle", { cx: f2(PX(tu)), cy: f2(PY(tv)), r: 2, fill: "rgba(90,171,255," + (0.15 + 0.5 * i / trail.length).toFixed(2) + ")" })));
+      const hit = bound - ov < 0.002;
+      svg.appendChild(mk("circle", { cx: PX(u), cy: PY(ov), r: 6, fill: "#060a13", stroke: hit ? C.good : C.q, "stroke-width": 2 }));
+
+      $("uhOv").textContent = ov.toFixed(3);
+      $("uhOv").className = "v " + (hit ? "good" : "q");
+      $("uhF").textContent = bound.toFixed(3);
+      $("uhULbl").textContent = Math.round(+uCtl.value) + "°";
+      $("uhDLbl").textContent = Math.round(+dCtl.value) + "°";
+      $("uhSub").textContent = hit ? "you found the Uhlmann unitary" : "searching";
+    }
+    uCtl.addEventListener("input", () => requestAnimationFrame(draw));
+    dCtl.addEventListener("input", () => { trail = []; requestAnimationFrame(draw); });
+    $("uhNew").addEventListener("click", () => { newHidden(); draw(); });
+    draw();
+  })();
+})();
+
+</script>
+</body>
+</html>

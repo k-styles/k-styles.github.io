@@ -13,5 +13,6 @@
         "reason": "full-bleed bands: the section background must reach the viewport edge by design, so the inset sits on .band (1.2rem block) and .band-in/.levels/.panel (1.5rem inline). Measured 17px+ from every hairline to content."
       }
     ]
-  }
+  },
+  "buildPath": "code"
 }
