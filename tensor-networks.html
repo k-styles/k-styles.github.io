@@ -14,6 +14,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -306,6 +308,9 @@ footer a:hover { border-color: var(--quantum); }
   font-family: var(--serif); font-size: 1.22rem; text-align: center; color: var(--star-bright);
   margin: 0.4rem 0 1.4rem; letter-spacing: 0.01em;
 }
+.formula { overflow-x: auto; overflow-y: hidden; padding: 0.2rem 0; }
+.formula .katex-display { margin: 0; }
+.formula .katex { font-size: 1.28em; color: var(--star-bright); }
 .formula i { color: rgba(203,183,255,0.98); }
 @media (max-width: 760px) {
   .ctl-row.three { grid-template-columns: 1fr; }
@@ -363,7 +368,7 @@ footer a:hover { border-color: var(--quantum); }
     For comparison, switch to a random state of the same ten spins.
   </p>
 
-  <p class="formula">H = −J <i>Σ</i> Z<sub>i</sub>Z<sub>i+1</sub> − h <i>Σ</i> X<sub>i</sub></p>
+  <p class="formula" data-tex="H = -J \sum_i Z_i Z_{i+1} \;-\; h \sum_i X_i">H = −J <i>Σ</i> Z<sub>i</sub>Z<sub>i+1</sub> − h <i>Σ</i> X<sub>i</sub></p>
 
   <section class="band" aria-label="Schmidt spectrum of a spin chain">
     <div class="band-in">
@@ -1006,6 +1011,15 @@ footer a:hover { border-color: var(--quantum); }
     draw();
   })();
 })();
+</script>
+<script>
+/* Typeset the formulas once KaTeX has loaded; the plain-text version stays if it never does. */
+window.addEventListener("DOMContentLoaded", function () {
+  if (!window.katex) return;
+  document.querySelectorAll(".formula[data-tex]").forEach(function (el) {
+    try { katex.render(el.dataset.tex, el, { displayMode: true, throwOnError: false }); } catch (e) {}
+  });
+});
 </script>
 </body>
 </html>
